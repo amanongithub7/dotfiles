@@ -1,13 +1,18 @@
-
 # font
 font-family = SFMono Nerd Font
-# font-family = BerkeleyMono Nerd Font
 font-size = 20
 
-# theme/UI
+# theme
 theme = catppuccin-frappe
-cursor-style = block
 
+# cursor
+cursor-style = block_hollow
+cursor-invert-fg-bg = true
+# move cursor by pressing option+click
+cursor-click-to-move = true
+shell-integration-features = no-cursor
+
+# window experience
 window-padding-balance = true
 adjust-cell-height = 35%
 mouse-hide-while-typing = true
@@ -15,8 +20,9 @@ mouse-scroll-multiplier = 2
 window-save-state = always
 macos-titlebar-style = transparent
 unfocused-split-opacity = 0.7
+confirm-close-surface = false
 
-# # background
+# background
 background-blur = true
 background-opacity = 0.65
 
