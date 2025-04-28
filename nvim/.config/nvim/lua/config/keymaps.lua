@@ -1,3 +1,10 @@
--- Keymaps are automatically loaded on the VeryLazy event
--- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
--- Add any additional keymaps here
+-- Keymaps for Neovim
+
+-- Spawn terminal using leader + t
+vim.keymap.set("n", "<leader>t", function()
+  if vim.fn.bufexists("term://*") == 1 then
+    vim.cmd("bdelete! term://*")
+  else
+    vim.cmd("split | terminal")
+  end
+end, { desc = "Toggle terminal" })

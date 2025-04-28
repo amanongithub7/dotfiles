@@ -3,7 +3,7 @@ font-family = SFMono Nerd Font
 font-size = 20
 
 # theme
-theme = catppuccin-frappe
+theme = nord
 
 # cursor
 cursor-style = block_hollow
@@ -24,5 +24,5 @@ confirm-close-surface = false
 
 # background
 background-blur = true
-background-opacity = 0.65
+background-opacity = 0.73
 

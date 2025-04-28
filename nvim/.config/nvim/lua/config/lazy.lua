@@ -19,6 +19,20 @@ require("lazy").setup({
   spec = {
     -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+    -- import extra modules here
+    { import = "lazyvim.plugins.extras.lang.typescript" },
+    { import = "lazyvim.plugins.extras.lang.json" },
+    { import = "lazyvim.plugins.extras.lang.yaml" },
+    { import = "lazyvim.plugins.extras.lang.go" },
+    { import = "lazyvim.plugins.extras.formatting.prettier" },
+    { import = "lazyvim.plugins.extras.ui.mini-animate" },
+    { import = "lazyvim.plugins.extras.ui.edgy" },
+    {
+      "folke/tokyonight.nvim",
+      lazy = false,
+      priority = 1000,
+      opts = {},
+    },
     -- import/override with your plugins
     { import = "plugins" },
   },
@@ -36,7 +50,14 @@ require("lazy").setup({
     enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
-  plugins = { "nvim-lua/plenary.nvim" },
+  plugins = {
+    "nvim-lua/plenary.nvim",
+
+    -- Git related plugins
+    { "tpope/vim-fugitive" },
+    { "tpope/vim-rhubarb" },
+    { "lewis6991/gitsigns.nvim", opts = {} },
+  },
   performance = {
     rtp = {
       -- disable some rtp plugins
