@@ -27,15 +27,17 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.formatting.prettier" },
     { import = "lazyvim.plugins.extras.ui.mini-animate" },
     { import = "lazyvim.plugins.extras.ui.edgy" },
-    {
-      "folke/tokyonight.nvim",
-      lazy = false,
-      priority = 1000,
-      opts = {},
-    },
+    -- {
+    --  "folke/tokyonight.nvim",
+    --  lazy = false,
+    --  priority = 1000,
+    --  opts = {},
+    --},
+    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
     -- import/override with your plugins
     { import = "plugins" },
   },
+  install = { color_scheme = { "catpuccin-latte" } },
   defaults = {
     -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
     -- If you know what you're doing, you can set this to `true` to have all your custom plugins lazy-loaded by default.
@@ -45,13 +47,13 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "tokyonight", "habamax" } },
   checker = {
     enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
   plugins = {
     "nvim-lua/plenary.nvim",
+    "nvim-telescope/telescope.nvim",
 
     -- Git related plugins
     { "tpope/vim-fugitive" },

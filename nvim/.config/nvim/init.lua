@@ -1,6 +1,8 @@
 -- bootstrap lazy.nvim, LazyVim and your plugins
-require('config.keymaps')
-require('config.lazy')
+require("config.keymaps")
+require("config.lazy")
+
+vim.cmd.colorscheme("catppuccin-latte")
 
 -- bind grep to ripgrep
 vim.cmd([[set grepprg=rg\ --vimgrep\ --smart-case\ --hidden]])
