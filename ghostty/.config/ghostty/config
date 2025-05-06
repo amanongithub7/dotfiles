@@ -23,5 +23,5 @@ confirm-close-surface = false
 
 # background
 background-blur = true
-background-opacity = 0.73
+background-opacity = 0.75
 
