@@ -19,23 +19,18 @@ require("lazy").setup({
   spec = {
     -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-    -- import extra modules here
+    -- ts, json and yaml language servers
     { import = "lazyvim.plugins.extras.lang.typescript" },
     { import = "lazyvim.plugins.extras.lang.json" },
     { import = "lazyvim.plugins.extras.lang.yaml" },
-    { import = "lazyvim.plugins.extras.lang.go" },
+
+    -- UI improvements
     { import = "lazyvim.plugins.extras.formatting.prettier" },
     { import = "lazyvim.plugins.extras.ui.mini-animate" },
     { import = "lazyvim.plugins.extras.ui.edgy" },
-    -- {
-    --  "folke/tokyonight.nvim",
-    --  lazy = false,
-    --  priority = 1000,
-    --  opts = {},
-    --},
-    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
     -- import/override with your plugins
     { import = "plugins" },
+    
   },
   install = { color_scheme = { "catpuccin-latte" } },
   defaults = {
