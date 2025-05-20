@@ -107,7 +107,13 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'colorls $realpath'
 eval "$(fzf --zsh)"
 eval "$(zoxide init zsh)"
 
+# asdf setuip
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+
 unset ZSH_AUTOSUGGEST_USE_ASYNC
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+
+# Clear output at end of shell setup 
+clear

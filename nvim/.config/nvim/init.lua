@@ -9,6 +9,8 @@ vim.cmd.colorscheme("catppuccin-latte")
 -- bind grep to ripgrep
 vim.cmd([[set grepprg=rg\ --vimgrep\ --smart-case\ --hidden]])
 
--- non-relative line numbers
+-- Relative and absolute line numbers
 vim.opt.number = true
-vim.opt.relativenumber = false
+vim.opt.relativenumber = true
+vim.opt.statuscolumn = "%s %l %r"
+
