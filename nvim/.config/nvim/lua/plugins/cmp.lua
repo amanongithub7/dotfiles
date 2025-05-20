@@ -35,7 +35,7 @@ return {
                         module = "blink.cmp.sources.lsp",
                         kind = "LSP",
                         score_offset = 1000,
-                    }, 
+                    },
                     dadbod = {
                         name = "Dadbod",
                         enabled = true,
@@ -46,8 +46,8 @@ return {
                         name = "snippets",
                         enabled = true,
                         module = "blink.cmp.sources.snippets",
-                        score_offset = 900,
-                        max_items = 5,
+                        score_offset = 800,
+                        max_items = 3,
                     },
                     -- relegation zone
                     copilot = {
@@ -55,7 +55,7 @@ return {
                         enabled = true,
                         module = "blink-copilot",
                         kind = "Copilot",
-                        score_offset = -100,
+                        score_offset = 600,
                         async = true,
                         opts = {
                             max_completions = 3,
