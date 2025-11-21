@@ -1,3 +1,5 @@
-This is a remote for my local git dotfiles repository which houses my configurations and plugins for applications such as ghostty and neovim.
+# ⚙️ Dotfiles
 
-I use [gnu-stow](https://www.gnu.org/software/stow/) to maintain symlinks between `~/dotfiles/../.config/..` and `~/.config/..`. 
+This repository houses my configurations and plugins for applications such as ghostty, zsh and neovim.
+
+My setup uses [gnu-stow](https://www.gnu.org/software/stow/) to maintain symlinks between my local `~/dotfiles/../.config/..` and `~/.config/..` directories.
