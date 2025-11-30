@@ -3,7 +3,7 @@ font-family = SFMono Nerd Font
 font-size = 20
 
 # theme
-theme = dark:catppuccin-frappe,light:catppuccin-latte
+theme = dark:Catppuccin Mocha,light:Catppuccin Latte
 
 # cursor
 cursor-style = block_hollow
