@@ -16,13 +16,25 @@ Refer to the [LazyVim documentation](https://lazyvim.github.io/installation) to 
 
 ## 🗂️ Directory Structure
 
-```
+````
 - lazy.nvim/
 - lua/
+  - config/
+  - plugins/
 - LICENSE
 - README.md
 - init.lua
 - init.sh
 - lazyvim.json
 - stylua.toml
-```
+nvim/
+├─ lazy.nvim/          # source code
+├─ lua
+│  ├─ config/ # entry point
+│  └─ plugins/ # helper functions
+├─ data/         # raw and processed datasets
+│  ├─ raw/
+│  └─ processed/
+└─ README.md     # this file
+```bash
+````
