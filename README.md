@@ -1,5 +1,5 @@
 # ⚙️ Dotfiles
 
-This repository houses my configurations and plugins for applications such as ghostty, zsh and neovim.
+This repository houses my configurations for Z shell, ghostty (terminal emulator), and NeoVim (hyper-customizable vim extension).
 
-My setup uses [gnu-stow](https://www.gnu.org/software/stow/) to maintain symlinks between my local `~/dotfiles/../.config/..` and `~/.config/..` directories.
+Check the READMEs within each folder for more details.
