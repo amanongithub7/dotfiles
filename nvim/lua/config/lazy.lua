@@ -30,7 +30,6 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.ui.edgy" },
     -- import/override with your plugins
     { import = "plugins" },
-    
   },
   install = { color_scheme = { "catpuccin-latte" } },
   defaults = {
@@ -69,5 +68,10 @@ require("lazy").setup({
         "zipPlugin",
       },
     },
+  },
+  -- limit parallel git jobs
+  git = {
+    max_concurrent = 4, -- increase only if it stays stable
+    timeout = 120, -- seconds, gives slower links more breathing room
   },
 })
