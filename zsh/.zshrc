@@ -42,6 +42,7 @@ autoload -U compinit && compinit
 # oh-my-zsh setup with plugins
 export ZSH="$HOME/.oh-my-zsh"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting web-search macos)
+export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST # dump zsh completions in the specified directory, not in $HOME
 source $ZSH/oh-my-zsh.sh
 
 # zsh history
