@@ -7,10 +7,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # path shims
-export PATH=/usr/local/bin:$PATH
-export PATH=$PATH:/Users/aman/Library/Python/3.11/bin
-source ~/.bash_profile
-export PATH="$HOME/.npm-packages/bin:$PATH"
+export PATH="$HOME/.npm-packages/bin:$PATH"   # npm package binaries
+export PATH="/usr/local/bin:$PATH"            # legacy user-specific binaries
+export PATH="/opt/homebrew/bin:$PATH"         # homebrew-installed binaries
 
 # nvm setup
 export NVM_DIR="$HOME/.nvm"
