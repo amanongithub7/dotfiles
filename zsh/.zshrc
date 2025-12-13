@@ -44,7 +44,7 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting web-search macos)
 export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST # dump zsh completions in the specified directory, not in $HOME
 source $ZSH/oh-my-zsh.sh
 
-# zsh history
+# zsh history configuration
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
@@ -57,10 +57,10 @@ setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups 
 
-# auto-update zsh
+# auto-update oh-my-zsh
 zstyle ':omz:update' mode auto
 
-# auto-completion key bindings
+# auto-completion key bindings for previous and next
 bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 
@@ -70,6 +70,7 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 
+# fuzzy finder and zoxide initialization
 eval "$(fzf --zsh)"
 eval "$(zoxide init zsh)"
 
@@ -117,7 +118,7 @@ export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init - zsh)" 
 
-# clear output at end of shell setup
-clear
-
 [[ -s "/Users/aman/.gvm/scripts/gvm" ]] && source "/Users/aman/.gvm/scripts/gvm"
+
+# clear output at the end of shell setup
+clear
