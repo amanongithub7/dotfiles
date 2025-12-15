@@ -84,11 +84,11 @@ eval "$(zoxide init zsh)"
 # plugins, and themes. aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # for a full list of active aliases, run `alias`.
-alias caf='caffeinate -d'
+alias caf='caffeinate -d'                                  # force OS and display to stay awake
 alias ls='colorls'
-alias l='eza -l --icons --git -a'
-alias lt='eza --tree --level=2 --long --icons --git'
-alias ltree='eza --tree --level=2  --icons --git'
+alias l='eza -a -l --git --icons'                          # table view of files with metadata
+alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
+alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
 
 # golang
 #
