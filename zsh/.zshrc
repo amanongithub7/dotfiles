@@ -30,6 +30,9 @@ fi
 # load zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
+# load eza theme
+export EZA_CONFIG_DIR="${HOME}/dotfiles/eza"
+
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
 zinit ice depth=1; zinit light romkatv/powerlevel10k
 zinit light zsh-users/zsh-completions
@@ -119,6 +122,8 @@ export PYENV_ROOT="$HOME/.pyenv"
 eval "$(pyenv init - zsh)" 
 
 [[ -s "/Users/aman/.gvm/scripts/gvm" ]] && source "/Users/aman/.gvm/scripts/gvm"
+
+unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
 
 # clear output at the end of shell setup
 clear
