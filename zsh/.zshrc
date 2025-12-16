@@ -31,7 +31,7 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # load eza theme
-export EZA_CONFIG_DIR="${HOME}/dotfiles/eza"
+export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
 
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
 zinit ice depth=1; zinit light romkatv/powerlevel10k
