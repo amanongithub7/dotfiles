@@ -30,7 +30,7 @@ fi
 # load zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
-# load eza theme
+# load eza theme - TODO: dynamic var value based on macOS theme
 export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
 
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
@@ -88,7 +88,7 @@ eval "$(zoxide init zsh)"
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # for a full list of active aliases, run `alias`.
 alias caf='caffeinate -d'                                  # force OS and display to stay awake
-alias ls='colorls'
+alias ls='eza --icons'
 alias l='eza -a -l --git --icons'                          # table view of files with metadata
 alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
 alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
