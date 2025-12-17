@@ -75,3 +75,8 @@ require("lazy").setup({
     timeout = 120, -- seconds, gives slower links more breathing room
   },
 })
+
+-- ensure the LazyVim utilities are loaded early
+if not _G.LazyVim then
+  _G.LazyVim = require("lazyvim.util")
+end
