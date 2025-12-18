@@ -21,17 +21,18 @@ return {
 
       mason_tool_installer.setup({
         ensure_installed = {
+          "black",
+          "delve",
+          "eslint_d",
+          "gofumpt",
+          "gopls",
+          "isort",
+          "prettier",
+          "ruff",
           "stylua",
           "shfmt",
           "shellcheck",
-          "prettier",
-          "eslint_d",
-          "black",
-          "ruff",
-          "isort",
-          "gofumpt",
-          "gopls",
-          "delve",
+          "texlab",
         },
       })
     end,
