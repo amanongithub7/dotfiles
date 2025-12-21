@@ -30,7 +30,15 @@ fi
 # load zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
-# load eza theme on macOS' current dark/light style
+# themes
+# TODO: add options for other themes in the terminal by syncing bat, eza, nvim & omz themes
+# requirements:
+# - bat: add theme to bat if it doesn't exist, then set the corresponding dark & light env vars
+# - eza: add theme to dotfiles/eza/*theme-name*/*dark-mode or light-mode* (perhaps an extra map of themes is needed)
+# - nvim: add theme to plugins and then update theme.lua -> after that glhf!
+# - oh-my-zsh: figure out
+#
+# load eza theme based on macOS' current dark/light style
 # NOTE: this conditional export is only re-evaluated when a new shell session is created
 # it does'nt change the eza theme for existing shell sessions when dark/light style is toggled
 if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
@@ -38,6 +46,10 @@ if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
 else
   export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/light-mode"
 fi
+
+# bat themes for dark & light modes
+export BAT_THEME_LIGHT="Catppuccin Latte"
+export BAT_THEME_DARK="Catppuccin Mocha"
 
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
 zinit ice depth=1; zinit light romkatv/powerlevel10k
