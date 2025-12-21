@@ -43,8 +43,10 @@ source "${ZINIT_HOME}/zinit.zsh"
 # it does'nt change the eza theme for existing shell sessions when dark/light style is toggled
 if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
   export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
+  export BAT_THEME="Catppuccin Mocha" # needed for bat-extras that don't read BAT_THEME_LIGHT/DARK
 else
   export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/light-mode"
+  export BAT_THEME="Catppuccin Latte"
 fi
 
 # bat themes for dark & light modes
@@ -112,6 +114,9 @@ alias l='eza -a -l --git --icons'                          # table view of files
 alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
 alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
 
+# toggle dark/light mode on macos and source zsh config for bat, eza, etc. theme updates
+alias yin-yang='clear && dark-mode && source ~/.zshrc'
+alias yy='yin-yang'
 # golang
 #
 # go root directory
