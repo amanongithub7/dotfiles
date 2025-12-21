@@ -30,8 +30,14 @@ fi
 # load zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
-# load eza theme - TODO: dynamic var value based on macOS theme
-export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
+# load eza theme on macOS' current dark/light style
+# NOTE: this conditional export is only re-evaluated when a new shell session is created
+# it does'nt change the eza theme for existing shell sessions when dark/light style is toggled
+if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
+  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
+else
+  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/light-mode"
+fi
 
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
 zinit ice depth=1; zinit light romkatv/powerlevel10k
