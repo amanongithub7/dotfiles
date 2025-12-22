@@ -117,6 +117,16 @@ alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files 
 # toggle dark/light mode on macos and source zsh config for bat, eza, etc. theme updates
 alias yin-yang='clear && dark-mode && source ~/.zshrc'
 alias yy='yin-yang'
+
+# yazi util func to exit into current yazi dir with `q` and original cwd with `Q`
+function yz() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
 # golang
 #
 # go root directory
