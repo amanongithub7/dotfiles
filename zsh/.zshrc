@@ -16,7 +16,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # load nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # load nvm bash_completion
 
-# zinit
+# zinit - zsh plugin manager
 #
 # home directory for zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -38,15 +38,17 @@ source "${ZINIT_HOME}/zinit.zsh"
 # - nvim: add theme to plugins and then update theme.lua -> after that glhf!
 # - oh-my-zsh: figure out
 #
-# load eza theme based on macOS' current dark/light style
+# load eza, bat-extras and fzf theme based on macOS' current dark/light style
 # NOTE: this conditional export is only re-evaluated when a new shell session is created
-# it does'nt change the eza theme for existing shell sessions when dark/light style is toggled
+# it does'nt change the theme for existing shell sessions when dark/light style is toggled
 if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
   export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
   export BAT_THEME="Catppuccin Mocha" # needed for bat-extras that don't read BAT_THEME_LIGHT/DARK
+  source ~/.config/fzf/themes/catppuccin/catppuccin-fzf-mocha.sh # set fzf theme to mocha
 else
   export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/light-mode"
   export BAT_THEME="Catppuccin Latte"
+  source ~/.config/fzf/themes/catppuccin/catppuccin-fzf-latte.sh # set fzf theme to latte
 fi
 
 # bat themes for dark & light modes
@@ -92,6 +94,9 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+
+# forward fzf theme to fzf‑tab
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
 
 # fuzzy finder and zoxide initialization
 eval "$(fzf --zsh)"
