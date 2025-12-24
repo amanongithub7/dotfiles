@@ -55,6 +55,16 @@ fi
 export BAT_THEME_LIGHT="Catppuccin Latte"
 export BAT_THEME_DARK="Catppuccin Mocha"
 
+# fzf default options - use bat, show previews and have borders
+export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS} \
+  --height 40%                # make the window 40 % of the terminal height
+  --layout=reverse            # newest entries at the bottom, prompt at the top
+  --border                    # draw a border around the UI
+  --preview='bat --style=numbers --color=always {}'   # preview files with bat
+  --preview-window=right:60%   # show preview on the right, 60 % width
+  --bind 'ctrl-a:select-all,ctrl-d:deselect-all'
+"
+
 # zinit imports for powerlevel10k, auto-completion and fuzzy finder
 zinit ice depth=1; zinit light romkatv/powerlevel10k
 zinit light zsh-users/zsh-completions
@@ -165,4 +175,3 @@ eval "$(pyenv init - zsh)"
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
 
 # clear output at the end of shell setup
-clear
