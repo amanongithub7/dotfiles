@@ -120,7 +120,7 @@ alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
 alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
 
 # toggle dark/light mode on macos and source zsh config for bat, eza, etc. theme updates
-alias yin-yang='clear && dark-mode && source ~/.zshrc'
+alias yin-yang='clear && dark-mode && printf "\u262F\n" && source ~/.zshrc'
 alias yy='yin-yang'
 
 # yazi util func to exit into current yazi dir with `q` and original cwd with `Q`
