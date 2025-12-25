@@ -55,23 +55,38 @@ fi
 export BAT_THEME_LIGHT="Catppuccin Latte"
 export BAT_THEME_DARK="Catppuccin Mocha"
 
-# fzf default options - use bat, show previews and have borders
-export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS} \
-  --height 40%                # make the window 40 % of the terminal height
-  --layout=reverse            # newest entries at the bottom, prompt at the top
-  --border                    # draw a border around the UI
-  --preview='bat --style=numbers --color=always {}'   # preview files with bat
-  --preview-window=right:60%   # show preview on the right, 60 % width
-  --bind 'ctrl-a:select-all,ctrl-d:deselect-all'
-"
 
-# zinit imports for powerlevel10k, auto-completion and fuzzy finder
-zinit ice depth=1; zinit light romkatv/powerlevel10k
 zinit light zsh-users/zsh-completions
-zinit light Aloxaf/fzf-tab 
+
+# styling for recommender systems
+# disable sort when completing `git checkout`
+zstyle ':completion:*:git-checkout:*' sort false
+# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+# set descriptions format to enable group support
+# NOTE: don't use escape sequences (like '%F{red}%d%f') here, fzf-tab will ignore them
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
 
 # load completions
-autoload -U compinit && compinit
+autoload -U compinit; compinit
+
+# fzf default options - use bat, show previews and have borders
+export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS} \
+  --height 40% \
+  --layout=reverse \
+  --border \
+  --preview='less {}' \
+  --preview-window=right:60%:wrap \
+  --bind \"ctrl-a:select-all,ctrl-d:deselect-all\""
+
+export LESSOPEN='|~/.lessfilter.sh %s'
+
+# zinit imports for powerlevel10k, auto-completion and fzf-tab
+zinit ice depth=1; zinit light romkatv/powerlevel10k
+# NOTE: fzf-tab needs to be loaded after compinit, but before plugins which will wrap widgets 
+# such as auto-suggestions
+zinit light Aloxaf/fzf-tab 
 
 # oh-my-zsh setup with plugins
 export ZSH="$HOME/.oh-my-zsh"
@@ -99,14 +114,9 @@ zstyle ':omz:update' mode auto
 bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 
-# styling for recommender systems
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
-zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --icons --color=always $realpath'
-
-# forward fzf theme to fzf‑tab
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
+# use lessfilter for previews
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
 
 # fuzzy finder and zoxide initialization
 eval "$(fzf --zsh)"
@@ -175,3 +185,4 @@ eval "$(pyenv init - zsh)"
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
 
 # clear output at the end of shell setup
+
