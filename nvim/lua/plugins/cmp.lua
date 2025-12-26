@@ -1,9 +1,5 @@
 return {
   {
-    "hrsh7th/nvim-cmp",
-    lazy = false,
-  },
-  {
     "saghen/blink.cmp",
     dependencies = {
       "hrsh7th/nvim-cmp",
@@ -14,6 +10,7 @@ return {
       keymap = { preset = "default" },
       appearance = {
         nerd_font_variant = "mono",
+        use_nvim_cmp_as_default = true,
       },
       completion = {
         documentation = { auto_show = true },
@@ -26,28 +23,6 @@ return {
       },
       sources = {
         default = { "lsp", "path", "snippets", "buffer", "dadbod" },
-        providers = {
-          lsp = {
-            name = "lsp",
-            enabled = true,
-            module = "blink.cmp.sources.lsp",
-            kind = "LSP",
-            score_offset = 1000,
-          },
-          dadbod = {
-            name = "Dadbod",
-            enabled = true,
-            module = "vim_dadbod_completion.blink",
-            score_offset = 950,
-          },
-          snippets = {
-            name = "snippets",
-            enabled = true,
-            module = "blink.cmp.sources.snippets",
-            score_offset = 800,
-            max_items = 3,
-          },
-        },
       },
       signature = { enabled = true },
       fuzzy = { implementation = "prefer_rust_with_warning" },
