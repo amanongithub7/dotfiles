@@ -42,7 +42,11 @@ return {
     dependencies = { "mason-org/mason.nvim" },
     config = function()
       require("mason-lspconfig").setup({
-        ensure_installed = { "gopls", "lua_ls" },
+        ensure_installed = {
+          "gopls",
+          "lua_ls",
+          "basedpyright",
+        },
       })
     end,
   },
@@ -56,7 +60,6 @@ return {
       },
     },
     config = function(_, opts)
-      -- Get blink.cmp capabilities
       local blink = require("blink.cmp")
       local capabilities = blink.get_lsp_capabilities()
       local lspconfig = require("lspconfig")
@@ -74,6 +77,12 @@ return {
       -- Lua language server setup
       lspconfig.lua_ls.setup({
         capabilities = opts.capabilities,
+      })
+
+      -- Python language server setup
+      lspconfig.basedpyright.setup({
+        capabilities = opts.capabilities,
+        filetypes = { "python" },
       })
 
       vim.diagnostic.config({
