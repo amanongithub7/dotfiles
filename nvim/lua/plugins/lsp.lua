@@ -1,63 +1,77 @@
 return {
   {
-    "mason-org/mason.nvim",
-    dependencies = {
-      "WhoIsSethDaniel/mason-tool-installer.nvim",
-    },
-    config = function()
-      local mason = require("mason")
-      local mason_tool_installer = require("mason-tool-installer")
-
-      mason.setup({
-        ui = {
-          icons = {
-            package_installed = "✓",
-            package_pending = "➜",
-            package_uninstalled = "✗",
-          },
-        },
-        max_concurrent_installers = 4,
-      })
-
-      mason_tool_installer.setup({
-        ensure_installed = {
-          "black",
-          "delve",
-          "eslint_d",
-          "gofumpt",
-          "gopls",
-          "isort",
-          "prettier",
-          "ruff",
-          "stylua",
-          "shfmt",
-          "shellcheck",
-          "texlab",
-        },
-      })
-    end,
-  },
-  {
-    "mason-org/mason-lspconfig.nvim",
-    dependencies = { "mason-org/mason.nvim" },
-    config = function()
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "gopls",
-          "lua_ls",
-          "basedpyright",
-        },
-      })
-    end,
-  },
-  {
     "neovim/nvim-lspconfig",
     dependencies = {
-      "saghen/blink.cmp",
+      -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
       {
         "folke/lazydev.nvim",
         ft = "lua", -- only load for lua files
       },
+      -- fidget provides UI cues such as progress spinners to indicate status of LSPs.
+      { "j-hui/fidget.nvim", opts = {} },
+
+      --[[                     Mason
+        mason is a tiny package manager for LSPs, linters, DAP, etc.
+        It installs tools in ~/.local/share/nvim/mason/ for use in NeoVim,
+        which is preferable over scattered brew/npm/pip installs.
+      --]]
+      {
+        "mason-org/mason.nvim",
+        opts = {
+          ui = {
+            icons = {
+              package_installed = "✓",
+              package_pending = "➜",
+              package_uninstalled = "✗",
+            },
+          },
+          max_concurrent_installers = 4,
+        },
+      },
+      --[[                    mason-lspconfig
+        mason-lspconfig is a bridge between Mason and nvim-lspconfig.
+        It sets up installed servers if no explicit setup() is provided.
+        It also translates server names between mason and nvim-lspconfig.
+        Ex. lua_ls <-> lua-language-server
+      --]]
+      {
+        "mason-org/mason-lspconfig.nvim",
+        opts = {
+          -- ensure that the following language servers are installed at neovim startup
+          ensure_installed = {
+            "basedpyright",
+            "gopls",
+            "lua_ls",
+            "texlab",
+          },
+        },
+      },
+      --[[                    mason-tool-installer
+        mason-tool-installer provides functionality for non-lsp tooling.
+        It can be used to ensure that specific linters, formatters, daps, etc.
+        are installed on the machine.
+      --]]
+      {
+        "WhoIsSethDaniel/mason-tool-installer.nvim",
+        opts = {
+          ensure_installed = {
+            "black",
+            "delve",
+            "eslint_d",
+            "gofumpt",
+            "isort",
+            "prettier",
+            "ruff",
+            "stylua",
+            "shfmt",
+            "shellcheck",
+          },
+        },
+      },
+
+      -- Install blink.cmp, our auto-completion plugin, before nvim-lspconfig so that
+      -- we can give LSPs a full picture of the capabilities of our Neovim setup.
+      "saghen/blink.cmp",
     },
     config = function(_, opts)
       local blink = require("blink.cmp")
@@ -66,8 +80,6 @@ return {
 
       -- Merge with existing capabilities if present
       opts.capabilities = vim.tbl_deep_extend("force", opts.capabilities or {}, capabilities)
-
-      require("mason").setup()
 
       -- Go language server setup
       lspconfig.gopls.setup({
