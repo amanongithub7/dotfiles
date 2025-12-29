@@ -1,2 +1,5 @@
+.init.lua.swp
+.neoconf.json
+
 lazy.nvim/*
 lazy-lock.json
