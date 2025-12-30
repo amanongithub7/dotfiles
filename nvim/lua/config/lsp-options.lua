@@ -1,3 +1,5 @@
+-- Josean's lsp options
+-- https://github.com/josean-dev/dev-environment-files/blob/main/.config/nvim/lua/josean/lsp.lua
 local keymap = vim.keymap -- for conciseness
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("UserLspConfig", {}),
