@@ -28,6 +28,9 @@ return {
       },
       {
         "nvim-lspconfig",
+        -- nested dependencies are supported by lazyvim
+        -- users can also define a separate table entry for a dependency and it's dependencies...
+        -- ... and the configurations will be merged by lazyvim when it builds its dependency tree
         dependencies = {
           -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
           {
