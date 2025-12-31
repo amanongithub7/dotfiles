@@ -61,6 +61,7 @@ return {
       "mason-org/mason.nvim",
     },
     opts = {
+      -- ensure that the following non-lsp tools such as formatters and litners are installed
       ensure_installed = {
         "black",
         "delve",
