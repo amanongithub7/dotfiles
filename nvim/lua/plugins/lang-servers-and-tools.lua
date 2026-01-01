@@ -54,12 +54,12 @@ return {
       })
     end,
   },
-  --[[                    mason-tool-installer
-    mason-tool-installer provides functionality for non-lsp tooling.
-    It can be used to ensure that specific linters, formatters, daps, etc.
-    are installed on the machine.
-  --]]
   {
+    --[[                    mason-tool-installer
+      mason-tool-installer provides functionality for non-lsp tooling.
+      It can be used to ensure that specific linters, formatters, daps, etc.
+      are installed on the machine.
+    --]]
     "WhoIsSethDaniel/mason-tool-installer.nvim",
     dependencies = {
       "mason-org/mason.nvim",
@@ -71,6 +71,12 @@ return {
     },
   },
   {
+    --[[
+      nvim-lspconfig stores default configurations for several commonly-used LSPs.
+      Importin nvim-lspconfig and running vim.lsp.enable for a specific LSP automatically configures 
+      that LSP with the settings specified by nvim-lspconfig.
+      Additional settings/overrides can be made by creating local lsp/*.lua files.
+    --]]
     "neovim/nvim-lspconfig",
     dependencies = {
       -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
