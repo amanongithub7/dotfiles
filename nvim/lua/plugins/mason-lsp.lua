@@ -1,57 +1,47 @@
+-- INFO: Lsp_list stores this Neovim configuration's list of LSPs for different programming languages.
+-- The LSPs are enabled in nvim-lspconfig's `config` method below, and use nvim-lspconfig's specified
+-- settings unless additional settings are provided locally (for example, through a `lsp/*.lua` file).
+Lsp_list = {
+  "basedpyright", -- Python
+  "lua_ls", -- Lua
+  "texlab", -- LaTeX
+}
+
 return {
   {
     --[[                    mason-lspconfig
-      mason-lspconfig is a bridge between Mason and nvim-lspconfig.
-      It sets up installed servers if no explicit setup() is provided, and 
-      it translates server names between mason and nvim-lspconfig.
-      Ex. lua-language-server (mason) <-> lua_ls (nvim-lspconfig)
-
-      It requires mason and nvim-lspconfig to be set up before itself.
+      mason-lspconfig is used in Neovim v0.11+ to ensure that specified LSPs are installed by Mason
+      on Neovim startup.
     --]]
     "mason-org/mason-lspconfig.nvim",
     dependencies = {
-      --[[                     Mason
-        mason is a tiny package manager for LSPs, linters, DAP, etc.
-        It installs tools in ~/.local/share/nvim/mason/ for use in NeoVim,
-        which is preferable over scattered brew/npm/pip installs.
-      --]]
-      "mason-org/mason.nvim",
-      opts = {
-        ui = {
-          icons = {
-            package_installed = "✓",
-            package_pending = "➜",
-            package_uninstalled = "✗",
-          },
-        },
-        max_concurrent_installers = 4,
-      },
       {
-        "nvim-lspconfig",
-        -- nested dependencies are supported by lazyvim
-        -- users can also define a separate table entry for a dependency and it's dependencies...
-        -- ... and the configurations will be merged by lazyvim when it builds its dependency tree
-        dependencies = {
-          -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
-          {
-            "folke/lazydev.nvim",
-            ft = "lua", -- only load for lua files
+        --[[                     Mason
+          mason is a tiny package manager for LSPs, linters, DAP, etc.
+          It installs tools in ~/.local/share/nvim/mason/ for use in NeoVim,
+          which is preferable over scattered brew/npm/pip installs.
+        --]]
+        "mason-org/mason.nvim",
+        opts = {
+          ui = {
+            icons = {
+              package_installed = "✓",
+              package_pending = "➜",
+              package_uninstalled = "✗",
+            },
           },
-          -- fidget provides UI cues such as progress spinners to indicate status of LSPs.
-          { "j-hui/fidget.nvim", opts = {} },
+          max_concurrent_installers = 4,
         },
       },
+      -- nvim-lspconfig is configured in its own table below
+      "neovim/nvim-lspconfig",
     },
-    -- mason-lspconfig opts
-    opts = {
+    config = function()
       -- ensure that the following language servers are installed at neovim startup
-      -- and set up with their default configurations unless provided
-      ensure_installed = {
-        "basedpyright", -- Python
-        "lua_ls", -- Lua
-        "texlab", -- LaTeX
-      },
-    },
+      require("mason-lspconfig").setup({
+        ensure_installed = Lsp_list,
+      })
+    end,
   },
   --[[                    mason-tool-installer
     mason-tool-installer provides functionality for non-lsp tooling.
@@ -64,8 +54,8 @@ return {
       "mason-org/mason.nvim",
     },
     opts = {
-      -- ensure that the following non-lsp tools such as formatters and litners are installed
-      -- NOTE: mason-tool-installer doesn't set these up to work with LSPs or Neovim buffers
+      -- ensure that the following non-lsp tools such as formatters and linters are installed
+      -- NOTE: mason-tool-installer doesn't set these up: that is done manually or by plugins like none-ls
       ensure_installed = {
         "black", -- Python formatter
         "isort", -- sorts and groups Python imports alphabetically
@@ -75,5 +65,27 @@ return {
         "shellcheck", -- static analysis shell linter
       },
     },
+  },
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
+      {
+        "folke/lazydev.nvim",
+        ft = "lua", -- only load for lua files
+      },
+      -- fidget provides UI cues such as progress spinners to indicate status of LSPs.
+      { "j-hui/fidget.nvim", opts = {} },
+      "saghen/blink.cmp",
+    },
+    config = function()
+      for _, lsp in ipairs(Lsp_list) do
+        -- auto-start lsp when a relevant buffer is opened with its default configuration from nvim-lspconfig
+        -- NOTE: As of Neovim v0.11, `vim.lsp.enable` automatically find's nvim-lspconfig's configuration for
+        -- the lsp, and merges it with any local lsp/*.lua config defined by a user or a plugin.
+        -- Sharing a completion plugin's capabilities is no longer necessary.
+        vim.lsp.enable(lsp)
+      end
+    end,
   },
 }
