@@ -1,15 +1,15 @@
--- INFO: Lsp_list stores this Neovim configuration's list of LSPs for different programming languages.
+-- LANG_SERVERS stores this Neovim configuration's list of LSPs for different programming languages.
 -- The LSPs are enabled in nvim-lspconfig's `config` method below, and use nvim-lspconfig's specified
 -- settings unless additional settings are provided locally (for example, through a `lsp/*.lua` file).
-Lsp_list = {
+LANG_SERVERS = {
   "basedpyright", -- Python
   "lua_ls", -- Lua
   "texlab", -- LaTeX
 }
 
--- Language_tools_list contains the linters/formatters/debuggers to specify to mason-tool-installer
+-- LANG_TOOLS contains the linters/formatters/debuggers to specify to mason-tool-installer
 -- for Neovim startup installation (by Mason).
-Language_tools_list = {
+LANG_TOOLS = {
   "black", -- Python formatter
   "isort", -- sorts and groups Python imports alphabetically
   "ruff", -- ultra-fast Python linter and formatter
@@ -50,7 +50,7 @@ return {
     config = function()
       -- ensure that the following language servers are installed at neovim startup
       require("mason-lspconfig").setup({
-        ensure_installed = Lsp_list,
+        ensure_installed = LANG_SERVERS,
       })
     end,
   },
@@ -67,7 +67,7 @@ return {
     opts = {
       -- ensure that the following non-lsp tools such as formatters and linters are installed
       -- NOTE: mason-tool-installer doesn't set these up: that is done manually or by plugins like none-ls
-      ensure_installed = Language_tools_list,
+      ensure_installed = LANG_TOOLS,
     },
   },
   {
@@ -83,7 +83,7 @@ return {
       "saghen/blink.cmp",
     },
     config = function()
-      for _, lsp in ipairs(Lsp_list) do
+      for _, lsp in ipairs(LANG_SERVERS) do
         -- auto-start lsp when a relevant buffer is opened with its default configuration from nvim-lspconfig
         -- NOTE: As of Neovim v0.11, `vim.lsp.enable` automatically find's nvim-lspconfig's configuration for
         -- the lsp, and merges it with any local lsp/*.lua config defined by a user or a plugin.
