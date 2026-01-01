@@ -45,11 +45,11 @@ return {
     -- mason-lspconfig opts
     opts = {
       -- ensure that the following language servers are installed at neovim startup
+      -- and set up with their default configurations unless provided
       ensure_installed = {
-        "basedpyright",
-        "gopls",
-        "lua_ls",
-        "texlab",
+        "basedpyright", -- Python
+        "lua_ls", -- Lua
+        "texlab", -- LaTeX
       },
     },
   },
@@ -65,17 +65,14 @@ return {
     },
     opts = {
       -- ensure that the following non-lsp tools such as formatters and litners are installed
+      -- NOTE: mason-tool-installer doesn't set these up to work with LSPs or Neovim buffers
       ensure_installed = {
-        "black",
-        "delve",
-        "eslint_d",
-        "gofumpt",
-        "isort",
-        "prettier",
-        "ruff",
-        "stylua",
-        "shfmt",
-        "shellcheck",
+        "black", -- Python formatter
+        "isort", -- sorts and groups Python imports alphabetically
+        "ruff", -- ultra-fast Python linter and formatter
+        "stylua", -- Lua formatter
+        "shfmt", -- shell script formatter
+        "shellcheck", -- static analysis shell linter
       },
     },
   },
