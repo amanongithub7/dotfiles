@@ -2,20 +2,30 @@
 -- The LSPs are enabled in nvim-lspconfig's `config` method below, and use nvim-lspconfig's specified
 -- settings unless additional settings are provided locally (for example, through a `lsp/*.lua` file).
 LANG_SERVERS = {
-  "basedpyright", -- Python
-  "lua_ls", -- Lua
-  "texlab", -- LaTeX
+  -- LaTeX
+  "texlab",
+
+  -- Lua
+  "lua_ls",
+
+  -- Python
+  "basedpyright", -- lsp for auto-complete, code suggestions & error checking
+  "ruff", -- ultra-fast Python linter and formatter served as an lsp
 }
 
 -- LANG_TOOLS contains the linters/formatters/debuggers to specify to mason-tool-installer
 -- for Neovim startup installation (by Mason).
 LANG_TOOLS = {
-  "black", -- Python formatter
-  "isort", -- sorts and groups Python imports alphabetically
-  "ruff", -- ultra-fast Python linter and formatter
+  -- Lua
   "stylua", -- Lua formatter
-  "shfmt", -- shell script formatter
-  "shellcheck", -- static analysis shell linter
+
+  -- Python
+  "isort", -- sorts and groups imports alphabetically
+  "mypy", -- static type checker
+
+  -- Shell Scipting
+  "shellcheck", -- static analysis & linter
+  "shfmt", -- formatter
 }
 
 return {
