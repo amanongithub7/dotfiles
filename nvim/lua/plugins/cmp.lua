@@ -16,13 +16,38 @@ return {
         documentation = { auto_show = true },
         menu = {
           border = "rounded",
+          draw = {
+            -- completion menu options format: icon label kind
+            columns = { { "kind_icon", gap = 1 }, { "label", "label_description", gap = 1 }, { "kind" } },
+            -- use kind_icons from mini.icons
+            components = {
+              kind_icon = {
+                text = function(ctx)
+                  local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
+                  return kind_icon
+                end,
+                -- (optional) use highlights from mini.icons
+                highlight = function(ctx)
+                  local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+                  return hl
+                end,
+              },
+              kind = {
+                -- (optional) use highlights from mini.icons
+                highlight = function(ctx)
+                  local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+                  return hl
+                end,
+              },
+            },
+          },
         },
         ghost_text = {
           enabled = true,
         },
       },
       sources = {
-        default = { "lsp", "path", "snippets", "buffer", "dadbod" },
+        default = { "lsp", "path", "snippets", "buffer" },
       },
       signature = { enabled = true },
       fuzzy = { implementation = "prefer_rust_with_warning" },
