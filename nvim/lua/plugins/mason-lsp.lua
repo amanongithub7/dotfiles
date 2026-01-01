@@ -7,6 +7,17 @@ Lsp_list = {
   "texlab", -- LaTeX
 }
 
+-- Language_tools_list contains the linters/formatters/debuggers to specify to mason-tool-installer
+-- for Neovim startup installation (by Mason).
+Language_tools_list = {
+  "black", -- Python formatter
+  "isort", -- sorts and groups Python imports alphabetically
+  "ruff", -- ultra-fast Python linter and formatter
+  "stylua", -- Lua formatter
+  "shfmt", -- shell script formatter
+  "shellcheck", -- static analysis shell linter
+}
+
 return {
   {
     --[[                    mason-lspconfig
@@ -56,14 +67,7 @@ return {
     opts = {
       -- ensure that the following non-lsp tools such as formatters and linters are installed
       -- NOTE: mason-tool-installer doesn't set these up: that is done manually or by plugins like none-ls
-      ensure_installed = {
-        "black", -- Python formatter
-        "isort", -- sorts and groups Python imports alphabetically
-        "ruff", -- ultra-fast Python linter and formatter
-        "stylua", -- Lua formatter
-        "shfmt", -- shell script formatter
-        "shellcheck", -- static analysis shell linter
-      },
+      ensure_installed = Language_tools_list,
     },
   },
   {
