@@ -19,6 +19,9 @@ LANG_TOOLS = {
   -- Lua
   "stylua", -- formatter
 
+  -- Python
+  "debugpy", -- debugging tool
+
   -- Shell Scipting
   "shellcheck", -- static analysis & linter
   "shfmt", -- formatter
