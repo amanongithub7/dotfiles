@@ -9,19 +9,15 @@ LANG_SERVERS = {
   "lua_ls",
 
   -- Python
-  "basedpyright", -- lsp for auto-complete, code suggestions & error checking
-  "ruff", -- ultra-fast Python linter and formatter served as an lsp
+  "basedpyright", -- lsp for auto-complete, code suggestions & error (eg. syntax) checking
+  "ruff", -- linter and formatter
 }
 
 -- LANG_TOOLS contains the linters/formatters/debuggers to specify to mason-tool-installer
 -- for Neovim startup installation (by Mason).
 LANG_TOOLS = {
   -- Lua
-  "stylua", -- Lua formatter
-
-  -- Python
-  "isort", -- sorts and groups imports alphabetically
-  "mypy", -- static type checker
+  "stylua", -- formatter
 
   -- Shell Scipting
   "shellcheck", -- static analysis & linter
@@ -106,6 +102,40 @@ return {
         -- Sharing a completion plugin's capabilities is no longer necessary.
         vim.lsp.enable(lsp)
       end
+    end,
+  },
+  {
+    "nvimtools/none-ls.nvim",
+    dependencies = {
+      "mason.nvim",
+      "mason-tool-installer.nvim",
+      "nvimtools/none-ls-extras.nvim",
+    },
+    config = function()
+      local null_ls = require("null-ls")
+
+      local sources = {
+        require("none-ls.formatting.ruff").with({ extra_args = { "--extend-select", "I" } }),
+        require("none-ls.formatting.ruff_format"),
+      }
+
+      local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
+      null_ls.setup({
+        sources = sources,
+        on_attach = function(client, bufnr)
+          if client.supports_method("textDocument/formatting") then
+            vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              group = augroup,
+              buffer = bufnr,
+              callback = function()
+                vim.lsp.buf.format({ async = false })
+              end,
+            })
+          end
+        end,
+      })
     end,
   },
 }
