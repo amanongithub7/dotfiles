@@ -19,6 +19,9 @@ LANG_TOOLS = {
   -- Lua
   "stylua", -- formatter
 
+  -- Markdown
+  "prettier",
+
   -- Python
   "debugpy", -- debugging tool
 
@@ -118,6 +121,12 @@ return {
       local null_ls = require("null-ls")
 
       local sources = {
+        -- Markdown
+        null_ls.builtins.formatting.prettier.with({
+          filetypes = { "markdown" }, -- limit to markdown
+          extra_args = { "--prose-wrap", "always" }, -- optional tweaks
+        }),
+        -- Python
         require("none-ls.formatting.ruff").with({ extra_args = { "--extend-select", "I" } }),
         require("none-ls.formatting.ruff_format"),
       }
