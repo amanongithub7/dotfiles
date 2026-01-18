@@ -5,9 +5,15 @@ font-size = 20
 # theme
 theme = dark:Catppuccin Mocha,light:Catppuccin Latte
 
+# background
+# recommended: dark-colored backgrounds for OS dark mode, light for light
+# background-opacity = 0.7
+# background-blur-radius = 70
+
 # cursor
 cursor-style = block_hollow
 cursor-invert-fg-bg = true
+
 # move cursor by pressing option+click
 cursor-click-to-move = true
 shell-integration-features = no-cursor
@@ -20,8 +26,4 @@ mouse-scroll-multiplier = 2
 macos-titlebar-style = transparent
 unfocused-split-opacity = 0.7
 confirm-close-surface = false
-
-# background
-# background-blur = true
-# background-opacity = 0.75
 
