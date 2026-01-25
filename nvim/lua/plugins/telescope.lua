@@ -24,4 +24,17 @@ return {
       require("telescope").load_extension("ui-select")
     end,
   },
+  { -- fuzzy file browser
+    "nvim-telescope/telescope-file-browser.nvim",
+    dependencies = {
+      "nvim-mini/mini.icons",
+      "nvim-telescope/telescope.nvim",
+      "nvim-lua/plenary.nvim",
+    },
+    config = function()
+      require("telescope").load_extension("file_browser")
+      vim.keymap.set("n", "<space>fz", ":Telescope file_browser<CR>", { desc = "file browser 2" })
+      -- Alternatively, using lua API
+    end,
+  },
 }
