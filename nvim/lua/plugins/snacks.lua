@@ -46,7 +46,7 @@ return {
       function()
         Snacks.picker.smart()
       end,
-      desc = "Smart Find Files",
+      desc = "Smart Find Files (cwd)",
     },
     {
       "<leader>,",
@@ -60,14 +60,14 @@ return {
       function()
         Snacks.picker.grep()
       end,
-      desc = "Grep",
+      desc = "Grep (cwd)",
     },
     {
       "<leader>:",
       function()
         Snacks.picker.command_history()
       end,
-      desc = "Command History",
+      desc = "Vim Command History",
     },
     {
       "<leader>n",
@@ -81,7 +81,7 @@ return {
       function()
         Snacks.explorer()
       end,
-      desc = "File Explorer",
+      desc = "File Explorer (cwd)",
     },
     -- find
     {
