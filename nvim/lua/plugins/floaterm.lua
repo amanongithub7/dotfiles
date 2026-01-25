@@ -6,7 +6,7 @@ return {
       function()
         vim.cmd("FloatermNew")
       end,
-      desc = "Floating terminal (cwd)",
+      desc = "Floating Terminal (cwd)",
     },
   },
 }
