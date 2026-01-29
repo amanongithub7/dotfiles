@@ -2,7 +2,7 @@ return {
   "voldikss/vim-floaterm",
   keys = {
     {
-      "<leader>T",
+      "<leader>F",
       function()
         vim.cmd("FloatermNew")
       end,
