@@ -152,6 +152,9 @@ function yz() {
 	rm -f -- "$tmp"
 }
 
+# api key export using pass and gnupg
+export TODOIST_API_KEY="$(pass Todoist/API)"
+
 # golang
 #
 # go root directory
