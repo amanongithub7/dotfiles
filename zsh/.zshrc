@@ -152,8 +152,14 @@ function yz() {
 	rm -f -- "$tmp"
 }
 
+# gnupg
+#
 # api key export using pass and gnupg
 export TODOIST_API_KEY="$(pass Todoist/API)"
+
+# add relevant permissions for gnupg
+find ~/.gnupg -type f -exec chmod 600 {} \; # Set 600 for files
+find ~/.gnupg -type d -exec chmod 700 {} \; # Set 700 for directories
 
 # golang
 #
