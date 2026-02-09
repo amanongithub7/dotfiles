@@ -139,6 +139,12 @@ alias l='eza -a -l --git --icons'                          # table view of files
 alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
 alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
 
+# bat and bat-extras for better formatting and colorschemes
+alias cat='bat' # file previews
+alias diff='batdiff' # git index based diffs and regular diffs
+alias man='batman' # man pages
+alias rg='batgrep' # ripgrep
+
 # toggle dark/light mode on macos and source zsh config for bat, eza, etc. theme updates
 alias yin-yang='clear && dark-mode && printf "\u262F\n" && source ~/.zshrc && tmux source-file ~/.config/tmux/tmux.conf && clear'
 alias yy='yin-yang'
