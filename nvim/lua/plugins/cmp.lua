@@ -4,6 +4,7 @@ return {
     dependencies = {
       "hrsh7th/nvim-cmp",
       "rafamadriz/friendly-snippets",
+      "obsidian-nvim/obsidian.nvim",
     },
     version = "1.*",
     opts = {
@@ -48,6 +49,10 @@ return {
       },
       sources = {
         default = { "lsp", "path", "snippets", "buffer" },
+        per_filetype = {
+          codecompanion = { "codecompanion" },
+          markdown = { "obsidian" },
+        },
       },
       signature = { enabled = true },
       fuzzy = { implementation = "prefer_rust_with_warning" },
