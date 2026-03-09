@@ -190,14 +190,13 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
-# pyenv shims
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - zsh)" 
+# tmux-conda-inherit tmux plugin setup
+if [[ -n "$TMUX" ]]; then
+  export flavor='conda'  # Change to 'conda' or 'mamba' if needed
+  source ~/.config/tmux/plugins/tmux-conda-inherit/conda-inherit.sh
+fi
 
+# go version manager
 [[ -s "/Users/aman/.gvm/scripts/gvm" ]] && source "/Users/aman/.gvm/scripts/gvm"
 
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
-
-# clear output at the end of shell setup
-
