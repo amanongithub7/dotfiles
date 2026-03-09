@@ -31,6 +31,10 @@ return {
           name = "personal",
           path = "~/vaults/personal",
         },
+        {
+          name = "education-initiative",
+          path = "~/vaults/education-initiative",
+        },
       },
     },
   },
@@ -46,5 +50,13 @@ return {
         completions = { lsp = { enabled = true } },
       })
     end,
+  },
+  { -- table of contents generator
+    "hedyhli/markdown-toc.nvim",
+    ft = "markdown", -- Lazy load on markdown filetype
+    cmd = { "Mtoc" }, -- Or, lazy load on "Mtoc" command
+    opts = {
+      -- Your configuration here (optional)
+    },
   },
 }
