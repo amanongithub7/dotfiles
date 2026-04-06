@@ -149,6 +149,10 @@ alias rg='batgrep' # ripgrep
 alias yin-yang='clear && dark-mode && printf "\u262F\n" && source ~/.zshrc && tmux source-file ~/.config/tmux/tmux.conf && clear'
 alias yy='yin-yang'
 
+# python aliases
+alias python=python3
+alias pip=pip3
+
 # yazi util func to exit into current yazi dir with `q` and original cwd with `Q`
 function yz() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -200,3 +204,9 @@ fi
 [[ -s "/Users/aman/.gvm/scripts/gvm" ]] && source "/Users/aman/.gvm/scripts/gvm"
 
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
+
+# for applications installed by pipx
+export PATH="$PATH:/Users/aman/.local/bin"
+
+# source virtualenv wrapper functions
+source ~/.zsh_functions/venv_wrapper.sh
