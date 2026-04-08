@@ -1,10 +1,23 @@
 return {
   {
+    "jmbuhr/otter.nvim",
+    dev = false,
+    dependencies = {
+      {
+        "neovim/nvim-lspconfig",
+        "nvim-treesitter/nvim-treesitter",
+      },
+    },
+    opts = {},
+  },
+  {
     "saghen/blink.cmp",
     dependencies = {
       "hrsh7th/nvim-cmp",
       "rafamadriz/friendly-snippets",
       "obsidian-nvim/obsidian.nvim",
+      "saghen/blink.compat", -- compatibility layer for nvim-cmp sources
+      "jmbuhr/otter.nvim", -- LSP bridge for jupyter notebooks
     },
     version = "1.*",
     opts = {

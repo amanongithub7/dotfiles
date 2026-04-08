@@ -23,7 +23,7 @@ return {
       require("jupytext").setup({
         style = "markdown",
         output_extension = "md",
-        force_ft = "markdown",
+        force_ft = "quarto",
       })
     end,
   },
@@ -38,6 +38,7 @@ return {
       local quarto = require("quarto")
       quarto.setup({
         lspFeatures = {
+          enabled = true,
           -- NOTE: put whatever languages are needed here:
           languages = { "python" },
           chunks = "all",
@@ -60,6 +61,10 @@ return {
         codeRunner = {
           enabled = true,
           default_method = "molten",
+          ft_runners = {
+            python = "molten",
+          },
+          never_run = { "yaml" },
         },
       })
       local runner = require("quarto.runner")
