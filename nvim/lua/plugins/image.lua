@@ -1,7 +1,15 @@
 return {
   {
+    "vhyrro/luarocks.nvim",
+    priority = 1001, -- Needs to run before other plugins
+    opts = {
+      rocks = { "dkjson", "magick" },
+    },
+  },
+  {
     "3rd/image.nvim",
     version = "1.1.0",
+    dependencies = { "luarocks.nvim" },
     build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
     opts = {
       processor = "magick_cli",
