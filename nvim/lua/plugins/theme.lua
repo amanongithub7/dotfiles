@@ -1,10 +1,15 @@
 return {
   {
     "f-person/auto-dark-mode.nvim",
+  },
+  {
+    "scottmckendry/cyberdream.nvim",
+    lazy = false,
+    priority = 1000,
     opts = {
-      -- your configuration comes here
-      -- or leave it empty to use the default settings
-      -- refer to the configuration section below
+      variant = "auto",
+      borderless_pickers = true,
+      transparent = true,
     },
   },
   {
