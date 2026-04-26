@@ -12,22 +12,14 @@ vim.keymap.set("n", "<space>B", function()
   require("telescope").extensions.file_browser.file_browser()
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
--- molten.nvim - plugins/ipynb.lua
-vim.keymap.set("n", "<leader>mr", ":MoltenEvaluateLine<CR>")
-vim.keymap.set("n", "<leader>mc", ":MoltenEvaluateCell<CR>")
-vim.keymap.set("n", "<localleader>e", ":MoltenEvaluateOperator<CR>", { desc = "evaluate operator", silent = true })
-vim.keymap.set(
-  "n",
-  "<localleader>os",
-  ":noautocmd MoltenEnterOutput<CR>",
-  { desc = "open output window", silent = true }
-)
-vim.keymap.set("n", "<localleader>rc", ":MoltenReevaluateCell<CR>", { desc = "re-eval cell", silent = true })
-vim.keymap.set(
-  "v",
-  "<localleader>r",
-  ":<C-u>MoltenEvaluateVisual<CR>gv",
-  { desc = "execute visual selection", silent = true }
-)
-vim.keymap.set("n", "<localleader>oh", ":MoltenHideOutput<CR>", { desc = "close output window", silent = true })
-vim.keymap.set("n", "<localleader>md", ":MoltenDelete<CR>", { desc = "delete Molten cell", silent = true })
+-- codecompanion keymaps
+vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "<leader>cct", "<cmd>CodeCompanionChat Toggle<cr>", { noremap = true, silent = true })
+
+local wk = require("which-key")
+wk.add({
+  { "<leader>cc", group = "CodeCompanion", icon = "🤖" },
+
+  { "<leader>cct", desc = "Toggle Chat", icon = "󰭻" },
+  { "<leader>cca", desc = "Actions", icon = "" },
+})

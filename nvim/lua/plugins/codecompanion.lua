@@ -146,8 +146,6 @@ return {
       },
     })
 
-    vim.keymap.set({ "n", "v" }, "<leader>cka", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
-    vim.keymap.set({ "n", "v" }, "<leader>ckt", "<cmd>CodeCompanionChat Toggle<cr>", { noremap = true, silent = true })
     vim.keymap.set("v", "ga", "<cmd>CodeCompanionChat Add<cr>", { noremap = true, silent = true })
 
     -- expand 'cc' into 'CodeCompanion' in the command line
