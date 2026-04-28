@@ -124,20 +124,29 @@ end, {
   complete = "file",
 })
 
+-- Helper function to open files with external viewer
+local function open_with_external_viewer(file_path, viewer_cmd)
+  vim.fn.jobstart(vim.list_extend(viewer_cmd, { file_path }), {
+    detach = true,
+  })
+  -- Close the buffer Neovim created
+  vim.cmd("let tbd = bufnr('%') | b# | exe 'bd! ' . tbd")
+end
+
 -- open pdfs in sioyek instead of a neovim buffer
 vim.api.nvim_create_autocmd("BufReadCmd", {
   pattern = "*.pdf",
   callback = function()
-    -- get the full path of the pdf file
     local file_path = vim.api.nvim_buf_get_name(0)
+    open_with_external_viewer(file_path, { "sioyek", "--new-window" })
+  end,
+})
 
-    -- run sioyek in a new window, detached from neovim
-    -- use jobstart to detach the process properly
-    vim.fn.jobstart({ "sioyek", "--new-window", file_path }, {
-      detach = true,
-    })
-
-    -- close the buffer that neovim created
-    vim.cmd("let tbd = bufnr('%') | b# | exe 'bd! ' . tbd")
+-- open png and jpeg files in preview instead of a neovim buffer
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.webp" },
+  callback = function()
+    local file_path = vim.api.nvim_buf_get_name(0)
+    open_with_external_viewer(file_path, { "open", "-a", "Preview" })
   end,
 })
