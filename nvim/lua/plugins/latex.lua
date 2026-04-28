@@ -15,18 +15,6 @@ return {
     -- sioyek as pdf viewer
     vim.g.vimtex_view_method = "sioyek"
     vim.g.vimtex_callback_progpath = "/opt/homebrew/bin/nvim"
+    vim.g.vimtex_quickfix_open_on_warning = 0 -- don't open quickfix window when there are only warnings
   end,
-  -- config = function()
-  --   vim.cmd("syntax enable")
-  --   vim.cmd("let g:vimtex_view_general_viewer='sioyek'")
-  --   -- %1: file, %2: line number
-  --   local options = string.format(
-  --     '--reuse-window --inverse-search="nvr --servername %s +%%2 %%1" --forward-search-file @tex --forward-search-line @line @pdf',
-  --     vim.v.servername
-  --   )
-  --
-  --   local command = string.format("let g:vimtex_view_general_options='%s'", options)
-  --   vim.cmd(command)
-  --   vim.cmd("let g:vimtex_compiler_progname='nvr'")
-  -- end,
 }
