@@ -153,6 +153,9 @@ alias yy='yin-yang'
 alias python=python3
 alias pip=pip3
 
+# alias for qgis that launches with its python virtual env
+alias qgis='export PYTHONPATH="$HOME/qgis_venv/lib/python3.12/site-packages:$PYTHONPATH" && open /Applications/QGIS-LTR.app'
+
 # yazi util func to exit into current yazi dir with `q` and original cwd with `Q`
 function yz() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
