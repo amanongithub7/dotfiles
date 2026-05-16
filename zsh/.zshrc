@@ -206,6 +206,10 @@ fi
 # go version manager
 [[ -s "/Users/aman/.gvm/scripts/gvm" ]] && source "/Users/aman/.gvm/scripts/gvm"
 
+# set neovim as default editor
+export EDITOR=nvim
+export VISUAL=nvim
+
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
 
 # for applications installed by pipx
