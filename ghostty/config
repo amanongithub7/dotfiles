@@ -8,6 +8,19 @@ font-size = 20
 # cyberdream
 theme = dark:cyberdream,light:cyberdream-light
 
+# app icon
+#
+# macos-icon
+#     official - Use the official Ghostty icon.
+#     blueprint, chalkboard, microchip, glass, holographic, paper, retro, xray
+macos-icon = official
+# macos-icon-frame: the material to use for the frame of the macOS app icon
+#     aluminum - A brushed aluminum frame. This is the default.
+#     beige - A classic 90's computer beige frame.
+#     plastic - A glossy, dark plastic frame.
+#     chrome - A shiny chrome frame.
+macos-icon-frame = chrome
+
 # background
 background-opacity = 0.65
 background-blur-radius = 150
