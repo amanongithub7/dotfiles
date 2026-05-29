@@ -133,6 +133,7 @@ eval "$(zoxide init zsh)"
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # for a full list of active aliases, run `alias`.
 alias caf='caffeinate -d'                                  # force OS and display to stay awake
+alias nvc='nvim && clear'                                  # keeps shell clean
 
 alias ls='eza --icons'
 alias l='eza -a -l --git --icons'                          # table view of files with metadata
