@@ -12,7 +12,7 @@ vim.keymap.set("n", "<space>B", function()
   require("telescope").extensions.file_browser.file_browser()
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
--- codecompanion keymaps
+-- codecompanion.nvim keymaps
 vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<leader>cct", "<cmd>CodeCompanionChat Toggle<cr>", { noremap = true, silent = true })
 
@@ -22,4 +22,21 @@ wk.add({
 
   { "<leader>cct", desc = "Toggle Chat", icon = "󰭻" },
   { "<leader>cca", desc = "Actions", icon = "" },
+})
+
+-- bookmarks.nvim keymaps
+vim.keymap.set({ "n", "v" }, "mm", "<cmd>BookmarksMark<cr>", { noremap = true })
+vim.keymap.set({ "n", "v" }, "mo", "<cmd>BookmarksGoto<cr>", { noremap = true })
+vim.keymap.set({ "n", "v" }, "mc", "<cmd>BookmarksCommands<cr>", { noremap = true })
+vim.keymap.set({ "n", "v" }, "md", "<cmd>BookmarksDesc<cr>", { noremap = true })
+vim.keymap.set({ "n", "v" }, "mt", "<cmd>BookmarksTree<cr>", { noremap = true })
+
+wk.add({
+  { "<leader>m", group = "Bookmarks", icon = "󰂺" },
+
+  { "<leader>mm", desc = "Bookmark Line", icon = "" },
+  { "<leader>mo", desc = "Open Bookmark", icon = "" },
+  { "<leader>mc", desc = "Bookmark Commands", icon = "" },
+  { "<leader>md", desc = "Add Bookmark Description", icon = "󱇗" },
+  { "<leader>mt", desc = "Open Bookmarks Tree", icon = "󱘎" },
 })
