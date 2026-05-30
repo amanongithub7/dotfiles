@@ -20,7 +20,7 @@ return {
         ]],
       },
     },
-    explorer = { enabled = true },
+    explorer = { enabled = false },
     indent = { enabled = true },
     input = { enabled = true },
     notifier = {
@@ -75,13 +75,6 @@ return {
         Snacks.picker.notifications()
       end,
       desc = "Notification History",
-    },
-    {
-      "<leader>e",
-      function()
-        Snacks.explorer()
-      end,
-      desc = "File Explorer (cwd)",
     },
     -- find
     {

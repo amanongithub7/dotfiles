@@ -1,16 +1,26 @@
 -- Keymaps for Neovim
 
+--------------------------------------------------------------------------------------------------------------------
 -- Disable Keymaps
+--------------------------------------------------------------------------------------------------------------------
+
 -- set by Lazy
 vim.keymap.del("n", "<leader>L") -- LazyVim changelog
 vim.keymap.del("n", "<leader>N") -- NeoVim news
 vim.keymap.del("n", "<leader>E") -- duplicate snacks explorer
+vim.keymap.del("n", "<leader>e") -- snacks explorer - this config uses neo-tree
 
+--------------------------------------------------------------------------------------------------------------------
 -- Set Keymaps
+--------------------------------------------------------------------------------------------------------------------
+
 -- file browser
 vim.keymap.set("n", "<space>B", function()
   require("telescope").extensions.file_browser.file_browser()
 end, { desc = "File Fuzzy-Finder (cwd)" })
+
+-- neo-tree
+vim.keymap.set("n", "<leader>e", ":Neotree toggle reveal<CR>", { desc = "Toggle Neo-tree" })
 
 -- codecompanion.nvim keymaps
 vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
