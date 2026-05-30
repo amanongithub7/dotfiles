@@ -42,11 +42,15 @@ vim.keymap.set({ "n", "v" }, "md", "<cmd>BookmarksDesc<cr>", { noremap = true })
 vim.keymap.set({ "n", "v" }, "mt", "<cmd>BookmarksTree<cr>", { noremap = true })
 
 wk.add({
-  { "<leader>m", group = "Bookmarks", icon = "󰂺" },
+  { "<leader>m", group = "bookmarks", icon = "󰂺" },
 
   { "<leader>mm", desc = "Bookmark Line", icon = "" },
   { "<leader>mo", desc = "Open Bookmark", icon = "" },
   { "<leader>mc", desc = "Bookmark Commands", icon = "" },
   { "<leader>md", desc = "Add Bookmark Description", icon = "󱇗" },
   { "<leader>mt", desc = "Open Bookmarks Tree", icon = "󱘎" },
+})
+-- sudo-tee/opencode.nvim keymaps - using default keymaps with group for custom icon
+wk.add({
+  { "<leader>o", group = "opencode", icon = { icon = "󱙺", color = "green" } },
 })
