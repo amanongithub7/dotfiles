@@ -50,7 +50,23 @@ wk.add({
   { "<leader>md", desc = "Add Bookmark Description", icon = "󱇗" },
   { "<leader>mt", desc = "Open Bookmarks Tree", icon = "󱘎" },
 })
+
 -- sudo-tee/opencode.nvim keymaps - using default keymaps with group for custom icon
 wk.add({
   { "<leader>o", group = "opencode", icon = { icon = "󱙺", color = "green" } },
+})
+
+-- keywordprg
+vim.keymap.del("n", "<leader>K") -- Remove LazyVim's default
+
+wk.add({
+  {
+    "<leader>K",
+    function()
+      vim.cmd("norm! K")
+    end,
+    desc = "Keywordprg",
+    icon = { icon = "", color = "green" },
+    mode = "n",
+  },
 })

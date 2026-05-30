@@ -150,3 +150,22 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
     open_with_external_viewer(file_path, { "open", "-a", "Preview" })
   end,
 })
+
+-- keywordprg config
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "python", "lua", "sh", "man" },
+  callback = function()
+    local ft = vim.bo.filetype -- Get the current filetype
+
+    if ft == "python" then
+      -- Use pydoc for Python
+      vim.opt_local.keywordprg = ":!python3 -m pydoc "
+    elseif ft == "lua" then
+      -- Use :help for Lua files
+      vim.opt_local.keywordprg = ":help "
+    elseif ft == "sh" or ft == "man" then
+      -- Use the system man page for shell scripts and man pages themselves
+      vim.opt_local.keywordprg = ":Man "
+    end
+  end,
+})
