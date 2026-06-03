@@ -16,7 +16,7 @@ vim.keymap.del("n", "<leader>e") -- snacks explorer - this config uses neo-tree
 
 -- file browser
 vim.keymap.set("n", "<space>B", function()
-  require("telescope").extensions.file_browser.file_browser()
+  Snacks.picker.files({ cwd = vim.fn.getcwd() })
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
 -- neo-tree

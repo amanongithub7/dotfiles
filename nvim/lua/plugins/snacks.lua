@@ -85,6 +85,13 @@ return {
       desc = "Find Config File",
     },
     {
+      "<leader>fp",
+      function()
+        Snacks.picker.files({ cwd = require("lazy.core.config").options.root })
+      end,
+      desc = "Find Plugin File",
+    },
+    {
       "<leader>ff",
       function()
         Snacks.picker.files()
@@ -99,7 +106,7 @@ return {
       desc = "Find Git Files",
     },
     {
-      "<leader>fp",
+      "<leader>fP",
       function()
         Snacks.picker.projects()
       end,
