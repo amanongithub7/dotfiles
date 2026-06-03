@@ -171,9 +171,6 @@ return {
   },
   {
     "sudo-tee/opencode.nvim",
-    config = function()
-      require("opencode").setup({})
-    end,
     dependencies = {
       "nvim-lua/plenary.nvim",
       {
@@ -193,6 +190,16 @@ return {
       -- 'nvim-telescope/telescope.nvim',
       -- 'ibhagwan/fzf-lua',
       -- 'nvim_mini/mini.nvim',
+    },
+    opts = {
+      keymap = {
+        editor = {
+          ["<leader>om"] = { "switch_mode" },
+        },
+        input_window = {
+          ["<C-l>"] = { "switch_mode" },
+        },
+      },
     },
   },
 }
