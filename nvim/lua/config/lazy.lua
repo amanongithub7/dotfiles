@@ -27,6 +27,7 @@ require("lazy").setup({
     },
 
     -- UI improvements
+    { "lazyvim.plugins.extras.editor.snacks_picker", enabled = false },
     { import = "lazyvim.plugins.extras.formatting.prettier" },
     { import = "lazyvim.plugins.extras.ui.mini-animate" },
     { import = "lazyvim.plugins.extras.ui.edgy" },

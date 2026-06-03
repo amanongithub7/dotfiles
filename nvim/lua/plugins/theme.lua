@@ -8,7 +8,6 @@ return {
     priority = 1000,
     opts = {
       variant = "auto",
-      borderless_pickers = true,
       transparent = true,
     },
   },

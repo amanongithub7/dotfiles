@@ -27,7 +27,18 @@ return {
       enabled = true,
       timeout = 3000,
     },
-    picker = { enabled = true },
+    picker = {
+      enabled = true,
+      layouts = {
+        telescope = {
+          reverse = false,
+          layout = {
+            border = "bold",
+          },
+        },
+      },
+      layout = "telescope",
+    },
     quickfile = { enabled = true },
     scope = { enabled = true },
     scroll = { enabled = true },
