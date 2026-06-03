@@ -20,7 +20,7 @@ vim.keymap.set("n", "<space>B", function()
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
 -- neo-tree
-vim.keymap.set("n", "<leader>e", ":Neotree toggle reveal<CR>", { desc = "Toggle Neo-tree" })
+vim.keymap.set("n", "<leader>e", "<cmd>Neotree toggle reveal<cr>", { desc = "Toggle Neo-tree" })
 
 -- codecompanion.nvim keymaps
 vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
