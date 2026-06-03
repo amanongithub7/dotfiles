@@ -213,8 +213,14 @@ export VISUAL=nvim
 
 unset LS_COLORS # in order to force eza to refer to EZA_CONFIG_DIR for theme
 
+# python utils - pipx, virtualenv and pyenv
 # for applications installed by pipx
 export PATH="$PATH:/Users/aman/.local/bin"
 
 # source virtualenv wrapper functions
 source ~/.zsh_functions/venv_wrapper.sh
+
+# required by pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
