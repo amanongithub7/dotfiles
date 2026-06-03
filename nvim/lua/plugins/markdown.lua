@@ -25,15 +25,17 @@ return {
     ---@type obsidian.config
     opts = {
       legacy_commands = false,
+      ---@diagnostic disable: missing-fields
       ui = { enable = false },
+      ---@diagnostic enable: missing-fields
       workspaces = {
         {
           name = "personal",
           path = "~/vaults/personal",
         },
         {
-          name = "education-initiative",
-          path = "~/vaults/education-initiative",
+          name = "climate-crisis",
+          path = "~/vaults/climate-crisis",
         },
       },
     },
@@ -48,6 +50,15 @@ return {
     config = function()
       require("render-markdown").setup({
         completions = { lsp = { enabled = true } },
+        anti_conceal = {
+          enabled = true,
+          above = 5,
+          below = 5,
+        },
+        code = {
+          border = "thick",
+          conceal_delimiters = false,
+        },
       })
     end,
   },
@@ -58,5 +69,11 @@ return {
     opts = {
       -- Your configuration here (optional)
     },
+  },
+  { -- follow links within md files using <CR>
+    "jghauser/follow-md-links.nvim",
+    config = function()
+      vim.keymap.set("n", "<bs>", ":edit #<cr>", { silent = true })
+    end,
   },
 }
