@@ -1,0 +1,182 @@
+tap "anomalyco/tap"
+tap "asmvik/formulae"
+tap "cjbassi/gotop"
+tap "cormacrelf/tap"
+tap "felixkratz/formulae"
+tap "hmbown/deepseek-tui"
+tap "nikitabobko/tap"
+# General-purpose data compression with high compression ratio
+brew "xz"
+# Zstandard is a real-time compression algorithm
+brew "zstd"
+# Plugin manager for zsh, inspired by oh-my-zsh and vundle
+brew "antigen"
+# Cryptography and SSL/TLS Toolkit
+brew "openssl@3"
+# Another unofficial Qt installer
+brew "aqtinstall"
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
+# Bash scripts that integrate bat with various command-line tools
+brew "bat-extras"
+# Parser generator
+brew "bison"
+# Collection of portable C++ source libraries
+brew "boost"
+# GNU multiple precision arithmetic library
+brew "gmp"
+# Glorious Glasgow Haskell Compilation System
+brew "ghc"
+# Command-line interface for Cabal and Hackage
+brew "cabal-install"
+# Versatile and fast Unicode/ASCII/ANSI graphics renderer
+brew "chafa"
+# Cross-platform make
+brew "cmake"
+# Suite of command-line tools for converting to and working with CSV
+brew "csvkit"
+# Control the macOS dark mode from the command-line
+brew "dark-mode"
+# Secure hashing function
+brew "libb2"
+# Interpreter for PostScript and PDF
+brew "ghostscript"
+# GNU Privacy Guard (OpenPGP)
+brew "gnupg"
+# PDF rendering library (based on the xpdf-3.0 code base)
+brew "poppler"
+# GNOME document viewer
+brew "evince"
+# Perl lib for reading and writing EXIF metadata
+brew "exiftool"
+# Modern, maintained replacement for ls
+brew "eza"
+# Like neofetch, but much faster because written mostly in C
+brew "fastfetch"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# Package compiler and linker metadata toolkit
+brew "pkgconf"
+# Geospatial Data Abstraction Library
+brew "gdal"
+# WebDriver <-> Marionette proxy
+brew "geckodriver"
+# GitHub command-line tool
+brew "gh"
+# Git extension for versioning large files
+brew "git-lfs"
+# Blazing fast terminal-ui for git written in rust
+brew "gitui"
+# Google Testing and Mocking Framework
+brew "googletest"
+# Terminal based graphical activity monitor inspired by gtop and vtop
+brew "gotop"
+# Tools and libraries to manipulate images in select formats
+brew "imagemagick"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# Interactive environments for writing and running code
+brew "jupyterlab"
+# Simple terminal UI for git commands
+brew "lazygit"
+# Find what models run on your hardware
+brew "llmfit"
+# Package manager for the Lua programming language
+brew "luarocks"
+# Scalable distributed version control system
+brew "mercurial"
+# Text-based UI library
+brew "ncurses"
+# Ambitious Vim-fork focused on extensibility and agility
+brew "neovim"
+# Powerful command-line document and bibliography manager
+brew "papis"
+# Display directories as trees (with optional color/HTML output)
+brew "tree"
+# Password manager
+brew "pass"
+# Pinentry for GPG on Mac
+brew "pinentry-mac"
+# Execute binaries from Python packages in isolated environments
+brew "pipx"
+# Paste PNG into files
+brew "pngpaste"
+# Fast, disk space efficient package manager
+brew "pnpm"
+# Python version management
+brew "pyenv"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.12"
+# SVG rendering tool and library
+brew "resvg"
+# Search tool like grep and The Silver Searcher
+brew "ripgrep"
+# Browser automation for testing purposes
+brew "selenium-server"
+# 7-Zip is a file archiver with a high compression ratio
+brew "sevenzip"
+# Cross-shell prompt for astronauts
+brew "starship"
+# TOML toolkit written in Rust
+brew "taplo"
+# Tool Command Language
+brew "tcl-tk@8"
+# Terminal multiplexer
+brew "tmux"
+# Tool for creating isolated virtual python environments
+brew "virtualenv"
+# Blazing fast terminal file manager written in Rust, based on async I/O
+brew "yazi"
+# Process YAML, JSON, XML, CSV and properties documents from the CLI
+brew "yq"
+# General-purpose lossless data-compression library
+brew "zlib"
+# Shell extension to navigate your filesystem faster
+brew "zoxide"
+# The AI coding agent built for the terminal.
+brew "anomalyco/tap/opencode"
+# A tiling window manager for macOS based on binary space partitioning.
+brew "asmvik/formulae/yabai"
+# Watcher for macOS 10.14+ light/dark mode changes
+brew "cormacrelf/tap/dark-notify"
+# A window border system for macOS
+brew "felixkratz/formulae/borders"
+# Custom macOS statusbar with shell plugin, interaction and graph support
+brew "felixkratz/formulae/sketchybar"
+# Terminal-native coding agent for DeepSeek V4
+brew "hmbown/deepseek-tui/deepseek-tui"
+# AeroSpace is an i3-like tiling window manager for macOS
+cask "nikitabobko/tap/aerospace"
+cask "font-hack-nerd-font"
+cask "font-symbols-only-nerd-font"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+# Web browser
+cask "librewolf"
+# Geographic Information System
+cask "qgis@ltr"
+# PDF viewer designed for reading research papers and technical books
+cask "sioyek"
+# System monitor for the menu bar
+cask "stats"
+# Menu bar customization tool
+cask "swiftbar"
+vscode "auto-theme-switcher.auto-theme-switcher"
+vscode "catppuccin.catppuccin-vsc"
+vscode "catppuccin.catppuccin-vsc-icons"
+vscode "jojoee.conda-cheatsheet"
+vscode "kevinrose.vsc-python-indent"
+vscode "khaled.vscode-openrouter-extension"
+vscode "ms-python.debugpy"
+vscode "ms-python.python"
+vscode "ms-python.vscode-pylance"
+vscode "ms-python.vscode-python-envs"
+vscode "vscodevim.vim"
+npm "corepack"
+npm "markdownlint-cli2"
+npm "neovim"
+npm "swagger-ui-watcher"
