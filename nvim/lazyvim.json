@@ -11,12 +11,10 @@
     "lazyvim.plugins.extras.lang.git",
     "lazyvim.plugins.extras.lang.json",
 
-    "lazyvim.plugins.extras.lsp.none-ls",
     "lazyvim.plugins.extras.test.core",
     "lazyvim.plugins.extras.ui.edgy",
 
     "lazyvim.plugins.extras.util.dot",
-    "lazyvim.plugins.extras.util.gitui",
     "lazyvim.plugins.extras.util.mini-hipatterns"
   ],
   "install_version": 8,

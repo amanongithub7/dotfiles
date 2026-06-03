@@ -8,7 +8,6 @@ vim.cmd([[set grepprg=rg\ --vimgrep\ --smart-case\ --hidden]])
 -- relative and absolute line numbers
 vim.opt.number = true
 vim.opt.relativenumber = true
-vim.opt.statuscolumn = "%s %l %r"
 
 -- use the virtualenv saved as "neovim" for python3
 vim.g.python3_host_prog = vim.fn.expand("~/.virtualenvs/neovim/bin/python3")

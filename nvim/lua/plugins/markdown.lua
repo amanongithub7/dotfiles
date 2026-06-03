@@ -17,7 +17,6 @@ return {
       "nvim-lua/plenary.nvim",
       -- Optional
       "saghen/blink.cmp", -- completion
-      "nvim-telescope/telescope.nvim", -- pickers
       "nvim-treesitter/nvim-treesitter", -- syntax highlighting
       "folke/snacks.nvim", -- snacks.image needed for image previews
     },
