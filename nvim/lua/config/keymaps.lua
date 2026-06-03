@@ -8,7 +8,7 @@
 vim.keymap.del("n", "<leader>L") -- LazyVim changelog
 vim.keymap.del("n", "<leader>N") -- NeoVim news
 vim.keymap.del("n", "<leader>E") -- duplicate snacks explorer
-vim.keymap.del("n", "<leader>e") -- snacks explorer - this config uses neo-tree
+vim.keymap.del("n", "<leader>e") -- snacks explorer - this config uses yazi
 
 --------------------------------------------------------------------------------------------------------------------
 -- Set Keymaps
@@ -19,8 +19,8 @@ vim.keymap.set("n", "<space>B", function()
   Snacks.picker.files({ cwd = vim.fn.getcwd() })
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
--- neo-tree
-vim.keymap.set("n", "<leader>e", "<cmd>Neotree toggle reveal<cr>", { desc = "Toggle Neo-tree" })
+-- yazi
+vim.keymap.set("n", "<leader>e", "<cmd>Yazi<cr>", { desc = "Toggle Yazi" })
 
 -- codecompanion.nvim keymaps
 vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
