@@ -125,13 +125,6 @@ return {
     },
     -- git
     {
-      "<leader>gb",
-      function()
-        Snacks.picker.git_branches()
-      end,
-      desc = "Git Branches",
-    },
-    {
       "<leader>gl",
       function()
         Snacks.picker.git_log()
@@ -217,13 +210,6 @@ return {
         Snacks.picker.search_history()
       end,
       desc = "Search History",
-    },
-    {
-      "<leader>sa",
-      function()
-        Snacks.picker.autocmds()
-      end,
-      desc = "Autocmds",
     },
     {
       "<leader>sb",
