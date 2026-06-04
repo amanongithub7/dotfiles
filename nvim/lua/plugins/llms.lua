@@ -200,6 +200,9 @@ return {
           ["<C-l>"] = { "switch_mode" },
         },
       },
+      ui = {
+        window_width = 0.30,
+      },
     },
   },
 }
