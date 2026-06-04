@@ -16,7 +16,18 @@ return {
       -- Required
       "nvim-lua/plenary.nvim",
       -- Optional
-      "saghen/blink.cmp", -- completion
+      {
+        "saghen/blink.cmp", -- completion
+        config = function()
+          require("blink.cmp").setup({
+            per_filetype = {
+              markdown = {
+                "lsp",
+              },
+            },
+          })
+        end,
+      },
       "nvim-treesitter/nvim-treesitter", -- syntax highlighting
       "folke/snacks.nvim", -- snacks.image needed for image previews
     },
@@ -35,6 +46,10 @@ return {
         {
           name = "climate-crisis",
           path = "~/vaults/climate-crisis",
+        },
+        {
+          name = "tech-stack",
+          path = "~/vaults/tech-stack",
         },
       },
     },
