@@ -64,11 +64,11 @@ return {
     config = function()
       require("render-markdown").setup({
         completions = { lsp = { enabled = true } },
-        anti_conceal = {
-          enabled = true,
-          above = 5,
-          below = 5,
-        },
+        -- anti_conceal = {
+        --   enabled = true,
+        --   above = 5,
+        --   below = 5,
+        -- },
         code = {
           border = "thick",
           conceal_delimiters = false,
@@ -89,5 +89,10 @@ return {
     config = function()
       vim.keymap.set("n", "<bs>", ":edit #<cr>", { silent = true })
     end,
+  },
+  { -- modify tables, move rows and columns, etc with keyboard shortcuts
+    "SCJangra/table-nvim",
+    ft = "markdown",
+    opts = {},
   },
 }
