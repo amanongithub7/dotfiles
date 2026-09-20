@@ -1,4 +1,4 @@
-vim.lsp.config("ruff", {
+return {
   init_options = {
     settings = {
       lint = {
@@ -27,4 +27,4 @@ vim.lsp.config("ruff", {
       showSyntaxErrors = false,
     },
   },
-})
+}

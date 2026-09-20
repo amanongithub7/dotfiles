@@ -15,12 +15,14 @@ return {
     dependencies = {
       "hrsh7th/nvim-cmp",
       "rafamadriz/friendly-snippets",
+      "L3MON4D3/LuaSnip",
       "obsidian-nvim/obsidian.nvim",
       "saghen/blink.compat", -- compatibility layer for nvim-cmp sources
       "jmbuhr/otter.nvim", -- LSP bridge for jupyter notebooks
     },
     version = "1.*",
     opts = {
+      snippets = { preset = "luasnip" },
       keymap = { preset = "default" },
       appearance = {
         nerd_font_variant = "mono",
