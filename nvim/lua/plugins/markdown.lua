@@ -12,7 +12,7 @@ return {
       vim.g.mkdp_filetypes = { "markdown" }
     end,
   },
-  { -- plugin that provides rendering, linking and other Obsidian-related functionality
+  {                -- plugin that provides rendering, linking and other Obsidian-related functionality
     "obsidian-nvim/obsidian.nvim",
     version = "*", -- recommended, use latest release instead of latest commit
     ft = "markdown",
@@ -20,9 +20,9 @@ return {
       -- Required
       "nvim-lua/plenary.nvim",
       -- Optional
-      "saghen/blink.cmp", -- completion
+      "saghen/blink.cmp",                -- completion
       "nvim-treesitter/nvim-treesitter", -- syntax highlighting
-      "folke/snacks.nvim", -- snacks.image needed for image previews
+      "folke/snacks.nvim",               -- snacks.image needed for image previews
     },
     ---@module 'obsidian'
     ---@type obsidian.config
@@ -39,10 +39,6 @@ return {
         {
           name = "climate-crisis",
           path = "~/vaults/climate-crisis",
-        },
-        {
-          name = "tech-stack",
-          path = "~/vaults/tech-stack",
         },
       },
     },
@@ -63,9 +59,9 @@ return {
       },
     },
   },
-  { -- table of contents generator
+  {                   -- table of contents generator
     "hedyhli/markdown-toc.nvim",
-    ft = "markdown", -- Lazy load on markdown filetype
+    ft = "markdown",  -- Lazy load on markdown filetype
     cmd = { "Mtoc" }, -- Or, lazy load on "Mtoc" command
     opts = {
       -- Your configuration here (optional)
