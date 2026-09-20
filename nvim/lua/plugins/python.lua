@@ -1,7 +1,9 @@
 return {
   { -- access python package documentation using :h module, class, function etc.
-    "girishji/pythondoc.vim",
-    config = function() end,
+    "RazorBest/pydoc.nvim",
+    opts = {
+      version = "3.12", -- Python version
+    },
   },
   -- virtual env selector
   {
