@@ -66,6 +66,12 @@ return {
         wo = { wrap = true }, -- Wrap notifications
       },
     },
+    zen = {
+      win = {
+        style = "zen",
+        width = 0.55, -- 80% of terminal width
+      },
+    },
   },
   keys = {
     -- Top Pickers & Explorer
