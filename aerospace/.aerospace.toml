@@ -81,7 +81,7 @@ on-mode-changed = []
     inner.vertical =   5
     outer.left =       [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
     outer.bottom =     [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
-    outer.top =        [{ monitor.odyssey = 45 }, { monitor.built-in = 14 }, 14]
+    outer.top =        [{ monitor.odyssey = 45 }, { monitor.built-in = 14 }, 45]
     outer.right =      [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
 
 # 'main' binding mode declaration
@@ -154,6 +154,7 @@ on-mode-changed = []
     alt-e = 'workspace E'
     alt-f = 'workspace F'
     alt-g = 'workspace G'
+    alt-i = 'workspace I'
     alt-m = 'workspace M'
     alt-n = 'workspace N'
     alt-o = 'workspace O'
