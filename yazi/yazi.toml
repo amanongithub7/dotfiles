@@ -3,3 +3,10 @@ edit = [
     { run = 'nvim "$@"', block = true, desc = "Neovim" },
     { run = '${EDITOR:-vi} "$@"', desc = "System Editor" },
 ] 
+pdf = [
+    { run = 'sioyek "$@"', desc = "Sioyek" },
+]
+[preview]
+image_alloc = "ueberzug"
+max_width = 1200
+max_height = 800
