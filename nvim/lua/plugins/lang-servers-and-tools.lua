@@ -77,7 +77,7 @@ return {
     },
     opts = {
       -- ensure that the following non-lsp tools such as formatters and linters are installed
-      -- NOTE: mason-tool-installer doesn't set these up: that is done manually or by plugins like none-ls
+      -- NOTE: mason-tool-installer doesn't configure these in editors; conform.nvim and nvim-lint handle that
       ensure_installed = LANG_TOOLS,
     },
   },
@@ -109,46 +109,28 @@ return {
       end
     end,
   },
+  -- conform configures formatting using LSP-style formatters.
+  -- LazyVim already sets up conform with stylua (lua), shfmt (sh), and fish_indent (fish).
+  -- The prettier extra adds prettier for markdown, yaml, json, etc.
+  -- We extend it here for Python (ruff) which isn't covered by defaults.
   {
-    "nvimtools/none-ls.nvim",
-    dependencies = {
-      "mason.nvim",
-      "mason-tool-installer.nvim",
-      "nvimtools/none-ls-extras.nvim",
+    "stevearc/conform.nvim",
+    opts = {
+      formatters_by_ft = {
+        python = { "ruff_organize_imports", "ruff_format" },
+      },
     },
-    config = function()
-      local null_ls = require("null-ls")
+  },
 
-      local sources = {
-        -- Lua
-        null_ls.builtins.formatting.stylua,
-        -- Markdown
-        null_ls.builtins.formatting.prettier.with({
-          filetypes = { "markdown" }, -- limit to markdown
-          extra_args = { "--prose-wrap", "always" }, -- optional tweaks
-        }),
-        -- Python
-        require("none-ls.formatting.ruff").with({ extra_args = { "--extend-select", "I" } }),
-        require("none-ls.formatting.ruff_format"),
-      }
-
-      local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-
-      null_ls.setup({
-        sources = sources,
-        on_attach = function(client, bufnr)
-          if client.supports_method("textDocument/formatting") then
-            vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-            vim.api.nvim_create_autocmd("BufWritePre", {
-              group = augroup,
-              buffer = bufnr,
-              callback = function()
-                vim.lsp.buf.format({ async = false })
-              end,
-            })
-          end
-        end,
-      })
-    end,
+  -- nvim-lint provides async linting for non-LSP linters.
+  -- LazyVim already installs and configures it; we extend it with shellcheck.
+  {
+    "mfussenegger/nvim-lint",
+    opts = {
+      linters_by_ft = {
+        sh = { "shellcheck" },
+        bash = { "shellcheck" },
+      },
+    },
   },
 }
