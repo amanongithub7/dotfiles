@@ -15,7 +15,9 @@
     "lazyvim.plugins.extras.ui.edgy",
 
     "lazyvim.plugins.extras.util.dot",
-    "lazyvim.plugins.extras.util.mini-hipatterns"
+    "lazyvim.plugins.extras.util.mini-hipatterns",
+
+    "lazyvim.plugins.extras.lsp.none-ls"
   ],
   "install_version": 8,
   "news": {
