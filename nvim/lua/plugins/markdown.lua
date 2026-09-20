@@ -1,4 +1,9 @@
 return {
+  { -- provides editing features for tables and lists especially
+    "yousefhadder/markdown-plus.nvim",
+    ft = "markdown",
+    opts = {},
+  },
   {
     "iamcco/markdown-preview.nvim",
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
@@ -63,7 +68,7 @@ return {
     opts = {},
     config = function()
       require("render-markdown").setup({
-        completions = { lsp = { enabled = true } },
+        completions = { lsp = { enabled = false } },
         -- anti_conceal = {
         --   enabled = true,
         --   above = 5,
@@ -84,10 +89,27 @@ return {
       -- Your configuration here (optional)
     },
   },
-  { -- follow links within md files using <CR>
-    "jghauser/follow-md-links.nvim",
+  {
+    "hedyhli/outline.nvim",
     config = function()
-      vim.keymap.set("n", "<bs>", ":edit #<cr>", { silent = true })
+      -- Example mapping to toggle outline
+      vim.keymap.set("n", "<leader>co", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
+
+      require("outline").setup({
+        providers = {
+          priority = { "markdown", "lsp" },
+        },
+        outline_window = {
+          center_on_jump = false,
+        },
+        outline_items = {
+          show_symbol_details = false,
+          auto_update_events = {
+            follow = { "CursorMoved" },
+            items = { "InsertLeave", "BufWritePost" },
+          },
+        },
+      })
     end,
   },
   { -- modify tables, move rows and columns, etc with keyboard shortcuts
