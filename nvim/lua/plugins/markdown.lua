@@ -62,24 +62,18 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-mini/mini.icons" },
-    ft = { "markdown", "codecompanion", "quarto" },
+    ft = { "markdown", "codecompanion", "quarto", "opencode_output" },
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
-    opts = {},
-    config = function()
-      require("render-markdown").setup({
-        completions = { lsp = { enabled = false } },
-        -- anti_conceal = {
-        --   enabled = true,
-        --   above = 5,
-        --   below = 5,
-        -- },
-        code = {
-          border = "thick",
-          conceal_delimiters = false,
-        },
-      })
-    end,
+    opts = {
+      anti_conceal = { enabled = false },
+      file_types = { "markdown", "codecompanion", "quarto", "opencode_output" },
+      completions = { lsp = { enabled = false } },
+      code = {
+        border = "thick",
+        conceal_delimiters = false,
+      },
+    },
   },
   { -- table of contents generator
     "hedyhli/markdown-toc.nvim",
