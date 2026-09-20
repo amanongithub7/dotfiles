@@ -10,11 +10,11 @@ return {
       "TmuxNavigatorProcessList",
     },
     keys = {
-      { "<c-h>", ":<C-U>TmuxNavigateLeft<cr>" },
-      { "<c-j>", ":<C-U>TmuxNavigateDown<cr>" },
-      { "<c-k>", ":<C-U>TmuxNavigateUp<cr>" },
-      { "<c-l>", ":<C-U>TmuxNavigateRight<cr>" },
-      { "<c-\\>", ":<C-U>TmuxNavigatePrevious<cr>" },
+      { "<c-h>", "<cmd>TmuxNavigateLeft<cr>", desc = "Navigate left" },
+      { "<c-j>", "<cmd>TmuxNavigateDown<cr>", desc = "Navigate down" },
+      { "<c-k>", "<cmd>TmuxNavigateUp<cr>", desc = "Navigate up" },
+      { "<c-l>", "<cmd>TmuxNavigateRight<cr>", desc = "Navigate right" },
+      { "<c-\\>", "<cmd>TmuxNavigatePrevious<cr>", desc = "Navigate previous" },
     },
   },
   { -- for vim-like navigation between herdr and vim panes
