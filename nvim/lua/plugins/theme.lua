@@ -3,6 +3,10 @@ return {
     "f-person/auto-dark-mode.nvim",
   },
   {
+    "folke/tokyonight.nvim",
+    enabled = false,
+  },
+  {
     "scottmckendry/cyberdream.nvim",
     lazy = false,
     priority = 1000,
@@ -13,9 +17,8 @@ return {
   },
   {
     "catppuccin/nvim",
-    lazy = "false",
     name = "catppuccin",
-    priority = 1000,
+    lazy = true,
     config = function()
       require("catppuccin").setup({
         auto_integrations = true,
