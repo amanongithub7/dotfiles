@@ -129,8 +129,13 @@ local function open_with_external_viewer(file_path, viewer_cmd)
   vim.fn.jobstart(vim.list_extend(viewer_cmd, { file_path }), {
     detach = true,
   })
-  -- Close the buffer Neovim created
-  vim.cmd("let tbd = bufnr('%') | b# | exe 'bd! ' . tbd")
+  -- Close the buffer Neovim created after the :edit machinery finishes
+  local buf = vim.api.nvim_get_current_buf()
+  vim.schedule(function()
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end)
 end
 
 -- open pdfs in sioyek instead of a neovim buffer
