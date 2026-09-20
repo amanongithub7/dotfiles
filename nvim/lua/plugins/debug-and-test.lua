@@ -127,4 +127,29 @@ return {
     end,
   },
   { "nvim-neotest/nvim-nio" },
+  {
+    "nvim-neotest/neotest",
+    ft = "python",
+    dependencies = {
+      "nvim-neotest/nvim-nio",
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-neotest/neotest-python",
+    },
+    keys = {
+      { "<leader>tt", function() require("neotest").run.run() end, desc = "Run nearest test" },
+      { "<leader>tT", function() require("neotest").run.run(vim.fn.expand("%")) end, desc = "Run all tests in file" },
+      { "<leader>tl", function() require("neotest").run.run_last() end, desc = "Re-run last test" },
+      { "<leader>ts", function() require("neotest").summary.toggle() end, desc = "Toggle test summary" },
+    },
+    opts = function()
+      return {
+        adapters = {
+          require("neotest-python")({
+            dap = { justMyCode = false },
+          }),
+        },
+      }
+    end,
+  },
 }
