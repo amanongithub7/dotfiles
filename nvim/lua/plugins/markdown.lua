@@ -20,18 +20,7 @@ return {
       -- Required
       "nvim-lua/plenary.nvim",
       -- Optional
-      {
-        "saghen/blink.cmp", -- completion
-        config = function()
-          require("blink.cmp").setup({
-            per_filetype = {
-              markdown = {
-                "lsp",
-              },
-            },
-          })
-        end,
-      },
+      "saghen/blink.cmp", -- completion
       "nvim-treesitter/nvim-treesitter", -- syntax highlighting
       "folke/snacks.nvim", -- snacks.image needed for image previews
     },
