@@ -29,7 +29,6 @@ require("lazy").setup({
     -- UI improvements
     { import = "lazyvim.plugins.extras.formatting.prettier" },
     { import = "lazyvim.plugins.extras.ui.mini-animate" },
-    { import = "lazyvim.plugins.extras.ui.edgy" },
 
     -- import/override with your plugins
     { import = "plugins" },
