@@ -54,7 +54,7 @@ return {
       file_types = { "markdown", "codecompanion", "quarto", "opencode_output" },
       completions = { lsp = { enabled = false } },
       code = {
-        border = "thick",
+        border = "none",
         conceal_delimiters = false,
       },
     },
