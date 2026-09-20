@@ -15,6 +15,7 @@ return {
       -- 'nvim_mini/mini.nvim',
     },
     opts = {
+      preferred_picker = "snacks",
       keymap = {
         editor = {
           ["<leader>om"] = { "switch_mode" },
