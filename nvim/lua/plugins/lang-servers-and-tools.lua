@@ -10,7 +10,6 @@ LANG_SERVERS = {
 
   -- Python
   "basedpyright", -- lsp for auto-complete, code suggestions & error (eg. syntax) checking
-  "ruff", -- linter and formatter
 }
 
 -- LANG_TOOLS contains the linters/formatters/debuggers to specify to mason-tool-installer
@@ -121,6 +120,8 @@ return {
       local null_ls = require("null-ls")
 
       local sources = {
+        -- Lua
+        null_ls.builtins.formatting.stylua,
         -- Markdown
         null_ls.builtins.formatting.prettier.with({
           filetypes = { "markdown" }, -- limit to markdown
