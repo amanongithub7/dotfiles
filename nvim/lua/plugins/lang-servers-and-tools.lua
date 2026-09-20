@@ -10,6 +10,7 @@ LANG_SERVERS = {
 
   -- Python
   "basedpyright", -- lsp for auto-complete, code suggestions & error (eg. syntax) checking
+  "ruff", -- lsp for linting & code actions
 }
 
 -- LANG_TOOLS contains the linters/formatters/debuggers to specify to mason-tool-installer
