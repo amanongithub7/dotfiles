@@ -64,7 +64,6 @@ return {
       sources = {
         default = { "lsp", "path", "snippets", "buffer" },
         per_filetype = {
-          codecompanion = { "codecompanion" },
           markdown = { "lsp", "path", "snippets", "buffer", "obsidian" },
         },
         providers = {
