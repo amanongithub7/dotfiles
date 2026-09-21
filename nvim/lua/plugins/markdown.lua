@@ -46,12 +46,12 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-mini/mini.icons" },
-    ft = { "markdown", "codecompanion", "quarto", "opencode_output" },
+    ft = { "markdown", "quarto", "opencode_output" },
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
     opts = {
       anti_conceal = { enabled = false },
-      file_types = { "markdown", "codecompanion", "quarto", "opencode_output" },
+      file_types = { "markdown", "quarto", "opencode_output" },
       completions = { lsp = { enabled = false } },
       code = {
         border = "none",
