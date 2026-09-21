@@ -67,32 +67,4 @@ return {
       -- Your configuration here (optional)
     },
   },
-  {
-    "hedyhli/outline.nvim",
-    config = function()
-      -- Example mapping to toggle outline
-      vim.keymap.set("n", "<leader>co", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
-
-      require("outline").setup({
-        providers = {
-          priority = { "markdown", "lsp" },
-        },
-        outline_window = {
-          center_on_jump = false,
-        },
-        outline_items = {
-          show_symbol_details = false,
-          auto_update_events = {
-            follow = { "CursorMoved" },
-            items = { "InsertLeave", "BufWritePost" },
-          },
-        },
-      })
-    end,
-  },
-  { -- modify tables, move rows and columns, etc with keyboard shortcuts
-    "SCJangra/table-nvim",
-    ft = "markdown",
-    opts = {},
-  },
 }
