@@ -11,13 +11,17 @@ return {
     opts = {},
   },
   {
+    "saghen/blink.compat",
+    opts = {},
+  },
+  {
     "saghen/blink.cmp",
     dependencies = {
       "hrsh7th/nvim-cmp",
       "rafamadriz/friendly-snippets",
       "obsidian-nvim/obsidian.nvim",
-      "saghen/blink.compat", -- compatibility layer for nvim-cmp sources
-      "jmbuhr/otter.nvim", -- LSP bridge for jupyter notebooks
+      "saghen/blink.compat",
+      "jmbuhr/otter.nvim",
     },
     version = "1.*",
     opts = {
@@ -32,23 +36,19 @@ return {
         menu = {
           border = "rounded",
           draw = {
-            -- completion menu options format: icon label kind
             columns = { { "kind_icon", gap = 1 }, { "label", "label_description", gap = 1 }, { "kind" } },
-            -- use kind_icons from mini.icons
             components = {
               kind_icon = {
                 text = function(ctx)
                   local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
                   return kind_icon
                 end,
-                -- (optional) use highlights from mini.icons
                 highlight = function(ctx)
                   local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
                   return hl
                 end,
               },
               kind = {
-                -- (optional) use highlights from mini.icons
                 highlight = function(ctx)
                   local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
                   return hl
@@ -65,7 +65,14 @@ return {
         default = { "lsp", "path", "snippets", "buffer" },
         per_filetype = {
           codecompanion = { "codecompanion" },
-          markdown = { "obsidian" },
+          markdown = { "lsp", "path", "snippets", "buffer", "obsidian" },
+        },
+        providers = {
+          obsidian = {
+            name = "obsidian",
+            module = "blink.compat.source",
+            score_offset = 100,
+          },
         },
       },
       signature = { enabled = true },
