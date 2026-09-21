@@ -17,18 +17,6 @@ vim.keymap.set("n", "<space>B", function()
   Snacks.picker.files({ cwd = vim.fn.getcwd() })
 end, { desc = "File Fuzzy-Finder (cwd)" })
 
--- codecompanion.nvim keymaps
-vim.keymap.set({ "n", "v" }, "<leader>cca", "<cmd>CodeCompanionActions<cr>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "<leader>cct", "<cmd>CodeCompanionChat Toggle<cr>", { noremap = true, silent = true })
-
-local wk = require("which-key")
-wk.add({
-  { "<leader>cc", group = "CodeCompanion", icon = "🤖" },
-
-  { "<leader>cct", desc = "Toggle Chat", icon = "󰭻" },
-  { "<leader>cca", desc = "Actions", icon = "" },
-})
-
 -- bookmarks.nvim keymaps
 vim.keymap.set({ "n", "v" }, "mm", "<cmd>BookmarksMark<cr>", { noremap = true })
 vim.keymap.set({ "n", "v" }, "mo", "<cmd>BookmarksGoto<cr>", { noremap = true })
