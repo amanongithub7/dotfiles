@@ -84,7 +84,7 @@ return {
   },
   {
     "benlubas/molten-nvim",
-    version = "^1.0.0", -- use version <2.0.0 to avoid breaking changes
+    branch = "main", -- Neovim 0.12 fix (#340, #offset! metadata) only exists on main; no release since v1.9.2
     build = ":UpdateRemotePlugins",
     dependencies = { "3rd/image.nvim" }, -- for images and plots
     init = function()
