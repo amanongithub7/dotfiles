@@ -11,6 +11,9 @@ export PATH="$HOME/.npm-packages/bin:$PATH"   # npm package binaries
 export PATH="/usr/local/bin:$PATH"            # legacy user-specific binaries
 export PATH="/opt/homebrew/bin:$PATH"         # homebrew-installed binaries
 
+# disable homebrewe hints
+export HOMEBREW_NO_ENV_HINTS=1
+
 # nvm setup
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # load nvm
