@@ -45,11 +45,11 @@ source "${ZINIT_HOME}/zinit.zsh"
 # NOTE: this conditional export is only re-evaluated when a new shell session is created
 # it does'nt change the theme for existing shell sessions when dark/light style is toggled
 if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
-  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/dark-mode"
+  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/cyberdream-dark"
   export BAT_THEME="Catppuccin Mocha" # needed for bat-extras that don't read BAT_THEME_LIGHT/DARK
   source ~/.config/fzf/themes/cyberdream/cyberdream-fzf-dark.sh # set fzf theme to cyberdream dark
 else
-  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/light-mode"
+  export EZA_CONFIG_DIR="${HOME}/dotfiles/eza/cyberdream-light"
   export BAT_THEME="Catppuccin Latte"
   source ~/.config/fzf/themes/cyberdream/cyberdream-fzf-light.sh # set fzf theme to cyberdream light
 fi
