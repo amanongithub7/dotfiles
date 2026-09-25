@@ -24,6 +24,7 @@ vim.keymap.set({ "n", "v" }, "mc", "<cmd>BookmarksCommands<cr>", { noremap = tru
 vim.keymap.set({ "n", "v" }, "md", "<cmd>BookmarksDesc<cr>", { noremap = true })
 vim.keymap.set({ "n", "v" }, "mt", "<cmd>BookmarksTree<cr>", { noremap = true })
 
+local wk = require("which-key")
 wk.add({
   { "<leader>m", group = "bookmarks", icon = "󰂺" },
 
