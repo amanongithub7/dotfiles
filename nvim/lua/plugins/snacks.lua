@@ -58,7 +58,7 @@ return {
     },
     quickfile = { enabled = true },
     scope = { enabled = true },
-    scroll = { enabled = true },
+    scroll = { enabled = false }, -- breaks gg/G jumps: interrupted smooth-scroll leaves cursor mid-flight
     statuscolumn = { enabled = true },
     words = { enabled = true },
     styles = {
