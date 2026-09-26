@@ -58,6 +58,20 @@ return {
   ███████████ ███    ███ █████████ █████ █████ ████ █████  
  ██████  █████████████████████ ████ █████ █████ ████ ██████ 
         ]],
+        -- trimmed from LazyVim's set: drop Find File, Find Text, Config,
+        -- Lazy Extras and Lazy (all have <leader> maps already)
+        ---@type snacks.dashboard.Item[]
+        keys = {
+          { icon = vim.fn.nr2char(0xf15b) .. " ", key = "n", desc = "New File", action = ":ene | startinsert" },
+          {
+            icon = vim.fn.nr2char(0xf0c5) .. " ",
+            key = "r",
+            desc = "Recent Files",
+            action = ":lua Snacks.dashboard.pick('oldfiles')",
+          },
+          { icon = vim.fn.nr2char(0xe348) .. " ", key = "s", desc = "Restore Session", section = "session" },
+          { icon = vim.fn.nr2char(0xf426) .. " ", key = "q", desc = "Quit", action = ":qa" },
+        },
       },
       formats = {
         header = dashboard_header_gradient,
