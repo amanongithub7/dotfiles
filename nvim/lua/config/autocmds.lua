@@ -174,3 +174,34 @@ vim.api.nvim_create_autocmd("FileType", {
     end
   end,
 })
+
+-- Per-agent-mode colors for the opencode footer badge (cycle modes with <leader>om).
+-- build/plan have dedicated highlight groups; every other agent (chat, custom)
+-- shares OpencodeAgentCustom. The plugin defines them with `default = true`, so
+-- our values win. Backgrounds come from the active cyberdream palette
+-- (variant = "auto" -> default on dark, light on light); the foreground is
+-- cyberdream's base bg (dark text on the neon dark badges, white on the light
+-- badges). Note: with transparent = true the dark palette reports bg = "NONE",
+-- hence the literal.
+local function set_opencode_agent_highlights()
+  local dark = vim.o.background == "dark"
+  local ok, palette = pcall(function()
+    local colors = require("cyberdream.colors")
+    return dark and colors.default or colors.light
+  end)
+  if not ok or not palette then
+    return
+  end
+  local modes = {
+    OpencodeAgentBuild = palette.red, -- build
+    OpencodeAgentPlan = palette.purple, -- plan
+    OpencodeAgentCustom = palette.blue, -- chat / other agents
+  }
+  local fg = dark and "#16181a" or "#ffffff"
+  for group, bg in pairs(modes) do
+    vim.api.nvim_set_hl(0, group, { bg = bg, fg = fg, bold = true })
+  end
+end
+
+set_opencode_agent_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = set_opencode_agent_highlights })
