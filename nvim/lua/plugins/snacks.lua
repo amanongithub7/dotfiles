@@ -1,3 +1,43 @@
+-- Cyan -> blue gradient for the dashboard header art, sourced from the active
+-- cyberdream palette (variant auto: default on dark, light on light). Returns
+-- one styled chunk per line; "\n" prefixes make snacks start a new row.
+local function hex_mix(a, b, t)
+  local ar, ag, ab = tonumber(a:sub(2, 3), 16), tonumber(a:sub(4, 5), 16), tonumber(a:sub(6, 7), 16)
+  local br, bg, bb = tonumber(b:sub(2, 3), 16), tonumber(b:sub(4, 5), 16), tonumber(b:sub(6, 7), 16)
+  return string.format(
+    "#%02x%02x%02x",
+    math.floor(ar + (br - ar) * t + 0.5),
+    math.floor(ag + (bg - ag) * t + 0.5),
+    math.floor(ab + (bb - ab) * t + 0.5)
+  )
+end
+
+local function dashboard_header_gradient(item)
+  local ok, colors = pcall(require, "cyberdream.colors")
+  if not ok then
+    return { { item.header, hl = "SnacksDashboardHeader" } }
+  end
+  local palette = vim.o.background == "light" and colors.light or colors.default
+  local from, to = palette.cyan, palette.blue
+  local lines = vim.split(item.header, "\n", { plain = true })
+  -- drop leading/trailing blank lines so the gradient spans the visible art
+  while #lines > 0 and lines[1]:find("^%s*$") do
+    table.remove(lines, 1)
+  end
+  while #lines > 0 and lines[#lines]:find("^%s*$") do
+    table.remove(lines)
+  end
+  local out = {}
+  local n = #lines
+  for i, line in ipairs(lines) do
+    local t = n > 1 and (i - 1) / (n - 1) or 0
+    local hl = "SnacksDashboardHeader" .. i
+    vim.api.nvim_set_hl(0, hl, { fg = hex_mix(from, to, t), bold = true })
+    out[#out + 1] = { (i == 1 and "" or "\n") .. line, hl = hl }
+  end
+  return out
+end
+
 return {
   "folke/snacks.nvim",
   priority = 1000,
@@ -18,6 +58,9 @@ return {
   ███████████ ███    ███ █████████ █████ █████ ████ █████  
  ██████  █████████████████████ ████ █████ █████ ████ ██████ 
         ]],
+      },
+      formats = {
+        header = dashboard_header_gradient,
       },
     },
     explorer = { enabled = true },
