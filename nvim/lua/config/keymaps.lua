@@ -147,6 +147,7 @@ vim.schedule(function()
     { "<leader>m", group = "bookmarks", icon = "󰂺" },
     { "<leader>o", group = "opencode", icon = { icon = "󱙺", color = "green" } },
     { "<leader>G", group = "GitHub", icon = "󰊤" },
+    { "<leader>od", group = "diff", icon = "󰊢" },
     { "<leader>?", desc = "Buffer Local Keymaps", icon = "󰋗" },
     { "<leader>w", group = "windows", icon = "󰖲" },
     -- groups whose maps were removed: hide the empty menu entries
