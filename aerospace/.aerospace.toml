@@ -16,7 +16,7 @@ config-version = 2
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
 after-startup-command = [
   # use JankyBorders to apply colored borders to active and inactive windows
-  "exec-and-forget borders active_color='glow(0xff8bd5ca)' inactive_color='0xff7287fd' width=5.0 style='round'",
+  "exec-and-forget borders active_color='glow(0xff5ef1ff)' inactive_color='0xff008c99' width=5 style='round'",
 ]
 
 # Start AeroSpace at login
@@ -79,10 +79,10 @@ on-mode-changed = []
 [gaps]
     inner.horizontal = 5
     inner.vertical =   5
-    outer.left =       [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
-    outer.bottom =     [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
+    outer.left =       [{ monitor.odyssey = 8 },  { monitor.built-in = 5 }, 8]
+    outer.bottom =     [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 8]
     outer.top =        [{ monitor.odyssey = 45 }, { monitor.built-in = 14 }, 45]
-    outer.right =      [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 5]
+    outer.right =      [{ monitor.odyssey = 8 }, { monitor.built-in = 5 }, 8]
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
