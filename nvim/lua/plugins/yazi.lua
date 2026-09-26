@@ -8,16 +8,10 @@ return {
   keys = {
     {
       -- open in the current file
-      "<leader>y",
+      "<leader>sy",
       mode = { "n", "v" },
       "<cmd>Yazi<cr>",
       desc = "Open yazi at the current file",
-    },
-    {
-      -- open in the current working directory
-      "<leader>ycwd",
-      "<cmd>Yazi cwd<cr>",
-      desc = "Open the file manager in nvim's working directory",
     },
   },
   opts = {

@@ -20,7 +20,7 @@ return {
         ]],
       },
     },
-    explorer = { enabled = false },
+    explorer = { enabled = true },
     indent = { enabled = true },
     input = { enabled = true },
     notifier = {
@@ -55,6 +55,20 @@ return {
         },
       },
       layout = "telescope",
+      -- delete buffers from the picker with x (keeps snacks' <c-x>/dd defaults)
+      sources = {
+        buffers = {
+          win = {
+            input = {
+              keys = {
+                ["<c-x>"] = { "bufdelete", mode = { "n", "i" } },
+                ["x"] = { "bufdelete", mode = { "n", "i" } },
+              },
+            },
+            list = { keys = { ["dd"] = "bufdelete", ["x"] = "bufdelete" } },
+          },
+        },
+      },
     },
     quickfile = { enabled = true },
     scope = { enabled = true },
@@ -80,10 +94,10 @@ return {
       function()
         Snacks.picker.smart()
       end,
-      desc = "Smart Find Files (cwd)",
+      desc = "Files",
     },
     {
-      "<leader>,",
+      "<leader>b",
       function()
         Snacks.picker.buffers()
       end,
@@ -94,7 +108,7 @@ return {
       function()
         Snacks.picker.grep()
       end,
-      desc = "Grep (cwd)",
+      desc = "Grep",
     },
     {
       "<leader>:",
@@ -102,49 +116,6 @@ return {
         Snacks.picker.command_history()
       end,
       desc = "Vim Command History",
-    },
-    -- find
-    {
-      "<leader>fc",
-      function()
-        Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
-      end,
-      desc = "Find Config File",
-    },
-    {
-      "<leader>fp",
-      function()
-        Snacks.picker.files({ cwd = require("lazy.core.config").options.root })
-      end,
-      desc = "Find Plugin File",
-    },
-    {
-      "<leader>ff",
-      function()
-        Snacks.picker.files()
-      end,
-      desc = "Find Files",
-    },
-    {
-      "<leader>fg",
-      function()
-        Snacks.picker.git_files()
-      end,
-      desc = "Find Git Files",
-    },
-    {
-      "<leader>fP",
-      function()
-        Snacks.picker.projects()
-      end,
-      desc = "Projects",
-    },
-    {
-      "<leader>fr",
-      function()
-        Snacks.picker.recent()
-      end,
-      desc = "Recent",
     },
     -- git
     {
@@ -233,20 +204,6 @@ return {
         Snacks.picker.search_history()
       end,
       desc = "Search History",
-    },
-    {
-      "<leader>sb",
-      function()
-        Snacks.picker.lines()
-      end,
-      desc = "Buffer Lines",
-    },
-    {
-      "<leader>sc",
-      function()
-        Snacks.picker.command_history()
-      end,
-      desc = "Command History",
     },
     {
       "<leader>sC",
@@ -413,32 +370,11 @@ return {
     },
     -- Other
     {
-      "<leader>z",
-      function()
-        Snacks.zen()
-      end,
-      desc = "Toggle Zen Mode",
-    },
-    {
-      "<leader>Z",
-      function()
-        Snacks.zen.zoom()
-      end,
-      desc = "Toggle Zoom",
-    },
-    {
       "<leader>.",
       function()
         Snacks.scratch()
       end,
       desc = "Toggle Scratch Buffer",
-    },
-    {
-      "<leader>S",
-      function()
-        Snacks.scratch.select()
-      end,
-      desc = "Select Scratch Buffer",
     },
     {
       "<leader>n",
@@ -462,11 +398,11 @@ return {
       desc = "Rename File",
     },
     {
-      "<leader>gB",
+      "<leader>GB",
       function()
         Snacks.gitbrowse()
       end,
-      desc = "Git Browse",
+      desc = "Browse",
       mode = { "n", "v" },
     },
     {
@@ -512,24 +448,6 @@ return {
       end,
       desc = "Prev Reference",
       mode = { "n", "t" },
-    },
-    {
-      "<leader>N",
-      desc = "Neovim News",
-      function()
-        Snacks.win({
-          file = vim.api.nvim_get_runtime_file("doc/news.txt", false)[1],
-          width = 0.6,
-          height = 0.6,
-          wo = {
-            spell = false,
-            wrap = false,
-            signcolumn = "yes",
-            statuscolumn = " ",
-            conceallevel = 3,
-          },
-        })
-      end,
     },
   },
   init = function()
