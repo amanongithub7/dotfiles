@@ -34,6 +34,8 @@ return {
       ---@diagnostic disable: missing-fields
       ui = { enable = false },
       ---@diagnostic enable: missing-fields
+      -- open these URI schemes without the "Open external link?" confirmation
+      open = { schemes = { "zotero" } },
       workspaces = {
         {
           name = "personal",
