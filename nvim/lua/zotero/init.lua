@@ -11,13 +11,6 @@ local DATA_DIR = vim.fn.expand("~/climate-crisis/research-papers/organization-to
 M.bib_file = DATA_DIR .. "/exports/library.bib"
 M.zotero_db = DATA_DIR .. "/zotero.sqlite"
 
--- BBT `file` field is often relative; resolve against this base.
--- (currently the linked ProtonDrive dir; changes to Zotero storage after the
--- storage migration — see the plan.)
-M.base_attachment_path = vim.fn.expand(
-  "~/Library/CloudStorage/ProtonDrive-cristianoronaldo0007@pm.me-folder/research-papers/pdfs"
-)
-
 M.vaults = {
   vim.fn.expand("~/vaults/climate-crisis"),
   vim.fn.expand("~/vaults/personal"),
@@ -26,7 +19,7 @@ M.notes_subdir = "research-papers-🔬/notes"
 M.pdfs_subdir = "research-papers-🔬/pdfs"
 
 ---Realpath-normalized check: is this buffer path a literature note?
----(vault dirs can be symlinks, e.g. into ProtonDrive, so names differ.)
+---(vault paths can be symlinks, so names may differ from the resolved path.)
 ---@param name string
 ---@return boolean
 function M.is_note_path(name)
@@ -416,31 +409,6 @@ function M.key_under_cursor()
   return key
 end
 
-local function sioyek(path)
-  vim.fn.jobstart({ "sioyek", "--new-window", path }, { detach = true })
-end
-
----Resolve a PDF path from the BBT `file` field.
----@param entry table
----@return string|nil
-function M.resolve_pdf(entry)
-  local file = entry.file
-  if file and file ~= "" then
-    -- BBT: file = {Title:relative/path.pdf:application/pdf} (may repeat)
-    local path = file:match("^[^:]*:(.-):application/pdf") or file:match(":(.-):application/pdf")
-    if path and path ~= "" then
-      path = path:gsub("\\\\", "/")
-      if not path:match("^/") then
-        path = M.base_attachment_path .. "/" .. path
-      end
-      if uv.fs_stat(path) then
-        return path
-      end
-    end
-  end
-  return nil
-end
-
 ---Find the literature note for a citekey across the vaults.
 ---@param key string
 ---@return string|nil
@@ -496,7 +464,7 @@ local function open_url(url)
 end
 
 ---Open the paper in **Zotero** (reader for the PDF, else the item), since that
----is where annotations are made. Falls back to Sioyek via the BBT file field.
+---is where annotations are made.
 ---@param entry table
 function M.open_pdf(entry)
   local m = M.zmap()[entry.key]
@@ -506,11 +474,6 @@ function M.open_pdf(entry)
   end
   if m and m.item and m.item ~= "" then
     open_url("zotero://select/library/items/" .. m.item)
-    return
-  end
-  local path = M.resolve_pdf(entry)
-  if path then
-    sioyek(path)
     return
   end
   vim.notify("Zotero: no PDF/item found for " .. entry.key, vim.log.levels.WARN)
