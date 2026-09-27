@@ -745,7 +745,6 @@ function M.render_annotations(annots, pdf_uri)
         local text = (a.text or ""):gsub("\n", " ")
         local page = a.page or ""
         out[#out + 1] = "> " .. text
-        out[#out + 1] = ""
         if pdf_uri:find("zotero://open-pdf", 1, true) then
           out[#out + 1] = ("**<u>[📍 p. %s](%s?page=%s&annotation=%s)</u>**"):format(page, pdf_uri, page, a.key or "")
         else
