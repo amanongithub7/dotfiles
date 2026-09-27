@@ -25,6 +25,24 @@ M.vaults = {
 M.notes_subdir = "research-papers-🔬/notes"
 M.pdfs_subdir = "research-papers-🔬/pdfs"
 
+---Realpath-normalized check: is this buffer path a literature note?
+---(vault dirs can be symlinks, e.g. into ProtonDrive, so names differ.)
+---@param name string
+---@return boolean
+function M.is_note_path(name)
+  if not name or name == "" then
+    return false
+  end
+  local resolved = uv.fs_realpath(name) or name
+  for _, v in ipairs(M.vaults) do
+    local base = uv.fs_realpath(v .. "/" .. M.notes_subdir) or (v .. "/" .. M.notes_subdir)
+    if resolved:sub(1, #base) == base then
+      return true
+    end
+  end
+  return false
+end
+
 -- BibTeX parsing -------------------------------------------------------------
 local cache = { mtime = nil, entries = nil }
 local zcache = { mtime = nil, map = nil }
@@ -582,9 +600,17 @@ function M.pick(opts)
     win = {
       input = {
         keys = {
-          ["<c-o>"] = { "zotero_pdf", mode = { "n", "i" } },
-          ["<c-n>"] = { "zotero_note", mode = { "n", "i" } },
-          ["<c-y>"] = { "zotero_yank", mode = { "n", "i" } },
+          -- plain letters in normal mode (insert mode still types for search)
+          ["o"] = { "zotero_pdf", mode = "n" },
+          ["n"] = { "zotero_note", mode = "n" },
+          ["y"] = { "zotero_yank", mode = "n" },
+        },
+      },
+      list = {
+        keys = {
+          ["o"] = "zotero_pdf",
+          ["n"] = "zotero_note",
+          ["y"] = "zotero_yank",
         },
       },
     },
@@ -806,14 +832,20 @@ end
 ---@param name string
 ---@return string
 local function notes_dir_for(name)
-  for _, cand in ipairs({ name, vim.fn.getcwd() }) do
+  local function pick(cand)
+    if not cand or cand == "" then
+      return nil
+    end
+    local resolved = uv.fs_realpath(cand) or cand
     for _, v in ipairs(M.vaults) do
-      if cand ~= "" and cand:find(v, 1, true) then
+      local root = uv.fs_realpath(v) or v
+      if resolved:sub(1, #root) == root then
         return v .. "/" .. M.notes_subdir
       end
     end
+    return nil
   end
-  return M.vaults[1] .. "/" .. M.notes_subdir
+  return pick(name) or pick(vim.fn.getcwd()) or (M.vaults[1] .. "/" .. M.notes_subdir)
 end
 
 ---Create or refresh the literature note for a citekey.

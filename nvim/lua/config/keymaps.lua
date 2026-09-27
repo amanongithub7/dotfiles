@@ -106,33 +106,54 @@ vim.keymap.set("n", "<leader>GP", function()
 end, { desc = "Pull Requests (all)" })
 
 -- Zotero (<leader>z) — see nvim/zotero-setup.md
-vim.keymap.set("n", "<leader>zc", function()
+-- Global: the Literature Menu (picker) + reload. Everything else is scoped to
+-- literature notes (below), where it actually applies.
+vim.keymap.set("n", "<leader>zl", function()
   require("zotero").pick_citation()
-end, { desc = "Insert Citation" })
-vim.keymap.set("n", "<leader>zo", function()
-  require("zotero").open_pdf_at_cursor()
-end, { desc = "Open in Zotero" })
-vim.keymap.set("n", "<leader>zn", function()
-  require("zotero").open_note_at_cursor()
-end, { desc = "Open/Create Note" })
-vim.keymap.set("n", "<leader>zy", function()
-  local z = require("zotero")
-  local entry = z.key_under_cursor() and z.entry(z.key_under_cursor())
-  if entry then
-    z.copy_key(entry.key)
-  else
-    z.pick({ action = "yank" })
-  end
-end, { desc = "Yank Citekey" })
+end, { desc = "Literature Menu" })
 vim.keymap.set("n", "<leader>zr", function()
   require("zotero").reload()
 end, { desc = "Reload Bibliography" })
-vim.keymap.set("n", "<leader>za", function()
-  require("zotero").insert_annotations()
-end, { desc = "Insert Annotations" })
-vim.keymap.set("n", "<leader>zN", function()
-  require("zotero").create_note()
-end, { desc = "New Note" })
+
+-- Literature-note-only Zotero actions (buffer-local, so which-key only shows
+-- them under <leader>z inside .../research-papers-🔬/notes/*.md).
+vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
+  callback = function(args)
+    local buf = args.buf
+    if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf].zotero_note_maps then
+      return
+    end
+    if not require("zotero").is_note_path(vim.api.nvim_buf_get_name(buf)) then
+      return
+    end
+    vim.b[buf].zotero_note_maps = true
+    local map = function(lhs, rhs, desc)
+      vim.keymap.set("n", lhs, rhs, { buffer = buf, desc = desc })
+    end
+    map("<leader>zo", function()
+      require("zotero").open_pdf_at_cursor()
+    end, "Open in Zotero")
+    map("<leader>zn", function()
+      require("zotero").open_note_at_cursor()
+    end, "Open/Create Note")
+    map("<leader>zy", function()
+      local z = require("zotero")
+      local key = z.key_under_cursor()
+      local entry = key and z.entry(key)
+      if entry then
+        z.copy_key(entry.key)
+      else
+        z.pick({ action = "yank" })
+      end
+    end, "Yank Citekey")
+    map("<leader>za", function()
+      require("zotero").insert_annotations()
+    end, "Insert Annotations")
+    map("<leader>zN", function()
+      require("zotero").create_note()
+    end, "New/Refresh Note")
+  end,
+})
 
 -- bookmarks
 vim.keymap.set({ "n", "v" }, "<leader>mm", "<cmd>BookmarksMark<cr>", { desc = "Bookmark Line" })
