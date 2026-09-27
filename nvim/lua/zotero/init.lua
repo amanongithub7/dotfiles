@@ -409,6 +409,26 @@ function M.key_under_cursor()
   return key
 end
 
+---Citekey for the current context: the one under the cursor (if it's a real
+---key), else the `citekey:` from the current literature note's frontmatter.
+---@return string|nil
+function M.current_citekey()
+  local word = M.key_under_cursor()
+  if word and (M.entry(word) or M.zmap()[word]) then
+    return word
+  end
+  if M.is_note_path(vim.api.nvim_buf_get_name(0)) then
+    local n = math.min(40, vim.api.nvim_buf_line_count(0))
+    for _, l in ipairs(vim.api.nvim_buf_get_lines(0, 0, n, false)) do
+      local ck = l:match("^%s*citekey:%s*(%S+)")
+      if ck then
+        return ck
+      end
+    end
+  end
+  return nil
+end
+
 ---Find the literature note for a citekey across the vaults.
 ---@param key string
 ---@return string|nil
@@ -595,23 +615,23 @@ function M.pick_citation()
   M.pick({ action = "insert" })
 end
 
----Open PDF for the citekey under the cursor, else pick.
+---Open the paper for the current context (cursor citekey or note's citekey),
+---else pick.
 function M.open_pdf_at_cursor()
-  local key = M.key_under_cursor()
-  local entry = key and M.entry(key)
-  if entry then
-    M.open_pdf(entry)
+  local key = M.current_citekey()
+  if key then
+    M.open_pdf(M.entry(key) or { key = key })
   else
     M.pick({ action = "pdf" })
   end
 end
 
----Open note for the citekey under the cursor, else pick (open or create).
+---Open note for the current context (cursor citekey or note's citekey), else
+---pick (open or create).
 function M.open_note_at_cursor()
-  local key = M.key_under_cursor()
-  local entry = key and M.entry(key)
-  if entry then
-    M.open_or_create_note(entry)
+  local key = M.current_citekey()
+  if key then
+    M.open_or_create_note(M.entry(key) or { key = key })
   else
     M.pick({ action = "note" })
   end
@@ -814,7 +834,7 @@ end
 ---Create or refresh the literature note for a citekey.
 ---@param citekey? string
 function M.create_note(citekey)
-  citekey = citekey or M.key_under_cursor()
+  citekey = citekey or M.current_citekey()
   if not citekey or citekey == "" then
     vim.notify("ZoteroNote: no citekey", vim.log.levels.WARN)
     return
@@ -894,7 +914,7 @@ end
 
 ---Insert the annotations for the citekey under the cursor at the cursor.
 function M.insert_annotations()
-  local key = M.key_under_cursor()
+  local key = M.current_citekey()
   if not key then
     vim.notify("Zotero: no citekey under cursor", vim.log.levels.WARN)
     return

@@ -138,10 +138,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     end, "Open/Create Note")
     map("<leader>zy", function()
       local z = require("zotero")
-      local key = z.key_under_cursor()
-      local entry = key and z.entry(key)
-      if entry then
-        z.copy_key(entry.key)
+      local key = z.current_citekey()
+      if key then
+        z.copy_key(key)
       else
         z.pick({ action = "yank" })
       end
