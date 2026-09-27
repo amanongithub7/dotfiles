@@ -14,22 +14,79 @@ return {
       -- 'ibhagwan/fzf-lua',
       -- 'nvim_mini/mini.nvim',
     },
+    init = function()
+      -- Session picker: rename the title and stay in normal mode so the
+      -- plain-letter actions (r/x/n/t/f/s) work without Ctrl. The BufEnter
+      -- autocmd re-applies normal mode whenever the picker regains focus
+      -- (e.g. after the rename prompt), but not when the user manually
+      -- presses i to search.
+      local group = vim.api.nvim_create_augroup("OpencodeSessionPicker", { clear = true })
+
+      local function find_session_picker()
+        local ok, Snacks = pcall(require, "snacks")
+        if not ok then
+          return nil
+        end
+        for _, p in ipairs(Snacks.picker.get({ tab = false })) do
+          local title = type(p.title) == "string" and p.title or ""
+          if title:find("Select A Session", 1, true) or title:find("Session Manager", 1, true) then
+            return p
+          end
+        end
+        return nil
+      end
+
+      local function to_normal_mode()
+        vim.schedule(function()
+          vim.cmd("stopinsert")
+        end)
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = group,
+        pattern = "snacks_picker_input",
+        callback = function(args)
+          local picker = find_session_picker()
+          if not picker then
+            return
+          end
+
+          vim.schedule(function()
+            if picker.closed then
+              return
+            end
+            local title = type(picker.title) == "string" and picker.title or ""
+            picker.title = title:gsub("^Select A Session", "Session Manager")
+            picker:update_titles()
+          end)
+
+          vim.api.nvim_create_autocmd("BufEnter", {
+            group = group,
+            buffer = args.buf,
+            callback = to_normal_mode,
+          })
+
+          to_normal_mode()
+        end,
+      })
+    end,
     opts = {
       preferred_picker = "snacks",
       default_mode = "plan",
       keymap = {
         session_picker = {
-          delete_session = { "<C-x>", mode = { "i", "n" }, desc = "Delete selected sessions" },
-          new_session = { "<C-e>", mode = { "i", "n" }, desc = "Create a new session" },
-          open_in_tab = { "<C-y>", mode = { "i", "n" }, desc = "Open in new panel tab" },
-          fork_session = { "<C-o>", mode = { "i", "n" }, desc = "Fork selected session" },
-          toggle_scope = { "<C-z>", mode = { "i", "n" }, desc = "Toggle project/global scope" },
+          rename_session = { "r", mode = "n", desc = "Rename selected session" },
+          delete_session = { "x", mode = "n", desc = "Delete selected sessions" },
+          new_session = { "n", mode = "n", desc = "Create a new session" },
+          open_in_tab = { "t", mode = "n", desc = "Open in new panel tab" },
+          fork_session = { "f", mode = "n", desc = "Fork selected session" },
+          toggle_scope = { "s", mode = "n", desc = "Toggle project/global scope" },
         },
         session_tab_picker = {
-          close_tab = { "<C-x>", mode = { "i", "n" }, desc = "Close selected panel tab" },
+          close_tab = { "x", mode = "n", desc = "Close selected panel tab" },
         },
         history_picker = {
-          delete_entry = { "<C-x>", mode = { "i", "n" }, desc = "Delete selected history entries" },
+          delete_entry = { "x", mode = "n", desc = "Delete selected history entries" },
         },
         editor = {
           ["<leader>og"] = { "toggle", desc = "Toggle Opencode" },
@@ -119,6 +176,7 @@ return {
         },
         output = {
           max_messages = 100,
+          always_scroll_to_bottom = true,
           tools = {
             -- hide reasoning by default; toggle display with <leader>or or /reasoning
             show_reasoning_output = false,
@@ -139,6 +197,47 @@ return {
         buffer = {
           enabled = true,
         },
+      },
+      -- Safety net for the final turn occasionally not appearing until the
+      -- next prompt. On idle: flush any pending render, and if the finished
+      -- turn is genuinely absent from state, do a full refresh (which is what
+      -- sending the next prompt was effectively doing).
+      hooks = {
+        on_done_thinking = function(completed_session)
+          vim.defer_fn(function()
+            local state = require("opencode.state")
+            local active = state.active_session
+            if not active or (completed_session and completed_session.id ~= active.id) then
+              return
+            end
+
+            require("opencode.ui.renderer.flush").resume_deferred_rendering()
+
+            local messages = state.messages or {}
+            local last_user = 0
+            for i, m in ipairs(messages) do
+              if m.info and m.info.role == "user" then
+                last_user = i
+              end
+            end
+            local has_reply = false
+            for i = last_user + 1, #messages do
+              if messages[i].info and messages[i].info.role == "assistant" then
+                has_reply = true
+                break
+              end
+            end
+
+            local renderer = require("opencode.ui.renderer")
+            if not has_reply then
+              renderer.render_full_session():and_then(function()
+                renderer.scroll_to_bottom(true)
+              end)
+            else
+              renderer.scroll_to_bottom(true)
+            end
+          end, 30)
+        end,
       },
     },
   },
