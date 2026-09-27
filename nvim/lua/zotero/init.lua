@@ -744,17 +744,16 @@ function M.render_annotations(annots, pdf_uri)
       for _, a in ipairs(list) do
         local text = (a.text or ""):gsub("\n", " ")
         local page = a.page or ""
-        out[#out + 1] = "> [!annotation-" .. c.name .. "]- Quote"
         out[#out + 1] = "> " .. text
-        out[#out + 1] = ">"
+        out[#out + 1] = ""
         if pdf_uri:find("zotero://open-pdf", 1, true) then
-          out[#out + 1] = ("> [📍 p. %s](%s?page=%s&annotation=%s)"):format(page, pdf_uri, page, a.key or "")
+          out[#out + 1] = ("**<u>[📍 p. %s](%s?page=%s&annotation=%s)</u>**"):format(page, pdf_uri, page, a.key or "")
         else
-          out[#out + 1] = ("> 📍 p. %s"):format(page)
+          out[#out + 1] = ("**<u>📍 p. %s</u>**"):format(page)
         end
         if a.comment and a.comment ~= "" then
-          out[#out + 1] = ">"
-          out[#out + 1] = "> **Note:** " .. (a.comment:gsub("\n", " "))
+          out[#out + 1] = ""
+          out[#out + 1] = "**Note:** " .. (a.comment:gsub("\n", " "))
         end
         out[#out + 1] = ""
       end
