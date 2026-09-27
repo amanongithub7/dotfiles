@@ -58,6 +58,8 @@ return {
       anti_conceal = { enabled = false },
       file_types = { "markdown", "quarto", "opencode_output" },
       completions = { lsp = { enabled = false } },
+      -- conceal <u>...</u> and underline the enclosed text (pin links)
+      html = { tag = { u = { scope_highlight = "Underlined" } } },
       code = {
         border = "none",
         conceal_delimiters = false,
