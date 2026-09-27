@@ -22,6 +22,18 @@ return {
       "obsidian-nvim/obsidian.nvim",
       "saghen/blink.compat",
       "jmbuhr/otter.nvim",
+      {
+        "krissen/blink-cmp-bibtex",
+        opts = {
+          global_files = {
+            vim.fn.expand("~/climate-crisis/research-papers/organization-tools/zotero/exports/library.bib"),
+          },
+          preview_style = "apa",
+        },
+        config = function(_, opts)
+          require("blink-cmp-bibtex").setup(opts)
+        end,
+      },
     },
     version = "1.*",
     opts = {
@@ -62,7 +74,7 @@ return {
         },
       },
       sources = {
-        default = { "lsp", "path", "snippets", "buffer" },
+        default = { "lsp", "path", "snippets", "buffer", "bibtex" },
         per_filetype = {
           markdown = { "lsp", "path", "snippets", "buffer", "obsidian" },
         },
@@ -71,6 +83,13 @@ return {
             name = "obsidian",
             module = "blink.compat.source",
             score_offset = 100,
+          },
+          bibtex = {
+            module = "blink-cmp-bibtex",
+            name = "BibTeX",
+            min_keyword_length = 2,
+            score_offset = 10,
+            async = true,
           },
         },
       },

@@ -105,6 +105,35 @@ vim.keymap.set("n", "<leader>GP", function()
   Snacks.picker.gh_pr({ state = "all" })
 end, { desc = "Pull Requests (all)" })
 
+-- Zotero (<leader>z) — see nvim/zotero-setup.md
+vim.keymap.set("n", "<leader>zc", function()
+  require("zotero").pick_citation()
+end, { desc = "Insert Citation" })
+vim.keymap.set("n", "<leader>zo", function()
+  require("zotero").open_pdf_at_cursor()
+end, { desc = "Open in Zotero" })
+vim.keymap.set("n", "<leader>zn", function()
+  require("zotero").open_note_at_cursor()
+end, { desc = "Open/Create Note" })
+vim.keymap.set("n", "<leader>zy", function()
+  local z = require("zotero")
+  local entry = z.key_under_cursor() and z.entry(z.key_under_cursor())
+  if entry then
+    z.copy_key(entry.key)
+  else
+    z.pick({ action = "yank" })
+  end
+end, { desc = "Yank Citekey" })
+vim.keymap.set("n", "<leader>zr", function()
+  require("zotero").reload()
+end, { desc = "Reload Bibliography" })
+vim.keymap.set("n", "<leader>za", function()
+  require("zotero").insert_annotations()
+end, { desc = "Insert Annotations" })
+vim.keymap.set("n", "<leader>zN", function()
+  require("zotero").create_note()
+end, { desc = "New Note" })
+
 -- bookmarks
 vim.keymap.set({ "n", "v" }, "<leader>mm", "<cmd>BookmarksMark<cr>", { desc = "Bookmark Line" })
 vim.keymap.set({ "n", "v" }, "<leader>mo", "<cmd>BookmarksGoto<cr>", { desc = "Open Bookmark" })
@@ -147,6 +176,7 @@ vim.schedule(function()
     { "<leader>m", group = "bookmarks", icon = "󰂺" },
     { "<leader>o", group = "opencode", icon = { icon = "󱙺", color = "green" } },
     { "<leader>G", group = "GitHub", icon = "󰊤" },
+    { "<leader>z", group = "Zotero", icon = vim.fn.nr2char(0xf02d) },
     { "<leader>od", group = "diff", icon = "󰊢" },
     { "<leader>?", desc = "Buffer Local Keymaps", icon = "󰋗" },
     { "<leader>w", group = "windows", icon = "󰖲" },
@@ -155,6 +185,7 @@ vim.schedule(function()
     { "<leader>q", hidden = true },
     { "<leader><tab>", hidden = true },
   })
+  require("zotero").setup()
 end)
 
 -- markdown-only headings/markdown-plus group
