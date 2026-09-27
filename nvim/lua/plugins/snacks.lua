@@ -1,6 +1,10 @@
 -- Cyan -> blue gradient for the dashboard header art, sourced from the active
 -- cyberdream palette (variant auto: default on dark, light on light). Returns
 -- one styled chunk per line; "\n" prefixes make snacks start a new row.
+-- The gradient can flow downward on demand: a timer rotates the per-line
+-- highlight groups while the dashboard is open and focused. It starts idle;
+-- press `a` on the dashboard to toggle the animation (see `ANIMATE`, `anim`,
+-- and the autocmds in `init`).
 local function hex_mix(a, b, t)
   local ar, ag, ab = tonumber(a:sub(2, 3), 16), tonumber(a:sub(4, 5), 16), tonumber(a:sub(6, 7), 16)
   local br, bg, bb = tonumber(b:sub(2, 3), 16), tonumber(b:sub(4, 5), 16), tonumber(b:sub(6, 7), 16)
@@ -10,6 +14,91 @@ local function hex_mix(a, b, t)
     math.floor(ag + (bg - ag) * t + 0.5),
     math.floor(ab + (bb - ab) * t + 0.5)
   )
+end
+
+-- Set to `false` to opt out of the header animation completely: the gradient
+-- stays static and the `a` toggle key is not offered. Leave `true` to allow the
+-- animation on demand (it stays idle until you press `a`).
+local ANIMATE = true
+
+-- Animation state for the dashboard header gradient. `base` holds one color per
+-- art row (symmetric cyan -> blue -> cyan so the wrap is seamless) and `phase`
+-- is rotated through it on a timer to make the gradient flow. The timer only
+-- runs when the feature is enabled, the user toggled it on (`wanted`), the
+-- dashboard is open, and the UI is focused, so switching tmux sessions pauses it
+-- automatically.
+local anim = {
+  enabled = ANIMATE,
+  wanted = false,
+  focused = true,
+  open = false,
+  phase = 0,
+  timer = nil,
+  fps = 12,
+  n = 0,
+  base = {},
+}
+
+local function anim_apply()
+  if anim.n == 0 then
+    return
+  end
+  local p = anim.phase % anim.n
+  for i = 1, anim.n do
+    local c = anim.base[((i - 1 + p) % anim.n) + 1]
+    vim.api.nvim_set_hl(0, "SnacksDashboardHeader" .. i, { fg = c, bold = true })
+  end
+end
+
+local function anim_stop()
+  if anim.timer then
+    anim.timer:stop()
+    anim.timer:close()
+    anim.timer = nil
+  end
+end
+
+local function anim_start()
+  if anim.timer or not anim.enabled or not anim.wanted or not anim.focused or not anim.open or anim.n == 0 then
+    return
+  end
+  anim.timer = vim.uv.new_timer()
+  anim.timer:start(
+    0,
+    math.floor(1000 / anim.fps),
+    vim.schedule_wrap(function()
+      anim.phase = anim.phase + 1
+      anim_apply()
+    end)
+  )
+end
+
+-- Start or stop the timer so it matches the current state.
+local function anim_sync()
+  if anim.enabled and anim.wanted and anim.focused and anim.open and anim.n > 0 then
+    anim_start()
+  else
+    anim_stop()
+  end
+end
+
+-- Toggle between the idle gradient and the flowing animation (dashboard `a`).
+local function anim_toggle()
+  if not anim.enabled then
+    return
+  end
+  anim.wanted = not anim.wanted
+  anim_sync()
+end
+
+-- Pause while the nvim UI (tmux session/pane) is unfocused, resume on return.
+local function anim_focus(focused)
+  anim.focused = focused
+  if focused then
+    anim_sync()
+  else
+    anim_stop()
+  end
 end
 
 local function dashboard_header_gradient(item)
@@ -27,15 +116,45 @@ local function dashboard_header_gradient(item)
   while #lines > 0 and lines[#lines]:find("^%s*$") do
     table.remove(lines)
   end
-  local out = {}
   local n = #lines
+  -- symmetric cyan -> blue -> cyan curve so line 1 and line n meet seamlessly
+  anim.base = {}
+  for i = 1, n do
+    local t = (i - 1) / n
+    anim.base[i] = hex_mix(from, to, 1 - math.abs(2 * t - 1))
+  end
+  anim.n = n
+  local out = {}
   for i, line in ipairs(lines) do
-    local t = n > 1 and (i - 1) / (n - 1) or 0
     local hl = "SnacksDashboardHeader" .. i
-    vim.api.nvim_set_hl(0, hl, { fg = hex_mix(from, to, t), bold = true })
+    vim.api.nvim_set_hl(0, hl, { fg = anim.base[i], bold = true })
     out[#out + 1] = { (i == 1 and "" or "\n") .. line, hl = hl }
   end
   return out
+end
+
+-- trimmed from LazyVim's set: drop Find File, Find Text, Config, Lazy Extras
+-- and Lazy (all have <leader> maps already). The animation toggle is only
+-- offered when `ANIMATE` is enabled.
+---@type snacks.dashboard.Item[]
+local dashboard_keys = {
+  { icon = vim.fn.nr2char(0xf15b) .. " ", key = "n", desc = "New File", action = ":ene | startinsert" },
+  {
+    icon = vim.fn.nr2char(0xf0c5) .. " ",
+    key = "r",
+    desc = "Recent Files",
+    action = ":lua Snacks.dashboard.pick('oldfiles')",
+  },
+  { icon = vim.fn.nr2char(0xe348) .. " ", key = "s", desc = "Restore Session", section = "session" },
+  { icon = vim.fn.nr2char(0xf426) .. " ", key = "q", desc = "Quit", action = ":qa" },
+}
+if ANIMATE then
+  table.insert(dashboard_keys, 4, {
+    icon = vim.fn.nr2char(0xf04b) .. " ",
+    key = "a",
+    desc = "Toggle Animation",
+    action = anim_toggle,
+  })
 end
 
 return {
@@ -58,20 +177,7 @@ return {
   ███████████ ███    ███ █████████ █████ █████ ████ █████  
  ██████  █████████████████████ ████ █████ █████ ████ ██████ 
         ]],
-        -- trimmed from LazyVim's set: drop Find File, Find Text, Config,
-        -- Lazy Extras and Lazy (all have <leader> maps already)
-        ---@type snacks.dashboard.Item[]
-        keys = {
-          { icon = vim.fn.nr2char(0xf15b) .. " ", key = "n", desc = "New File", action = ":ene | startinsert" },
-          {
-            icon = vim.fn.nr2char(0xf0c5) .. " ",
-            key = "r",
-            desc = "Recent Files",
-            action = ":lua Snacks.dashboard.pick('oldfiles')",
-          },
-          { icon = vim.fn.nr2char(0xe348) .. " ", key = "s", desc = "Restore Session", section = "session" },
-          { icon = vim.fn.nr2char(0xf426) .. " ", key = "q", desc = "Quit", action = ":qa" },
-        },
+        keys = dashboard_keys,
       },
       formats = {
         header = dashboard_header_gradient,
@@ -508,6 +614,42 @@ return {
     },
   },
   init = function()
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "SnacksDashboardOpened",
+      callback = function()
+        anim.open = true
+        anim_sync()
+      end,
+    })
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "SnacksDashboardClosed",
+      callback = function()
+        anim.open = false
+        anim_stop()
+      end,
+    })
+    if ANIMATE then
+      vim.api.nvim_create_autocmd("FocusGained", {
+        callback = function()
+          anim_focus(true)
+        end,
+      })
+      vim.api.nvim_create_autocmd("FocusLost", {
+        callback = function()
+          anim_focus(false)
+        end,
+      })
+      vim.api.nvim_create_autocmd("VimResume", {
+        callback = function()
+          anim_focus(true)
+        end,
+      })
+      vim.api.nvim_create_autocmd("VimSuspend", {
+        callback = function()
+          anim_focus(false)
+        end,
+      })
+    end
     vim.api.nvim_create_autocmd("User", {
       pattern = "VeryLazy",
       callback = function()
