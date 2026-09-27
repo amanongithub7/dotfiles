@@ -639,46 +639,76 @@ end
 
 -- Rendering (Phase 5) --------------------------------------------------------
 
-local ANNOT_CATEGORIES = {
-  { name = "yellow", heading = "⭐ Main Claims & Key Points" },
-  { name = "red", heading = "❌ Disagree / Limitations" },
-  { name = "green", heading = "✅ Methodology / Core Quotes" },
-  { name = "blue", heading = "ℹ️ Definitions & Concepts" },
-  { name = "purple", heading = "🔗 Connections & Future Work" },
-  { name = "magenta", heading = "💡 Research Ideas" },
-  { name = "orange", heading = "#️⃣ Section Headers" },
-  { name = "gray", heading = "📚 References to Follow Up" },
+-- Annotation colour -> type mapping. This is the SINGLE source of truth for how
+-- nvim renders Zotero highlights. Edit freely to match your conventions.
+-- `hex` is Zotero's default palette; `name` is the callout label.
+M.annotation_colors = {
+  { name = "disagreement", hex = "#ff6666", emoji = "❌", heading = "Disagreements / Critique" },
+  { name = "caveat", hex = "#f19837", emoji = "⚠️", heading = "Caveats & Limitations" },
+  { name = "definition", hex = "#ffd400", emoji = "ℹ️", heading = "Definitions & Concepts" },
+  { name = "keypoint", hex = "#5fb236", emoji = "⭐", heading = "Key Points" },
+  { name = "methodology", hex = "#2ea8e5", emoji = "🧪", heading = "Methodology" },
+  { name = "connection", hex = "#a28ae5", emoji = "🔗", heading = "Connections & Related Work" },
+  { name = "idea", hex = "#e56eee", emoji = "💡", heading = "Ideas & Questions" },
+  { name = "reference", hex = "#aaaaaa", emoji = "📚", heading = "References / Follow-up" },
 }
 
--- Map annotation colours (Zotero defaults + the template's PDF++ hexes) to the
--- template's category names.
-local COLOR_ALIASES = {
-  ["#ffd400"] = "yellow",
-  ["#ffd700"] = "yellow",
-  ["#ffff00"] = "yellow",
-  ["#ffe600"] = "yellow",
-  ["#ff6666"] = "red",
-  ["#ea5252"] = "red",
-  ["#ff0000"] = "red",
-  ["#5fb236"] = "green",
-  ["#51c7a0"] = "green",
-  ["#00ff00"] = "green",
-  ["#2ea8e5"] = "blue",
-  ["#086ddd"] = "blue",
-  ["#cee2f8"] = "blue",
-  ["#0000ff"] = "blue",
-  ["#a28ae5"] = "purple",
-  ["#c586c0"] = "purple",
-  ["#800080"] = "purple",
-  ["#e56eee"] = "magenta",
-  ["#ff7eb3"] = "magenta",
-  ["#ff00ff"] = "magenta",
-  ["#f19837"] = "orange",
-  ["#ffa500"] = "orange",
-  ["#aaaaaa"] = "gray",
-  ["#a0a0a0"] = "gray",
-  ["#808080"] = "gray",
+-- Extra hexes (PDF++/template variants) mapped to the same type names.
+local HEX_ALIASES = {
+  ["#ea5252"] = "disagreement",
+  ["#ff0000"] = "disagreement",
+  ["#ffa500"] = "caveat",
+  ["#ffd700"] = "definition",
+  ["#ffff00"] = "definition",
+  ["#ffe600"] = "definition",
+  ["#51c7a0"] = "keypoint",
+  ["#00ff00"] = "keypoint",
+  ["#086ddd"] = "methodology",
+  ["#cee2f8"] = "methodology",
+  ["#0000ff"] = "methodology",
+  ["#c586c0"] = "connection",
+  ["#800080"] = "connection",
+  ["#ff7eb3"] = "idea",
+  ["#ff00ff"] = "idea",
+  ["#a0a0a0"] = "reference",
+  ["#808080"] = "reference",
 }
+
+local OTHER = { name = "other", emoji = "📝", heading = "Other Highlights" }
+
+---Resolve an annotation colour hex to a type name.
+---@param hex string|nil
+---@return string
+local function color_name(hex)
+  hex = (hex or ""):lower()
+  for _, c in ipairs(M.annotation_colors) do
+    if c.hex == hex then
+      return c.name
+    end
+  end
+  return HEX_ALIASES[hex] or "other"
+end
+
+---Ordered categories (configured colours, then the "other" bucket).
+---@return table[]
+local function categories()
+  local out = {}
+  for _, c in ipairs(M.annotation_colors) do
+    out[#out + 1] = c
+  end
+  out[#out + 1] = OTHER
+  return out
+end
+
+---Markdown table describing the colour -> type convention.
+---@return string
+function M.annotation_legend()
+  local out = { "| Color | Type |", "|:-----:|------|" }
+  for _, c in ipairs(M.annotation_colors) do
+    out[#out + 1] = ("| %s | %s |"):format(c.emoji, c.heading)
+  end
+  return table.concat(out, "\n")
+end
 
 local ANNOT_START = "<!-- zotero:annotations:start -->"
 local ANNOT_END = "<!-- zotero:annotations:end -->"
@@ -698,18 +728,18 @@ end
 ---@param pdf_uri string Zotero URI for the PDF (deep-links get page/annotation)
 ---@return string
 function M.render_annotations(annots, pdf_uri)
-  local by_cat = {}
+  local by_name = {}
   for _, a in ipairs(annots) do
-    local cat = COLOR_ALIASES[((a.color or ""):lower())] or "gray"
-    by_cat[cat] = by_cat[cat] or {}
-    table.insert(by_cat[cat], a)
+    local n = color_name(a.color)
+    by_name[n] = by_name[n] or {}
+    table.insert(by_name[n], a)
   end
   local out, any = {}, false
-  for _, c in ipairs(ANNOT_CATEGORIES) do
-    local list = by_cat[c.name]
+  for _, c in ipairs(categories()) do
+    local list = by_name[c.name]
     if list and #list > 0 then
       any = true
-      out[#out + 1] = "### " .. c.heading
+      out[#out + 1] = "### " .. c.emoji .. " " .. c.heading
       out[#out + 1] = ""
       for _, a in ipairs(list) do
         local text = (a.text or ""):gsub("\n", " ")
@@ -781,6 +811,10 @@ function M.render_note(citekey)
     ANNOT_START,
     M.render_annotations(M.annotations(citekey), uri),
     ANNOT_END,
+    "",
+    "### 🗂️ Annotation Legend",
+    "",
+    M.annotation_legend(),
     "",
     "## 🔗 References",
     "",
