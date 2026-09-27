@@ -16,6 +16,7 @@ return {
     },
     opts = {
       preferred_picker = "snacks",
+      default_mode = "plan",
       keymap = {
         session_picker = {
           delete_session = { "<C-x>", mode = { "i", "n" }, desc = "Delete selected sessions" },
@@ -108,11 +109,35 @@ return {
       },
       ui = {
         window_width = 0.30,
+        input = {
+          auto_hide = true,
+        },
+        completion = {
+          file_sources = {
+            preferred_cli_tool = "rg",
+          },
+        },
         output = {
+          max_messages = 100,
           tools = {
             -- hide reasoning by default; toggle display with <leader>or or /reasoning
             show_reasoning_output = false,
           },
+        },
+      },
+      context = {
+        cursor_data = {
+          enabled = true,
+          context_lines = 5,
+        },
+        diagnostics = {
+          only_closest = true,
+        },
+        git_diff = {
+          enabled = true,
+        },
+        buffer = {
+          enabled = true,
         },
       },
     },
