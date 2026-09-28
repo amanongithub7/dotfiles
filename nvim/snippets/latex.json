@@ -1,0 +1,23 @@
+{
+  "report": {
+    "prefix": "report",
+    "body": [
+      "\\documentclass[11pt]{article}",
+      "\\usepackage[margin=1in]{geometry}",
+      "\\usepackage{amsmath,amssymb}",
+      "\\usepackage{hyperref}",
+      "",
+      "\\title{${1:Title}}",
+      "\\author{${2:Aman}}",
+      "\\date{\\today}",
+      "",
+      "\\begin{document}",
+      "\\maketitle",
+      "",
+      "\\section{${3:Introduction}}",
+      "$0",
+      "\\end{document}"
+    ],
+    "description": "One-page report skeleton"
+  }
+}
