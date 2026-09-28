@@ -1,3 +1,69 @@
+-- macOS desktop alerts for OpenCode completion/permission events. Only fires
+-- while the nvim UI is unfocused. Ghostty understands OSC 777 notifications but
+-- suppresses them while its window is focused, so: if Ghostty is frontmost
+-- (e.g. you switched tmux sessions in the same window) fall back to an osascript
+-- system notification, which shows regardless of focus; otherwise emit the
+-- native OSC banner. When running inside tmux the OSC is wrapped in a
+-- passthrough sequence (needs `allow-passthrough`).
+local focused = true
+
+local function session_name(session)
+  if not session then
+    return "session"
+  end
+  return (session.title and session.title ~= "" and session.title) or session.id or "session"
+end
+
+-- Native terminal notification (OSC 777), tmux-passthrough wrapped when needed.
+-- tmux's DCS parser drops a lone ESC, so the inner ESC must be doubled
+-- (\e\e) for the terminal to receive a real OSC.
+local function emit_osc(title, body)
+  local esc = "\27"
+  local osc = "]777;notify;" .. title .. ";" .. body .. "\7"
+  local seq = vim.env.TMUX and (esc .. "Ptmux;" .. esc .. esc .. osc .. esc .. "\\") or (esc .. osc)
+  io.stdout:write(seq)
+  io.stdout:flush()
+end
+
+-- macOS Notification Center alert. Args are passed via argv so no escaping.
+local function macos_notify(title, body)
+  vim.system({
+    "osascript",
+    "-e",
+    "on run argv",
+    "-e",
+    "display notification (item 2 of argv) with title (item 1 of argv)",
+    "-e",
+    "end run",
+    "--",
+    title,
+    body,
+  })
+end
+
+local function desktop_notify(title, body)
+  if focused then
+    return
+  end
+  body = body:gsub("[%c]", " ")
+  vim.schedule(function()
+    vim.system({ "lsappinfo", "front" }, { text = true }, function(front)
+      local asn = front.code == 0 and vim.trim(front.stdout or "") or ""
+      if asn == "" then
+        return emit_osc(title, body)
+      end
+      vim.system({ "lsappinfo", "info", "-only", "name", asn }, { text = true }, function(info)
+        local name = (info.stdout or ""):match('^"([^"]+)"')
+        if name and name:lower() == "ghostty" then
+          macos_notify(title, body)
+        else
+          emit_osc(title, body)
+        end
+      end)
+    end)
+  end)
+end
+
 return {
   {
     "sudo-tee/opencode.nvim",
@@ -15,6 +81,21 @@ return {
       -- 'nvim_mini/mini.nvim',
     },
     init = function()
+      -- Track UI focus so desktop alerts only fire while you're looking away.
+      local focus_group = vim.api.nvim_create_augroup("OpencodeNotifyFocus", { clear = true })
+      vim.api.nvim_create_autocmd({ "FocusGained", "VimResume" }, {
+        group = focus_group,
+        callback = function()
+          focused = true
+        end,
+      })
+      vim.api.nvim_create_autocmd({ "FocusLost", "VimSuspend" }, {
+        group = focus_group,
+        callback = function()
+          focused = false
+        end,
+      })
+
       -- Session picker: rename the title and stay in normal mode so the
       -- plain-letter actions (r/x/n/t/f/s) work without Ctrl. The BufEnter
       -- autocmd re-applies normal mode whenever the picker regains focus
@@ -204,6 +285,7 @@ return {
       -- sending the next prompt was effectively doing).
       hooks = {
         on_done_thinking = function(completed_session)
+          desktop_notify("OpenCode", session_name(completed_session) .. " finished")
           vim.defer_fn(function()
             local state = require("opencode.state")
             local active = state.active_session
@@ -237,6 +319,9 @@ return {
               renderer.scroll_to_bottom(true)
             end
           end, 30)
+        end,
+        on_permission_requested = function(session)
+          desktop_notify("OpenCode", session_name(session) .. " needs your approval")
         end,
       },
     },
