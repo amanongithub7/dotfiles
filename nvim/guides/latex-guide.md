@@ -162,21 +162,53 @@ snippet or the Zotero integration in this config.
 
 ---
 
-## 8. Tips & troubleshooting
+## 8. Chinese / CJK text
+
+`pdflatex` cannot typeset Unicode CJK characters — you get
+`LaTeX Error: Unicode character …`. Compile such documents with **XeLaTeX**.
+
+No extra installs needed:
+
+```latex
+% !TEX program = xelatex          % first line; VimTeX compiles with xelatex
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\newfontfamily\cjkfont{Songti SC}       % any macOS CJK font
+\newcommand{\zh}[1]{{\cjkfont #1}}      % wrap Chinese text: \zh{白雅铭}
+```
+
+Then open the file and `\ll` as usual.
+
+Automatic CJK (recommended if you write a lot of Chinese) uses the **ctex**
+bundle instead of a manual macro. This requires a consistent TeX Live install:
+
+```sh
+sudo tlmgr update --self --all
+sudo tlmgr install ctex
+```
+
+then keep `% !TEX program = xelatex` and use
+`\usepackage[fontset=fandol]{ctex}` (or `fontset=mac`). Never mix `tlmgr
+--usermode` packages with a frozen release — newer packages shadow the system
+but mismatch its LaTeX format.
+
+---
+
+## 9. Tips & troubleshooting
 
 - **Nothing compiles?** Ensure `latexmk` is installed (`latexmk -v`); VimTeX's
   default compiler is latexmk.
 - **PDF doesn't open / no sync?** Inverse search calls
   `/opt/homebrew/bin/nvim` (set via `vimtex_callback_progpath`). In sioyek,
   press `F4` and right-click to inverse-search.
-- **Engine:** default is `pdflatex`. Ask to switch to `lualatex`/`xelatex` for
-  Unicode/OpenType fonts.
+- **Engine:** default is `pdflatex`. Add `% !TEX program = xelatex` to a file
+  (see §8) for Unicode/CJK/OpenType fonts.
 - **Warnings:** the quickfix does not auto-open on warnings (only errors).
 - **Clean before sharing:** `\lc` (aux) or `\lC` (aux + PDF).
 
 ---
 
-## 9. Files in this setup
+## 10. Files in this setup
 
 | File | Purpose |
 | --- | --- |
