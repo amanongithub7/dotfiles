@@ -99,6 +99,22 @@ Convenience mappings:
 | `<F7>` | Prompt for a command to insert |
 | `<F8>` | Add `\left`/`\right` modifiers to delimiters |
 
+### Formatting & line length
+
+`.tex` and `.bib` files are auto-formatted on save by **tex-fmt** (via conform),
+which wraps long lines to **80** columns and normalizes indentation. Verbatim
+environments (`verbatim`, `minted`, `lstlisting`) are skipped automatically.
+
+| Key | Action |
+| --- | --- |
+| `<leader>cf` | Format the current file now |
+| `<leader>uF` | Toggle autoformat for this buffer · `<leader>uf` global |
+| `% tex-fmt: skip` | Don't format this line |
+| `% tex-fmt: off` / `% tex-fmt: on` | Don't format the block between them |
+
+Change the width in `nvim/lua/plugins/lang-servers-and-tools.lua`
+(`--wraplen`); tex-fmt also reindents, so it is not wrap-only.
+
 ---
 
 ## 5. Snippets
