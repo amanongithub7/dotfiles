@@ -137,44 +137,9 @@ eval "$(zoxide init zsh)"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # aliases
-#
-# set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# for a full list of active aliases, run `alias`.
-alias caf='caffeinate -d'                                  # force OS and display to stay awake
-alias nvc='nvim && clear'                                  # keeps shell clean
-
-alias ls='eza --icons'
-alias l='eza -a -l --git --icons'                          # table view of files with metadata
-alias lt='eza -a --git --icons --level=2 --tree'           # tree view of files
-alias ltree='eza -a --git --icons --level=2 --long --tree' # tree view of files with metadata
-
-# bat and bat-extras for better formatting and colorschemes
-alias cat='bat' # file previews
-alias diff='batdiff' # git index based diffs and regular diffs
-alias man='batman' # man pages
-alias rg='batgrep' # ripgrep
-
-# toggle dark/light mode on macos and source zsh config for bat, eza, etc. theme updates
-alias yin-yang='clear && dark-mode && printf "\u262F\n" && source ~/.zshrc && tmux source-file ~/.config/tmux/tmux.conf && clear'
-alias yy='yin-yang'
-
-# python aliases
-alias python=python3
-alias pip=pip3
-
-# alias for qgis that launches with its python virtual env
-alias qgis='export PYTHONPATH="$HOME/qgis_venv/lib/python3.12/site-packages:$PYTHONPATH" && open /Applications/QGIS-LTR.app'
-
-# yazi util func to exit into current yazi dir with `q` and original cwd with `Q`
-function yz() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	IFS= read -r -d '' cwd < "$tmp"
-	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-	rm -f -- "$tmp"
-}
+if [[ -o interactive ]]; then
+  [[ -r ~/dotfiles/zsh/personal_aliases.zsh ]] && source ~/dotfiles/zsh/personal_aliases.zsh
+fi
 
 # golang
 #
