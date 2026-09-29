@@ -1,0 +1,167 @@
+/* ==========================================================================
+   Cyberdream theme for the Zotero PDF reader (and other content documents)
+   --------------------------------------------------------------------------
+   The reader is a `type="content"` document, so it is NOT styled by
+   userChrome.css; instead it is themed by userContent.css. It switches via a
+   `data-color-scheme` attribute on <html> (set by Zotero), not a media query,
+   so the overrides below are scoped to `:root[data-color-scheme=…]`.
+
+   Scoping to `[data-color-scheme]` keeps this from leaking onto arbitrary web
+   pages loaded in Zotero (they don't set that attribute).
+
+   Same palette as userChrome.css. `!important` is required because this is a
+   user-origin stylesheet and must beat Zotero's author-origin :root rules.
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ dark -- */
+:root[data-color-scheme="dark"] {
+  /* surfaces */
+  --color-background: #16181a !important;
+  --color-background50: rgba(22, 24, 26, 0.5) !important;
+  --color-background70: rgba(22, 24, 26, 0.7) !important;
+  --color-sidepane: #1b1e21 !important;
+  --color-toolbar: #1b1e21 !important;
+  --color-tabbar: #16181a !important;
+  --color-button: #2a2e33 !important;
+  --color-button50: rgba(42, 46, 51, 0.5) !important;
+  --color-control: #c8ccd4 !important;
+  --color-panedivider: #2f343a !important;
+  --color-border: rgba(255, 255, 255, 0.12) !important;
+  --color-border50: rgba(255, 255, 255, 0.06) !important;
+  --color-menu: rgba(22, 24, 26, 0.85) !important;
+  --color-scrollbar: #3c4048 !important;
+  --color-scrollbar-hover: #5ef1ff !important;
+  --color-scrollbar-background: transparent !important;
+  --color-quinary-on-background: #1f2327 !important;
+  --color-quarternary-on-background: #262b31 !important;
+  --color-quinary-on-sidepane: #23272c !important;
+  --color-quarternary-on-sidepane: #2b3036 !important;
+
+  /* text */
+  --fill-primary: rgba(255, 255, 255, 0.92) !important;
+  --fill-secondary: rgba(255, 255, 255, 0.55) !important;
+  --fill-tertiary: rgba(255, 255, 255, 0.3) !important;
+  --fill-quarternary: rgba(255, 255, 255, 0.12) !important;
+  --fill-quinary: rgba(255, 255, 255, 0.06) !important;
+  --fill-senary: rgba(255, 255, 255, 0.03) !important;
+
+  /* accents */
+  --accent-white: #ffffff !important;
+  --accent-blue: #4d84ff !important;
+  --accent-blue10: rgba(77, 132, 255, 0.14) !important;
+  --accent-blue30: rgba(77, 132, 255, 0.35) !important;
+  --accent-blue50: rgba(77, 132, 255, 0.55) !important;
+  --accent-azure: #5ef1ff !important;
+  --accent-cyan: #5ef1ff !important;
+  --accent-teal: #5ef1c8 !important;
+  --accent-green: #5eff6c !important;
+  --accent-yellow: #f1ff5e !important;
+  --accent-gold: #f1ff5e !important;
+  --accent-orange: #ff9d5e !important;
+  --accent-red: #ff6e5e !important;
+  --accent-magenta: #bd5eff !important;
+  --accent-purple: #bd5eff !important;
+  --accent-wood: #c98a5e !important;
+  --accent-wood-dark: #996b6f !important;
+
+  /* focus rings */
+  --color-focus-outer-border: rgba(94, 241, 255, 0.9) !important;
+  --color-focus-border: rgba(0, 0, 0, 0.5) !important;
+
+  /* tag colours */
+  --tag-blue: #5ea1ff !important;
+  --tag-azure: #5ef1ff !important;
+  --tag-teal: #5ef1c8 !important;
+  --tag-green: #5eff6c !important;
+  --tag-yellow: #f1ff5e !important;
+  --tag-orange: #ff9d5e !important;
+  --tag-red: #ff6e5e !important;
+  --tag-magenta: #bd5eff !important;
+  --tag-purple: #bd5eff !important;
+  --tag-plum: #d05eff !important;
+  --tag-indigo: #7c8cff !important;
+  --tag-gray: #6b7280 !important;
+}
+
+/* ----------------------------------------------------------------- light -- */
+:root[data-color-scheme="light"] {
+  /* surfaces */
+  --color-background: #ffffff !important;
+  --color-background50: rgba(255, 255, 255, 0.5) !important;
+  --color-background70: rgba(255, 255, 255, 0.7) !important;
+  --color-sidepane: #f2f3f5 !important;
+  --color-toolbar: #f7f8f9 !important;
+  --color-tabbar: #f2f3f5 !important;
+  --color-button: #ffffff !important;
+  --color-button50: rgba(255, 255, 255, 0.5) !important;
+  --color-control: #ffffff !important;
+  --color-panedivider: #dce0e5 !important;
+  --color-border: rgba(22, 24, 26, 0.14) !important;
+  --color-border50: rgba(22, 24, 26, 0.07) !important;
+  --color-menu: rgba(247, 248, 249, 0.8) !important;
+  --color-scrollbar: #c2c6cc !important;
+  --color-scrollbar-hover: #008c99 !important;
+  --color-scrollbar-background: transparent !important;
+  --color-quinary-on-background: #eef0f2 !important;
+  --color-quarternary-on-background: #e2e5e9 !important;
+  --color-quinary-on-sidepane: #e9ebee !important;
+  --color-quarternary-on-sidepane: #dde0e4 !important;
+
+  /* text */
+  --fill-primary: rgba(22, 24, 26, 0.88) !important;
+  --fill-secondary: rgba(22, 24, 26, 0.55) !important;
+  --fill-tertiary: rgba(22, 24, 26, 0.26) !important;
+  --fill-quarternary: rgba(22, 24, 26, 0.1) !important;
+  --fill-quinary: rgba(22, 24, 26, 0.05) !important;
+  --fill-senary: rgba(22, 24, 26, 0.02) !important;
+
+  /* accents */
+  --accent-white: #ffffff !important;
+  --accent-blue: #0057d1 !important;
+  --accent-blue10: rgba(0, 87, 209, 0.1) !important;
+  --accent-blue30: rgba(0, 87, 209, 0.3) !important;
+  --accent-blue50: rgba(0, 87, 209, 0.5) !important;
+  --accent-azure: #008c99 !important;
+  --accent-cyan: #008c99 !important;
+  --accent-teal: #008c99 !important;
+  --accent-green: #008b0c !important;
+  --accent-yellow: #997b00 !important;
+  --accent-gold: #997b00 !important;
+  --accent-orange: #b25a00 !important;
+  --accent-red: #d11500 !important;
+  --accent-magenta: #a018ff !important;
+  --accent-purple: #a018ff !important;
+  --accent-wood: #a0522d !important;
+  --accent-wood-dark: #996b6f !important;
+
+  /* focus rings */
+  --color-focus-outer-border: rgba(0, 140, 153, 0.9) !important;
+  --color-focus-border: #ffffff !important;
+
+  /* tag colours */
+  --tag-blue: #0057d1 !important;
+  --tag-azure: #008c99 !important;
+  --tag-teal: #008c99 !important;
+  --tag-green: #008b0c !important;
+  --tag-yellow: #997b00 !important;
+  --tag-orange: #b25a00 !important;
+  --tag-red: #d11500 !important;
+  --tag-magenta: #a018ff !important;
+  --tag-purple: #a018ff !important;
+  --tag-plum: #a018ff !important;
+  --tag-indigo: #3b3bd1 !important;
+  --tag-gray: #8c8fa1 !important;
+}
+
+/* ------------------------------------------------ PDF viewer surrounding -- */
+/* The area behind/around the rendered pages (pdf.js viewer.css hardcodes
+   #f2f2f2 light and #272727 dark). Match cyberdream instead. */
+:root[data-color-scheme="dark"] body,
+:root[data-color-scheme="dark"] body #viewerContainer {
+  background-color: #16181a !important;
+}
+
+:root[data-color-scheme="light"] body,
+:root[data-color-scheme="light"] body #viewerContainer {
+  background-color: #f2f3f5 !important;
+}
