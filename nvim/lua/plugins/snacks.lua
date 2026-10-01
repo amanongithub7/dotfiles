@@ -133,6 +133,28 @@ local function dashboard_header_gradient(item)
   return out
 end
 
+-- Hidden and ignored entries, plus untracked files (`git_status_hl` colors the
+-- filename itself), inherit highlight groups that cyberdream links to `NonText`
+-- (near-invisible) - especially bad over a translucent background. Map them to
+-- readable palette colors. Snacks re-applies its highlight groups on every
+-- ColorScheme, so callers must run after that (see the hooks in `init`).
+local function set_picker_highlights()
+  local ok, colors = pcall(require, "cyberdream.colors")
+  if not ok then
+    return
+  end
+  local palette = vim.o.background == "light" and colors.light or colors.default
+  local groups = {
+    SnacksPickerPathHidden = palette.purple, -- hidden files/dirs (dotfiles)
+    SnacksPickerPathIgnored = palette.grey, -- gitignored files/dirs
+    SnacksPickerGitStatusUntracked = palette.green, -- untracked files/dirs + "?"
+    SnacksPickerGitStatusIgnored = palette.grey, -- ignored "!" badge
+  }
+  for group, fg in pairs(groups) do
+    vim.api.nvim_set_hl(0, group, { fg = fg })
+  end
+end
+
 -- trimmed from LazyVim's set: drop Find File, Find Text, Config, Lazy Extras
 -- and Lazy (all have <leader> maps already). The animation toggle is only
 -- offered when `ANIMATE` is enabled.
@@ -614,6 +636,16 @@ return {
     },
   },
   init = function()
+    -- schedule so we win the race against snacks' own ColorScheme re-apply
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      callback = function()
+        vim.schedule(set_picker_highlights)
+      end,
+    })
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "VeryLazy",
+      callback = set_picker_highlights,
+    })
     vim.api.nvim_create_autocmd("User", {
       pattern = "SnacksDashboardOpened",
       callback = function()
