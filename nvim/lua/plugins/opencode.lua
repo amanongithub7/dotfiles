@@ -1,10 +1,14 @@
--- macOS desktop alerts for OpenCode completion/permission events. Only fires
--- while the nvim UI is unfocused. Ghostty understands OSC 777 notifications but
--- suppresses them while its window is focused, so: if Ghostty is frontmost
--- (e.g. you switched tmux sessions in the same window) fall back to an osascript
--- system notification, which shows regardless of focus; otherwise emit the
--- native OSC banner. When running inside tmux the OSC is wrapped in a
--- passthrough sequence (needs `allow-passthrough`).
+-- macOS desktop alerts for OpenCode completion/permission/question events. The
+-- alert is suppressed only while the nvim UI is actually visible: nvim still
+-- thinks it has focus, *and* the terminal window is on the focused AeroSpace
+-- workspace. Switching to an empty/same-app workspace does not move macOS focus,
+-- so nvim keeps its `focused` flag without an AeroSpace query for help.
+--
+-- Ghostty understands OSC 777 notifications but suppresses them while its window
+-- is focused, so: if Ghostty is frontmost (e.g. you switched tmux sessions in the
+-- same window) fall back to an osascript system notification, which shows
+-- regardless of focus; otherwise emit the native OSC banner. When running inside
+-- tmux the OSC is wrapped in a passthrough sequence (needs `allow-passthrough`).
 local focused = true
 
 local function session_name(session)
@@ -41,19 +45,57 @@ local function macos_notify(title, body)
   })
 end
 
-local function desktop_notify(title, body)
-  if focused then
-    return
+-- Frontmost application name ("Ghostty", "LibreOffice", ...) or nil.
+local function front_app(cb)
+  vim.system({ "lsappinfo", "front" }, { text = true }, function(front)
+    local asn = front.code == 0 and vim.trim(front.stdout or "") or ""
+    if asn == "" then
+      return cb(nil)
+    end
+    vim.system({ "lsappinfo", "info", "-only", "name", asn }, { text = true }, function(info)
+      cb((info.stdout or ""):match('^"([^"]+)"'))
+    end)
+  end)
+end
+
+-- Whether `app` has a window on the focused AeroSpace workspace. Returns nil
+-- when AeroSpace can't be queried (then callers keep the old focused-only
+-- behavior rather than risking notification spam).
+local function app_on_active_workspace(app)
+  if not app or vim.fn.exepath("aerospace") == "" then
+    return nil
   end
+  local ws = vim.fn.systemlist({ "aerospace", "list-workspaces", "--focused" })[1]
+  if not ws or ws == "" then
+    return nil
+  end
+  local ok, wins = pcall(vim.fn.systemlist, {
+    "aerospace",
+    "list-windows",
+    "--workspace",
+    ws,
+    "--format",
+    "%{app-name}",
+  })
+  if not ok then
+    return nil
+  end
+  return vim.tbl_contains(wins, app)
+end
+
+local function desktop_notify(title, body)
   body = body:gsub("[%c]", " ")
   vim.schedule(function()
-    vim.system({ "lsappinfo", "front" }, { text = true }, function(front)
-      local asn = front.code == 0 and vim.trim(front.stdout or "") or ""
-      if asn == "" then
-        return emit_osc(title, body)
-      end
-      vim.system({ "lsappinfo", "info", "-only", "name", asn }, { text = true }, function(info)
-        local name = (info.stdout or ""):match('^"([^"]+)"')
+    front_app(function(name)
+      -- vim.system callbacks run in a fast-event context; hop back to the main
+      -- loop before shelling out to aerospace.
+      vim.schedule(function()
+        -- nil (unavailable) or true means "looks visible" -> stay quiet while
+        -- nvim still has focus; false means the terminal is off the active
+        -- workspace.
+        if focused and app_on_active_workspace(name) ~= false then
+          return
+        end
         if name and name:lower() == "ghostty" then
           macos_notify(title, body)
         else
@@ -93,6 +135,16 @@ return {
         group = focus_group,
         callback = function()
           focused = false
+        end,
+      })
+
+      -- Alert when OpenCode's question UI is waiting on input. The plugin fires
+      -- `User OpencodeEvent:<name>` for every server event, so this stays dormant
+      -- until OpenCode runs and never forces the plugin to load early.
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "OpencodeEvent:question.asked",
+        callback = function()
+          desktop_notify("OpenCode", "needs your input")
         end,
       })
 
