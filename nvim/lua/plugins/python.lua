@@ -1,6 +1,7 @@
 return {
   { -- access python package documentation using :h module, class, function etc.
     "RazorBest/pydoc.nvim",
+    ft = "python",
     opts = {
       version = "3.12", -- Python version
     },
@@ -86,6 +87,7 @@ return {
     "benlubas/molten-nvim",
     branch = "main", -- Neovim 0.12 fix (#340, #offset! metadata) only exists on main; no release since v1.9.2
     build = ":UpdateRemotePlugins",
+    ft = { "python", "quarto", "markdown" }, -- run code cells in these filetypes
     dependencies = { "3rd/image.nvim" }, -- for images and plots
     init = function()
       vim.g.molten_image_provider = "image.nvim"

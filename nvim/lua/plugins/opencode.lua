@@ -109,6 +109,18 @@ end
 return {
   {
     "sudo-tee/opencode.nvim",
+    lazy = true,
+    cmd = { "Opencode" },
+    -- lazy stubs for the entry maps; the plugin's own keymaps replace them on load
+    keys = {
+      { "<leader>og", desc = "Toggle Opencode" },
+      { "<leader>oi", desc = "Open Input Window" },
+      { "<leader>os", desc = "Session Management" },
+      { "<leader>op", desc = "Configure Provider" },
+      { "<leader>oz", desc = "Toggle Zoom" },
+      { "<leader>om", desc = "Toggle Agent Mode" },
+      { "<leader>or", desc = "Toggle Reasoning" },
+    },
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MeanderingProgrammer/render-markdown.nvim",
@@ -246,9 +258,15 @@ return {
           ["<leader>o<"] = false,
           ["<leader>o>"] = false,
           ["<leader>o?"] = false,
-          ["<leader>o1"] = false, ["<leader>o2"] = false, ["<leader>o3"] = false,
-          ["<leader>o4"] = false, ["<leader>o5"] = false, ["<leader>o6"] = false,
-          ["<leader>o7"] = false, ["<leader>o8"] = false, ["<leader>o9"] = false,
+          ["<leader>o1"] = false,
+          ["<leader>o2"] = false,
+          ["<leader>o3"] = false,
+          ["<leader>o4"] = false,
+          ["<leader>o5"] = false,
+          ["<leader>o6"] = false,
+          ["<leader>o7"] = false,
+          ["<leader>o8"] = false,
+          ["<leader>o9"] = false,
           ["<leader>oh"] = false,
           ["<leader>oo"] = false,
           ["<leader>ot"] = false,

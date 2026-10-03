@@ -1,6 +1,7 @@
 return {
   {
     "nvim-treesitter/nvim-treesitter-textobjects",
+    event = "LazyFile",
   },
   {
     "nvim-treesitter/nvim-treesitter",

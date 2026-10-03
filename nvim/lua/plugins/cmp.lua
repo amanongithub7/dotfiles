@@ -2,6 +2,7 @@ return {
   {
     "jmbuhr/otter.nvim",
     dev = false,
+    lazy = true, -- only needed for quarto/notebook LSP features
     dependencies = {
       {
         "neovim/nvim-lspconfig",
@@ -12,14 +13,17 @@ return {
   },
   {
     "saghen/blink.compat",
+    lazy = true, -- loaded with blink.cmp
     opts = {},
   },
   {
     "saghen/blink.cmp",
+    event = { "InsertEnter", "CmdlineEnter" },
     dependencies = {
       "hrsh7th/nvim-cmp",
       "rafamadriz/friendly-snippets",
-      "obsidian-nvim/obsidian.nvim",
+      -- obsidian is only needed as a completion source in markdown, where it
+      -- loads via its own ft=markdown spec; do not force-load it at startup.
       "saghen/blink.compat",
       "jmbuhr/otter.nvim",
       {

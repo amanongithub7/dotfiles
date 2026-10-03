@@ -1,6 +1,7 @@
 return {
   {
     "vhyrro/luarocks.nvim",
+    lazy = true,
     priority = 1001,
     opts = {
       rocks = { "dkjson", "magick" },
@@ -11,6 +12,8 @@ return {
     version = "1.1.0",
     dependencies = { "luarocks.nvim" },
     build = false,
+    -- only needed for inline images in these filetypes
+    ft = { "markdown", "python", "quarto", "jupyter", "r", "norg", "org" },
     opts = {
       processor = "magick_cli",
       backend = "kitty",

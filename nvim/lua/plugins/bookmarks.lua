@@ -2,6 +2,15 @@ return {
   "LintaoAmons/bookmarks.nvim",
   -- pin the plugin at specific version for stability
   -- backup your bookmark sqlite db when there are breaking changes (major version change)
+  -- load on first use; all access goes through the :Bookmarks* commands
+  cmd = {
+    "BookmarksMark",
+    "BookmarksGoto",
+    "BookmarksCommands",
+    "BookmarksDesc",
+    "BookmarksTree",
+    "BookmarksInfo",
+  },
   dependencies = {
     { "kkharji/sqlite.lua" },
     -- picker backend (choose one):

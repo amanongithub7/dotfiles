@@ -19,5 +19,6 @@ return {
   },
   { -- for vim-like navigation between herdr and vim panes
     "devxplay/herdr.nvim",
+    event = "VeryLazy",
   },
 }

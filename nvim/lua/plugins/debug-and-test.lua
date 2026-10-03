@@ -126,7 +126,7 @@ return {
       require("dap-python").setup(path)
     end,
   },
-  { "nvim-neotest/nvim-nio" },
+  { "nvim-neotest/nvim-nio", lazy = true },
   {
     "nvim-neotest/neotest",
     ft = "python",

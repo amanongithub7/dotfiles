@@ -40,6 +40,7 @@ return {
       on Neovim startup.
     --]]
     "mason-org/mason-lspconfig.nvim",
+    event = "LazyFile",
     dependencies = {
       {
         --[[                     Mason
@@ -76,6 +77,7 @@ return {
       are installed on the machine.
     --]]
     "WhoIsSethDaniel/mason-tool-installer.nvim",
+    event = "LazyFile",
     dependencies = {
       "mason-org/mason.nvim",
     },
@@ -93,6 +95,7 @@ return {
       Additional settings/overrides can be made by creating local lsp/*.lua files.
     --]]
     "neovim/nvim-lspconfig",
+    event = "LazyFile",
     dependencies = {
       -- lazydev configures lua_ls for editing Neovim configs by lazily updating workspace libraries.
       {
@@ -119,6 +122,7 @@ return {
   -- We extend it here for Python (ruff) which isn't covered by defaults.
   {
     "stevearc/conform.nvim",
+    event = "LazyFile",
     opts = {
       formatters_by_ft = {
         python = { "ruff_organize_imports", "ruff_format" },
@@ -136,6 +140,7 @@ return {
   -- LazyVim already installs and configures it; we extend it with shellcheck.
   {
     "mfussenegger/nvim-lint",
+    event = "LazyFile",
     opts = {
       linters_by_ft = {
         sh = { "shellcheck" },
