@@ -66,7 +66,16 @@ end
 
 return {
   "lervag/vimtex",
-  lazy = false, -- we don't want to lazy load VimTeX
+  -- load only for LaTeX/BibTeX buffers. NOTE: lazy loading means the global
+  -- :VimtexInverseSearch command only exists after a .tex/.bib buffer is opened,
+  -- so inverse-search from the PDF viewer into a fresh, bufferless nvim server
+  -- won't work.
+  event = {
+    "BufReadPre *.tex",
+    "BufReadPre *.bib",
+    "BufNewFile *.tex",
+    "BufNewFile *.bib",
+  },
   -- tag = "v2.15", -- uncomment to pin to a specific release
   init = function()
     -- VimTeX configuration
