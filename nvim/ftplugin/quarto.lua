@@ -66,6 +66,20 @@ map("<localleader>oh", ":MoltenHideOutput<CR>", "hide output")
 map("<localleader>ob", ":MoltenOpenInBrowser<CR>", "output in browser")
 map("<localleader>ip", ":MoltenImagePopup<CR>", "image popup")
 map("<localleader>my", ":MoltenYankOutput<CR>", "yank output")
+-- Expand the output float to fit its full buffer (works only while the
+-- cursor is inside it, i.e. after <localleader>os). Molten re-renders the
+-- window at max height on the next evaluation, so this is per-render.
+map("<localleader>oe", function()
+  local cfg = vim.api.nvim_win_get_config(0)
+  if cfg.relative == "" and cfg.external == false then
+    vim.notify("molten: cursor is not inside the output window — use <localleader>os first", vim.log.levels.WARN)
+    return
+  end
+  local lines = vim.api.nvim_buf_line_count(0)
+  if lines > vim.api.nvim_win_get_height(0) then
+    vim.api.nvim_win_set_height(0, lines)
+  end
+end, "expand output window")
 
 -- cell management
 map("<localleader>md", ":MoltenDelete<CR>", "delete molten cell")
@@ -94,6 +108,7 @@ wk.add({
   { "<localleader>os", desc = "show/enter output", icon = "󰕮", buffer = buf },
   { "<localleader>oh", desc = "hide output", icon = "󰘁", buffer = buf },
   { "<localleader>ob", desc = "output in browser", icon = "󰈹", buffer = buf },
+  { "<localleader>oe", desc = "expand output window", icon = "󰊓", buffer = buf },
   { "<localleader>ip", desc = "image popup", icon = "", buffer = buf },
   { "<localleader>my", desc = "yank output", icon = "󰆏", buffer = buf },
 

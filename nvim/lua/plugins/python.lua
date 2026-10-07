@@ -133,6 +133,11 @@ return {
       -- a keybind for `:noautocmd MoltenEnterOutput` is defined in config/keymaps.lua to open the output again
       vim.g.molten_auto_open_output = false
 
+      -- MoltenEnterOutput (<localleader>os) opens AND moves the cursor into
+      -- the float in one press. Molten's default "open_then_enter" only opens
+      -- on the first press and enters on the second, which feels broken.
+      vim.g.molten_enter_output_behavior = "open_and_enter"
+
       -- wrapping for virt text and the output window
       vim.g.molten_wrap_output = true
 
@@ -141,6 +146,11 @@ return {
 
       -- this will make it so the output shows up below the \`\`\` cell delimiter
       vim.g.molten_virt_lines_off_by_1 = true
+
+      -- show " N More Lines " in the output window footer when the buffer is
+      -- longer than the max height (scroll inside the float, or expand with
+      -- <localleader>oe)
+      vim.g.molten_output_show_more = true
     end,
   },
 }
