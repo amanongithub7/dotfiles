@@ -23,6 +23,22 @@ vim.api.nvim_create_autocmd("FileType", {
 -- falls back to a kernel that matches the name of the active venv (if any)
 local imb = function(e) -- init molten buffer
   vim.schedule(function()
+    -- molten requires a real JSON notebook; a corrupt file (e.g. jupytext
+    -- markdown written into an .ipynb) would raise a python traceback
+    local f = io.open(e.file, "r")
+    local head = f and f:read(512) or ""
+    if f then
+      f:close()
+    end
+    if not head:match("^%s*{") then
+      vim.notify(
+        ("molten: skipped %s — not a valid ipynb (corrupt file or jupytext markdown twin?)"):format(
+          vim.fs.basename(e.file or "")
+        ),
+        vim.log.levels.WARN
+      )
+      return
+    end
     local kernels = vim.fn.MoltenAvailableKernels()
     local try_kernel_name = function()
       local metadata = vim.json.decode(io.open(e.file, "r"):read("a"))["metadata"]
@@ -55,6 +71,28 @@ vim.api.nvim_create_autocmd("BufEnter", {
   callback = function(e)
     if vim.api.nvim_get_vvar("vim_did_enter") ~= 1 then
       imb(e)
+    end
+  end,
+})
+
+-- Safety net: never let a non-JSON buffer be written to an .ipynb path.
+-- Catches raw writes from hookless buffers (e.g. jupytext.nvim's startup
+-- race: file read before its BufReadCmd hook exists, so :w would dump the
+-- markdown content straight into the notebook). jupytext.nvim's own save
+-- flow is unaffected: it writes the markdown twin via a *.md BufWritePre
+-- and regenerates the .ipynb with the jupytext CLI (BufWriteCmd path).
+-- Aborting via error() cancels the write (verified: file stays untouched).
+vim.api.nvim_create_autocmd("BufWritePre", {
+  group = vim.api.nvim_create_augroup("ipynb-json-guard", { clear = true }),
+  pattern = "*.ipynb",
+  callback = function(e)
+    local lines = vim.api.nvim_buf_get_lines(e.buf, 0, 5, false)
+    if not table.concat(lines, "\n"):match("^%s*{") then
+      local md = e.file:gsub("%.ipynb$", ".md")
+      error(
+        ("blocked write to %s — buffer is not JSON (jupytext markdown twin?). Restore with: jupytext --to ipynb -o %s %s")
+          :format(vim.fs.basename(e.file), vim.fs.basename(e.file), vim.fs.basename(md))
+      )
     end
   end,
 })
