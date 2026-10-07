@@ -966,11 +966,81 @@ function M.insert_annotations()
   vim.api.nvim_buf_set_lines(0, line, line, false, section)
 end
 
+-- OpenCode handoff -------------------------------------------------------------
+---tmux window name for an item: "Title — Surname Year", sanitized + truncated.
+---@param d table
+---@return string
+local function tmux_window_name(d)
+  local author = ((d.authors and d.authors[1]) or ""):match("^([^,]+)") or ""
+  local name = string.format("%s — %s %s", d.title or "", author, d.year or "")
+  name = name:gsub("[%c\"'\\]", " "):gsub("%s+", " ")
+  name = name:gsub("^%s+", ""):gsub("%s+$", "")
+  if #name > 60 then
+    name = name:sub(1, 57) .. "..."
+  end
+  return name
+end
+
+---Open opencode with the `paper` agent in a new tmux window of the current
+---session, named after the paper, pre-seeded with the citekey + note path.
+---opencode runs in the vault root so the note is inside its worktree.
+---@param question? string
+function M.ask_opencode(question)
+  if not vim.env.TMUX or vim.fn.executable("tmux") ~= 1 then
+    vim.notify("Zotero: opencode handoff requires tmux", vim.log.levels.WARN)
+    return
+  end
+  local key = M.current_citekey()
+  if not key or key == "" then
+    vim.notify(
+      "Zotero: no citekey here — put the cursor on a citation or open a literature note",
+      vim.log.levels.WARN
+    )
+    return
+  end
+  local note = M.resolve_note(key)
+  local d = M.item_data(key)
+  local vault = M.vaults[1]
+  if note then
+    vault = vim.fn.fnamemodify(note, ":h:h:h") -- notes dir → papers dir → vault
+  end
+
+  local msg = "I'm asking about the paper with citekey " .. key .. "."
+  if note then
+    msg = msg .. " My literature note (read it first): " .. note
+  end
+  if d and d.title and d.title ~= "" then
+    msg = msg .. ". Title: " .. d.title
+  end
+  if question and question ~= "" then
+    msg = msg .. ". Question: " .. question
+  end
+
+  local name = (d and d.title and d.title ~= "") and tmux_window_name(d) or ("opencode " .. key)
+  -- new-window runs its shell-command via sh, so the seed message needs escaping
+  local cli = "opencode --agent paper " .. vim.fn.shellescape(msg)
+  local out = vim.fn.system({
+    "tmux", "new-window", "-P", "-F", "#{pane_id}",
+    "-c", vault, "-n", name, cli,
+  })
+  if vim.v.shell_error ~= 0 then
+    vim.notify("Zotero: tmux new-window failed:\n" .. vim.trim(out), vim.log.levels.ERROR)
+    return
+  end
+  -- keep the paper's name; tmux-nerd-font-window-name / tmux renames otherwise
+  vim.fn.system({ "tmux", "set-option", "-w", "-t", vim.trim(out), "automatic-rename", "off" })
+  vim.notify("Zotero: opened opencode (paper agent) in a new tmux window", vim.log.levels.INFO)
+end
+
 ---Register the `:ZoteroNote` command and the region-refresh autocmd.
 function M.setup()
   vim.api.nvim_create_user_command("ZoteroNote", function(a)
     M.create_note(a.args ~= "" and a.args or nil)
   end, { nargs = "?", desc = "Create/refresh a Zotero literature note" })
+
+  vim.api.nvim_create_user_command("ZoteroAsk", function(a)
+    M.ask_opencode(a.args ~= "" and a.args or nil)
+  end, { nargs = "?", desc = "Ask opencode's paper agent about this paper (new tmux window)" })
 
   local grp = vim.api.nvim_create_augroup("ZoteroNotes", { clear = true })
   vim.api.nvim_create_autocmd({ "BufWritePost", "FocusGained" }, {

@@ -151,6 +151,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     map("<leader>zN", function()
       require("zotero").create_note()
     end, "New/Refresh Note")
+    map("<leader>zq", function()
+      require("zotero").ask_opencode()
+    end, "Ask opencode (paper agent)")
   end,
 })
 
