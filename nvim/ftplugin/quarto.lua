@@ -55,6 +55,9 @@ map("<leader>mc", run_cell, "Molten: run cell")
 
 -- kernel
 map("<localleader>mi", ":MoltenInit<CR>", "init kernel")
+map("<localleader>mk", function()
+  require("molten-kernel").switch()
+end, "switch/bind kernel")
 map("<localleader>x", ":MoltenInterrupt<CR>", "interrupt kernel")
 map("<localleader>R", ":MoltenRestart<CR>", "restart kernel")
 map("<localleader>ms", ":MoltenSave<CR>", "save kernel state")
@@ -64,7 +67,7 @@ map("<localleader>ml", ":MoltenLoad<CR>", "load kernel state")
 map("<localleader>os", ":noautocmd MoltenEnterOutput<CR>", "show/enter output")
 map("<localleader>oh", ":MoltenHideOutput<CR>", "hide output")
 map("<localleader>ob", ":MoltenOpenInBrowser<CR>", "output in browser")
-map("<localleader>ip", ":MoltenImagePopup<CR>", "image popup")
+map("<localleader>i", ":MoltenImagePopup<CR>", "image popup")
 map("<localleader>my", ":MoltenYankOutput<CR>", "yank output")
 -- Expand the output float to fit its full buffer (works only while the
 -- cursor is inside it, i.e. after <localleader>os). Molten re-renders the
@@ -98,7 +101,9 @@ wk.add({
   { "<localleader>e", desc = "evaluate operator/motion", icon = "󰐊", buffer = buf },
   { "<localleader>r", desc = "evaluate selection", icon = "󰐊", mode = "v", buffer = buf },
 
+  { "<localleader>m", group = "molten", icon = "󱁯", buffer = buf },
   { "<localleader>mi", desc = "init kernel", icon = "󰌠", buffer = buf },
+  { "<localleader>mk", desc = "switch/bind kernel", icon = "󰓡", buffer = buf },
   { "<localleader>x", desc = "interrupt kernel", icon = "󰓛", buffer = buf },
   { "<localleader>R", desc = "restart kernel", icon = "󰦓", buffer = buf },
   { "<localleader>ms", desc = "save kernel state", icon = "󰆓", buffer = buf },
@@ -109,7 +114,7 @@ wk.add({
   { "<localleader>oh", desc = "hide output", icon = "󰘁", buffer = buf },
   { "<localleader>ob", desc = "output in browser", icon = "󰈹", buffer = buf },
   { "<localleader>oe", desc = "expand output window", icon = "󰊓", buffer = buf },
-  { "<localleader>ip", desc = "image popup", icon = "", buffer = buf },
+  { "<localleader>i", desc = "image popup", icon = "", buffer = buf },
   { "<localleader>my", desc = "yank output", icon = "󰆏", buffer = buf },
 
   { "<localleader>md", desc = "delete molten cell", icon = "󰆴", buffer = buf },
