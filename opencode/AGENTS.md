@@ -9,3 +9,15 @@ Read `~/.config/opencode/skills/zotero-cli/SKILL.md` before using it. Prefer it 
 Quick check that it is set up: `zotero-cli config`. Pass `--json` whenever you will parse the output.
 
 <!-- END zotero-cli skill -->
+
+## Literature notes (obsidian vault)
+
+Literature notes live at `~/vaults/climate-crisis/research-papers-🔬/notes/<citekey>.md`
+(fallback vault `~/vaults/personal`, same subpath). The filename stem and the
+frontmatter `citekey:` field are the Better BibTeX citekey;
+`zotero-cli search --mode citekey <key>` resolves it to the Zotero item.
+`## 🖍️ Annotations` is machine-managed by nvim — never edit it; the user's own
+writing lives in the `{% persist "summary" %}` block.
+
+For questions about papers, prefer the `paper` agent (primary, Tab-switchable),
+which encodes the full read-annotate-ask workflow.
