@@ -30,6 +30,43 @@ return {
         output_extension = "md",
         force_ft = "quarto",
       })
+      -- Regenerate the .ipynb from its markdown twin from whichever side of
+      -- the pair you're on. Same command jupytext.nvim runs on save, but
+      -- usable from the plain .md buffer (whose :w does NOT touch the ipynb).
+      -- Run cells with molten + :w first so MoltenExportOutput! embeds outputs.
+      vim.api.nvim_create_user_command("JupytextSync", function()
+        local bufname = vim.api.nvim_buf_get_name(0)
+        local md, ipynb
+        if bufname:match("%.ipynb$") then
+          ipynb = bufname
+          md = bufname:gsub("%.ipynb$", ".md")
+        elseif bufname:match("%.md$") then
+          md = bufname
+          ipynb = bufname:gsub("%.md$", ".ipynb")
+        else
+          vim.notify("JupytextSync: open the notebook or its markdown twin first", vim.log.levels.WARN)
+          return
+        end
+        if vim.fn.filereadable(md) == 0 then
+          vim.notify("JupytextSync: no markdown twin at " .. md, vim.log.levels.WARN)
+          return
+        end
+        local out = vim.fn.system({ "jupytext", "--update", "--to", "ipynb", "--output", ipynb, md })
+        if vim.v.shell_error ~= 0 then
+          vim.notify("JupytextSync failed:\n" .. vim.trim(out), vim.log.levels.ERROR)
+          return
+        end
+        local f = io.open(ipynb, "r")
+        local head = f and f:read(16) or ""
+        if f then
+          f:close()
+        end
+        if not head:match("^%s*{") then
+          vim.notify("JupytextSync: " .. vim.fn.fnamemodify(ipynb, ":t") .. " is still not JSON", vim.log.levels.ERROR)
+          return
+        end
+        vim.notify("JupytextSync: wrote " .. vim.fn.fnamemodify(ipynb, ":t"), vim.log.levels.INFO)
+      end, { desc = "Regenerate the .ipynb from its markdown twin" })
     end,
   },
   { -- python lsp inside markdown files and code running integration with molten
