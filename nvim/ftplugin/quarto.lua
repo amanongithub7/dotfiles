@@ -1,3 +1,10 @@
+-- Match markdown's list-friendly indentation (see vim.g.markdown_recommended_style
+-- in lua/config/options.lua) so nested lists under ordered items nest in .qmd too.
+vim.opt_local.expandtab = true
+vim.opt_local.tabstop = 4
+vim.opt_local.softtabstop = 4
+vim.opt_local.shiftwidth = 4
+
 -- Molten keymaps for notebook buffers (ft=quarto: .qmd files and jupytext-
 -- converted .ipynb buffers). localleader is "\".
 --
@@ -119,3 +126,7 @@ wk.add({
 
   { "<localleader>md", desc = "delete molten cell", icon = "󰆴", buffer = buf },
 })
+
+-- <CR> follows the link under the cursor, same as markdown buffers
+-- (see lua/config/markdown-links.lua)
+require("config.markdown-links").map()

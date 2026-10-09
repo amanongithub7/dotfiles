@@ -34,8 +34,10 @@ return {
       ---@diagnostic disable: missing-fields
       ui = { enable = false },
       ---@diagnostic enable: missing-fields
-      -- open these URI schemes without the "Open external link?" confirmation
-      open = { schemes = { "zotero" } },
+      -- schemes that open without the "Open external link?" confirmation.
+      -- NOTE: this replaces obsidian's default { "https", "http", "file", "mailto" }
+      -- (it is not merged), so the defaults must be re-listed here.
+      open = { schemes = { "zotero", "https", "http", "file", "mailto" } },
       workspaces = {
         {
           name = "personal",
