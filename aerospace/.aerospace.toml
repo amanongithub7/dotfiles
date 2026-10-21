@@ -16,7 +16,7 @@ config-version = 2
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
 after-startup-command = [
   # use JankyBorders to apply colored borders to active and inactive windows
-  "exec-and-forget borders active_color='glow(0xff5ef1ff)' inactive_color='0xff008c99' width=5 style='round'",
+  "exec-and-forget borders active_color='glow(0xffe3c875)' inactive_color='0xff3c4048' width=5 style='round'",
 ]
 
 # Start AeroSpace at login
