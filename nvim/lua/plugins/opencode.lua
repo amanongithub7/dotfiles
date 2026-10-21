@@ -109,6 +109,11 @@ end
 return {
   {
     "sudo-tee/opencode.nvim",
+    -- OpenCode CLI v2 renamed the serve startup line ("opencode server listening
+    -- on" -> "server listening on") and moved the HTTP API/event endpoints, so
+    -- `main` never sees the server become ready and hangs on "Loading...".
+    -- The v2 branch is the upstream-supported plugin line for OpenCode v2.
+    branch = "v2",
     lazy = true,
     cmd = { "Opencode" },
     -- lazy stubs for the entry maps; the plugin's own keymaps replace them on load
@@ -150,15 +155,9 @@ return {
         end,
       })
 
-      -- Alert when OpenCode's question UI is waiting on input. The plugin fires
-      -- `User OpencodeEvent:<name>` for every server event, so this stays dormant
-      -- until OpenCode runs and never forces the plugin to load early.
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "OpencodeEvent:question.asked",
-        callback = function()
-          desktop_notify("OpenCode", "needs your input")
-        end,
-      })
+      -- (Question-input alerts now come from the `on_question_asked` hook in
+      -- opts below: the v2 branch streams `form.created`, not the old
+      -- `OpencodeEvent:question.asked`, so that autocmd no longer fires.)
 
       -- Session picker: rename the title and stay in normal mode so the
       -- plain-letter actions (r/x/n/t/f/s) work without Ctrl. The BufEnter
@@ -214,6 +213,36 @@ return {
           to_normal_mode()
         end,
       })
+    end,
+    -- Workarounds for two upstream v2 defects (config-only; drop when fixed):
+    --
+    -- 1. `context.get_git_diff` runs `git diff --cached --minimal`. In a dir
+    --    that is not a git repo, git (2.54 / Apple Git-157) falls back to
+    --    `--no-index` mode and rejects `--cached`, exiting 129. `Promise.system`
+    --    rejects on non-zero exit and `chat_context.format_message` awaits it
+    --    without a pcall, so the whole `send_message` rejects. Degrade to "no
+    --    diff" instead of failing the send.
+    -- 2. The input-window submit action calls `send_message` and discards its
+    --    Promise, so a rejection is invisible: the input clears (auto_hide), the
+    --    output window never updates, and no error is shown. Surface it here.
+    config = function(_, opts)
+      require("opencode").setup(opts)
+
+      local base_context = require("opencode.context.base_context")
+      local get_git_diff = base_context.get_git_diff
+      base_context.get_git_diff = function(context_config)
+        return get_git_diff(context_config):catch(function()
+          return nil
+        end)
+      end
+
+      local messaging = require("opencode.services.messaging")
+      local send = messaging.send_message
+      messaging.send_message = function(prompt, send_opts)
+        return send(prompt, send_opts):catch(function(err)
+          vim.notify("[opencode.nvim] send failed: " .. vim.inspect(err):sub(1, 500), vim.log.levels.ERROR)
+        end)
+      end
     end,
     opts = {
       preferred_picker = "snacks",
@@ -317,6 +346,9 @@ return {
       },
       ui = {
         window_width = 0.30,
+        -- `<leader>oz` widens the split to this fraction of the screen. 1.0
+        -- makes zoom fill the whole width (the editor keeps a 1-col sliver).
+        zoom_width = 1.0,
         input = {
           auto_hide = true,
         },
@@ -349,49 +381,18 @@ return {
           enabled = true,
         },
       },
-      -- Safety net for the final turn occasionally not appearing until the
-      -- next prompt. On idle: flush any pending render, and if the finished
-      -- turn is genuinely absent from state, do a full refresh (which is what
-      -- sending the next prompt was effectively doing).
+      -- Desktop alerts only. The v2 branch flushes pending renders itself when a
+      -- request completes (session_runtime's user_message_count subscriber), so
+      -- the old renderer/message workaround here is no longer needed.
       hooks = {
         on_done_thinking = function(completed_session)
           desktop_notify("OpenCode", session_name(completed_session) .. " finished")
-          vim.defer_fn(function()
-            local state = require("opencode.state")
-            local active = state.active_session
-            if not active or (completed_session and completed_session.id ~= active.id) then
-              return
-            end
-
-            require("opencode.ui.renderer.flush").resume_deferred_rendering()
-
-            local messages = state.messages or {}
-            local last_user = 0
-            for i, m in ipairs(messages) do
-              if m.info and m.info.role == "user" then
-                last_user = i
-              end
-            end
-            local has_reply = false
-            for i = last_user + 1, #messages do
-              if messages[i].info and messages[i].info.role == "assistant" then
-                has_reply = true
-                break
-              end
-            end
-
-            local renderer = require("opencode.ui.renderer")
-            if not has_reply then
-              renderer.render_full_session():and_then(function()
-                renderer.scroll_to_bottom(true)
-              end)
-            else
-              renderer.scroll_to_bottom(true)
-            end
-          end, 30)
         end,
         on_permission_requested = function(session)
           desktop_notify("OpenCode", session_name(session) .. " needs your approval")
+        end,
+        on_question_asked = function()
+          desktop_notify("OpenCode", "needs your input")
         end,
       },
     },
