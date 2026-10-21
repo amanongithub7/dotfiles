@@ -22,7 +22,7 @@ local report_template = {
   "\\end{document}",
 }
 
--- \lh opens the LaTeX guide (nvim/guides/latex-guide.md) in a floating window.
+-- \h opens the LaTeX guide (nvim/guides/latex-guide.md) in a floating window.
 local guide_path = vim.fn.stdpath("config") .. "/guides/latex-guide.md"
 
 local function open_latex_guide()
@@ -59,7 +59,7 @@ local function open_latex_guide()
       vim.api.nvim_win_close(win, true)
     end
   end
-  for _, key in ipairs({ "q", "<Esc>", "<localleader>lh" }) do
+  for _, key in ipairs({ "q", "<Esc>", "<localleader>h" }) do
     vim.keymap.set("n", key, close, { buffer = buf, nowait = true, desc = "Close LaTeX guide" })
   end
 end
@@ -80,6 +80,10 @@ return {
   init = function()
     -- VimTeX configuration
     vim.g.vimtex_format_enabled = 1
+    -- VimTeX's mappings default to the `<localleader>l` prefix (e.g. `\ll`).
+    -- Drop the extra `l` layer so the menu lives directly on `<localleader>`
+    -- (`\l` compile, `\v` view, ...), since nothing else uses `\`.
+    vim.g.vimtex_mappings_prefix = "<localleader>"
     vim.cmd("syntax enable")
 
     -- skim as pdf viewer
@@ -87,10 +91,11 @@ return {
     -- vim.g.vimtex_view_skim_sync = 1
     -- vim.g.vimtex_view_skim_activate = 1
 
-    -- sioyek as pdf viewer. `--reuse-window` makes VimTeX reuse the running
-    -- sioyek window and forward-search it, instead of spawning a new window.
+    -- sioyek as pdf viewer. `--new-window` gives each PDF its own window, so a
+    -- preview never replaces another open PDF; sioyek still reuses the window
+    -- when the *same* file is already open, keeping live preview in place.
     vim.g.vimtex_view_method = "sioyek"
-    vim.g.vimtex_view_sioyek_options = "--reuse-window"
+    vim.g.vimtex_view_sioyek_options = "--new-window"
     vim.g.vimtex_callback_progpath = "/opt/homebrew/bin/nvim"
     vim.g.vimtex_quickfix_open_on_warning = 0 -- don't open quickfix window when there are only warnings
 
@@ -110,11 +115,11 @@ return {
       vim.cmd.edit(vim.fn.fnameescape(path))
     end, { nargs = "?", complete = "dir", desc = "Create a one-page LaTeX report" })
 
-    -- \lh: show the LaTeX guide in a floating window
+    -- \h: show the LaTeX guide in a floating window
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "tex",
       callback = function()
-        vim.keymap.set("n", "<localleader>lh", open_latex_guide, { buffer = true, desc = "LaTeX guide" })
+        vim.keymap.set("n", "<localleader>h", open_latex_guide, { buffer = true, desc = "LaTeX guide" })
       end,
     })
   end,
