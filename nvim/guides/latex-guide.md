@@ -1,6 +1,6 @@
 # LaTeX in Neovim — Guide
 
-Press `\lh` in any `.tex` buffer to reopen this guide (floating window; `q` closes).
+Press `\h` in any `.tex` buffer to reopen this guide (floating window; `q` closes).
 Leader for LaTeX is `<localleader>` = `\` (see `config/options.lua`).
 
 Tooling: **VimTeX** (compile/view/sync), **texlab** LSP (completion, diagnostics,
@@ -24,30 +24,31 @@ BasicTeX is installed; add missing packages with `sudo tlmgr install <package>`.
 
 | Key | Action |
 | --- | --- |
-| `\ll` | Compile (continuous `latexmk -pvc` by default — rebuilds on save) |
-| `\lv` | Open viewer / forward search (source → PDF) |
-| `\ls` | Toggle which file is the main file (multi-file projects) |
-| `\lk` | Stop compiler for this file · `\lK` stop all |
-| `\le` | Show errors in the quickfix window |
-| `\lq` | Open compiler log · `\lo` compile output · `\lg` status |
-| `\lc` | Clean aux files · `\lC` clean full (incl. PDF) |
-| `\lt` | Open table of contents · `\lT` toggle TOC |
-| `\lL` | Compile the selected region (visual/normal) · `\lS` single-shot compile |
-| `\li` / `\lI` | VimTeX info / full info · `\lm` list math mappings |
-| `\lr` | Reverse search (from viewer) · `\la` context menu (`Delete`, `Change`, etc.) |
-| `\lx` / `\lX` | Reload VimTeX / reload project state |
+| `\l` | Compile (continuous `latexmk -pvc` by default — rebuilds on save) |
+| `\v` | Open viewer / forward search (source → PDF) |
+| `\s` | Toggle which file is the main file (multi-file projects) |
+| `\k` | Stop compiler for this file · `\K` stop all |
+| `\e` | Show errors in the quickfix window |
+| `\q` | Open compiler log · `\o` compile output · `\g` status |
+| `\c` | Clean aux files · `\C` clean full (incl. PDF) |
+| `\t` | Open table of contents · `\T` toggle TOC |
+| `\L` | Compile the selected region (visual/normal) · `\S` single-shot compile |
+| `\i` / `\I` | VimTeX info / full info · `\m` list math mappings |
+| `\r` | Reverse search (from viewer) · `\a` context menu (`Delete`, `Change`, etc.) |
+| `\x` / `\X` | Reload VimTeX / reload project state |
 
 Typical loop:
 
-1. In `main.tex` press `\ll`. `latexmk -pvc` starts; the first successful build
+1. In `main.tex` press `\l`. `latexmk -pvc` starts; the first successful build
    **auto-opens sioyek** and forward-searches to your cursor.
 2. Edit and `:w` → latexmk rebuilds → **sioyek live-reloads**.
-3. `\lv` jumps from source to the PDF.
+3. `\v` jumps from source to the PDF.
 4. In sioyek press **F4** (toggle synctex) then **right-click** to jump back to
    the exact source line in Neovim.
 
-VimTeX viewer options include `--reuse-window`, so preview reuses one sioyek
-window (opening an unrelated PDF still gets its own window).
+The VimTeX viewer passes `--new-window`, so a compiled PDF opens in its own
+sioyek window instead of replacing another open PDF; recompiling the *same*
+document reuses that window, so live preview stays in place.
 
 ---
 
@@ -152,27 +153,199 @@ jump between placeholders.
 
 ---
 
-## 6. Bibliographies
+## 6. Citations & bibliography
 
-`biber` and `bibtex` are installed. With `biblatex`:
+### The pipeline
 
-```latex
-\usepackage[backend=biber]{biblatex}
-\addbibresource{refs.bib}
-...
-\nocite{*}
-\printbibliography
+```
+browser ──► Zotero (Connector) ──► Better BibTeX auto-export ──► nvim ──► \cite{key} ──► latexmk + biber
+                                   library.bib                    picker / completion
 ```
 
-`latexmk` runs biber/bibtex automatically during `\ll`. Cite with the `cite`
-snippet or the Zotero integration in this config.
+One auto-exported file is the source of truth for the whole config:
+
+```
+~/climate-crisis/research-papers/organization-tools/zotero/exports/library.bib
+```
+
+Both the `<leader>zl` picker (`lua/zotero/init.lua`) and citation completion
+(`blink-cmp-bibtex`, configured in `lua/plugins/cmp.lua`) read it. **Never
+hand-edit it** — BBT overwrites it on every change.
+
+### Capture a paper
+
+- **Browser (recommended):** the Zotero Connector extension. Click the connector
+  button (or right-click → *Save to Zotero*) on the paper's page. It saves
+  metadata **and** the PDF attachment — the attachment is what drives
+  `zotero://open-pdf/...`, notes and annotations.
+- **Shell:** when you only have an identifier (`zotero-cli` is on your PATH; the
+  Zotero desktop app must be running with its local API on):
+
+```sh
+zotero-cli add doi 10.1038/s41586-021-03819-2
+zotero-cli add url https://arxiv.org/abs/2401.01234
+zotero-cli add file ~/Downloads/paper.pdf
+```
+
+BBT refreshes `library.bib` on change; if nvim's cache looks stale, `<leader>zr`.
+
+### Point the document at a bibliography
+
+Use the shared export directly (every project stays in sync):
+
+```latex
+\addbibresource{/Users/aman/climate-crisis/research-papers/organization-tools/zotero/exports/library.bib}
+```
+
+…or export only **one collection** (Zotero: right-click collection →
+*Export Collection…* → Better BibTeX → target `exports/<paper>.bib` → tick **Keep
+updated**) and cite that. A collection export contains items directly in that
+collection, not its subcollections.
+
+### APA 7
+
+`biblatex-apa` implements the APA 7th edition and is already installed in the
+user texmf tree. APA **requires biber**:
+
+```latex
+\usepackage[american]{babel}
+\usepackage{csquotes}                            % required by biblatex-apa
+\usepackage[style=apa,backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa}  % APA date/term strings
+\addbibresource{.../exports/library.bib}
+
+\begin{document}
+\parencite{key}   % (Author, Year)
+\textcite{key}    % Author (Year)
+\printbibliography
+\end{document}
+```
+
+The BBT BibTeX-flavor export works unchanged: biblatex maps `journal` →
+`journaltitle`, and `year`/`month` are valid fields (BBT *Better BibLaTeX* with
+native `date`/`journaltitle` is also fine). Brace protection (`{{Title}}`) is
+respected, so APA sentence-case won't de-capitalize titles.
+
+Any other style is the same block with `style=<name>` instead of `apa`
+(`authoryear`, `ieee`, …) and no `\DeclareLanguageMapping`.
+
+### APA 7 — the `apa7` document class
+
+`biblatex-apa` above is a **style** applied to an ordinary class. For the full
+APA paper layout — title page, running head, author note, `[stu]` student mode —
+use the **`apa7` document class** instead:
+
+```latex
+% !TEX program = xelatex
+\documentclass[stu]{apa7}
+
+\usepackage{amsmath,amssymb}
+\usepackage[american]{babel}
+\usepackage{csquotes}                            % required by biblatex-apa
+\usepackage[style=apa,backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa}
+\addbibresource{refs.bib}
+
+\title{...}  \shorttitle{...}  \author{...}
+\affiliation{...}  \course{...}  \professor{...}  \duedate{...}
+```
+
+Two traps:
+
+- **Don't also load `geometry`.** `apa7.cls` loads it with 1-inch margins
+  itself, so `\usepackage[margin=1in]{geometry}` dies with
+  `Option clash for package geometry`. Margins are already correct.
+- **`apa7` does not load biblatex for you** in `[stu]` mode (it logs
+  *"defaulting to (but not loading) Biblatex"*), so load it yourself as above.
+  The alternative is the class option `[stu,biblatex]` with your own
+  `\usepackage{biblatex}` removed — but never both.
+
+On **BasicTeX** an `apa7` install is incomplete: TeX Live declares no
+dependencies for the package, so `sudo tlmgr install apa7` pulls only the class
+and the first compile dies on `scalerel.sty` (then `threeparttable.sty`,
+`endfloat.sty`, …):
+
+```sh
+sudo tlmgr install scalerel threeparttable endfloat
+# or, to end the whack-a-mole:
+sudo tlmgr install collection-latexextra
+```
+
+### Insert a citation
+
+Two routes; both need the document to declare a `\addbibresource`.
+
+| Route | How |
+| --- | --- |
+| Completion | type `\cite{` (or `\parencite{`, `\textcite{`, `\footcite{`) → blink completes keys with APA preview; `[G]` = global `library.bib`, `[L]` = the project's bib |
+| Picker | `<leader>zl` (Literature Menu) → type to filter → **Enter inserts** at the cursor |
+
+Inside the picker: `o` open the PDF in Zotero · `n` open/create the literature
+note · `y` yank the citekey. The insert is filetype-aware: `.tex` → `\cite{key}`,
+Markdown → `[@key]`. Compile as usual (`\l`) — latexmk runs biber/bibtex itself.
+
+### Shared export vs a local `refs.bib`
+
+| Aspect | Shared / collection auto-export | Local project `refs.bib` |
+| --- | --- | --- |
+| Stays current | ✅ automatically | ❌ you re-export |
+| Self-contained, shippable | ❌ lives outside the project | ✅ |
+| Frozen keys / reproducible | ❌ keys can change if the item is edited | ✅ |
+| Works on Overleaf / other machines | ❌ absolute path baked in | ✅ |
+
+- **While drafting:** cite against the shared (or collection) export — new
+  captures flow straight into completion and `<leader>zl`.
+- **Before sharing/submitting:** snapshot a project `refs.bib` so the build is
+  self-contained and keys are frozen. Best of both: give each paper a Zotero
+  collection and have it export straight into the project (below).
+
+### Maintain a local `refs.bib`
+
+1. **BBT exports straight into the project (recommended).** Same as the
+   collection export above, but target `<project>/refs.bib` with **Keep
+   updated**. Version-controllable and still auto-refreshing; note BBT stores
+   the absolute path, so moving the project stops the refresh.
+2. **Stable export + symlink.** Keep BBT exporting to the shared dir, then
+   `ln -s ~/…/exports/paper-x.bib refs.bib` — stable project paths, but the
+   symlink target is machine-specific (re-link on Overleaf).
+3. **One-off snapshot with `zotero-cli`** (frozen archive; it prints a fenced
+   Markdown block, so it must be unwrapped):
+
+````sh
+zotero-cli --json export --format bibtex --collection A3ZIC9KC \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["bibliography"])' \
+  | sed -n '/```bibtex/,/```/p' | sed '1d;$d' > refs.bib
+````
+
+`--format bibtex` is a `.bib`; `--format bib` is a *formatted* CSL bibliography,
+not a file.
+
+### Literature notes & gotchas
+
+| Key | Action |
+| --- | --- |
+| `<leader>zl` | Literature Menu — search the bib, insert a citation |
+| `<leader>zr` | Reload the bibliography cache |
+| `<leader>zo` / `<leader>zn` | Open the paper in Zotero / open-or-create the literature note (notes only) |
+| `<leader>zN` | Create/refresh the literature note (notes only) |
+| `<leader>za` | Insert the note's annotations at the cursor (notes only) |
+| `<leader>zq` | Ask opencode's `paper` agent about the paper (notes only) |
+
+- **`library.bib` is generated.** Edit items in Zotero, not the file.
+- **Pin BBT citation keys** for a paper you're writing — unpinned keys can
+  change when an item changes, breaking an existing `\cite{}`.
+- **Nothing in the picker/completion?** `<leader>zr`, and check BBT's
+  auto-export is still armed in Zotero.
+- The `<leader>zl` picker searches the shared `library.bib` regardless of which
+  bib the document loads; completion always follows the document's
+  `\addbibresource`.
 
 ---
 
 ## 7. Multi-file projects
 
 - Put a magic comment at the top of sub-files: `%! TeX root = main.tex`.
-- Or set the main file interactively with `\ls`.
+- Or set the main file interactively with `\s`.
 - `\input`, `\include`, and `subfiles` are supported; VimTeX tracks the project
   from the main file.
 
@@ -186,14 +359,19 @@ snippet or the Zotero integration in this config.
 No extra installs needed:
 
 ```latex
-% !TEX program = xelatex          % first line; VimTeX compiles with xelatex
+% !TEX program = xelatex
 \documentclass[11pt]{article}
 \usepackage{fontspec}
 \newfontfamily\cjkfont{Songti SC}       % any macOS CJK font
 \newcommand{\zh}[1]{{\cjkfont #1}}      % wrap Chinese text: \zh{白雅铭}
 ```
 
-Then open the file and `\ll` as usual.
+The `% !TEX program` directive must be **alone on its line** — VimTeX captures
+everything after `=` to end of line, so a trailing comment makes the engine name
+unparseable and it silently falls back to pdflatex (check the log's first line
+for `pdfTeX` vs `XeTeX`).
+
+Then open the file and `\l` as usual.
 
 Automatic CJK (recommended if you write a lot of Chinese) uses the **ctex**
 bundle instead of a manual macro. This requires a consistent TeX Live install:
@@ -220,7 +398,11 @@ but mismatch its LaTeX format.
 - **Engine:** default is `pdflatex`. Add `% !TEX program = xelatex` to a file
   (see §8) for Unicode/CJK/OpenType fonts.
 - **Warnings:** the quickfix does not auto-open on warnings (only errors).
-- **Clean before sharing:** `\lc` (aux) or `\lC` (aux + PDF).
+- **Stale errors after installing a package?** VimTeX keeps showing the last
+  quickfix list, and `\l` may think the job is up to date. Force a rebuild:
+  `\c` (clean aux) then `\l`. Check the log's first line to confirm which engine
+  actually ran.
+- **Clean before sharing:** `\c` (aux) or `\C` (aux + PDF).
 
 ---
 
@@ -228,7 +410,9 @@ but mismatch its LaTeX format.
 
 | File | Purpose |
 | --- | --- |
-| `nvim/lua/plugins/latex.lua` | VimTeX config, sioyek viewer, `:TexNewReport`, `\lh` |
+| `nvim/lua/plugins/latex.lua` | VimTeX config, sioyek viewer, `:TexNewReport`, `\h` |
 | `nvim/snippets/latex.json` | Project LaTeX snippets (`report`) |
+| `nvim/lua/zotero/init.lua` | Zotero integration: `<leader>zl` picker, citekey insert, notes |
+| `nvim/lua/plugins/cmp.lua` | `blink-cmp-bibtex` citation completion from `library.bib` |
 | `sioyek/prefs_user.config` | sioyek preferences (colors, window behavior) |
 | `nvim/guides/latex-guide.md` | This guide |
