@@ -151,6 +151,57 @@ return {
       -- longer than the max height (scroll inside the float, or expand with
       -- <localleader>oe)
       vim.g.molten_output_show_more = true
+
+      -- Molten paints the code cell under the cursor with the `MoltenCell`
+      -- group on every CursorMoved (remote plugin: on_cursor_moved ->
+      -- _show_selected, via nvim_buf_add_highlight; those extmarks get
+      -- priority 4096, so they outrank render-markdown's code-block bg at
+      -- 140) and there is no molten_* option to control it. The group's
+      -- attributes REPLACE the syntax highlighting of the covered lines,
+      -- per attribute: fg must stay unset or treesitter colors die (a
+      -- Normal link painted the code black), while bg layers over syntax.
+      -- So the group is a faint tint only: 4% of the normal foreground
+      -- blended into the background, a hovered-cell cue rather than a
+      -- visual-mode selection. Blend base: Normal's bg; the raw cyberdream
+      -- palette bg when transparent=true (Normal reports no bg then);
+      -- black/white as a last resort.
+      -- The group must keep existing: molten re-applies its default
+      -- CursorLine link whenever hlexists() == 0 (hl_utils.lua). Recomputed
+      -- on ColorScheme/background flips, same pattern as
+      -- set_opencode_agent_highlights in config/autocmds.lua.
+      local function tint_molten_cell()
+        local function resolved(name, what)
+          local c = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(name)), what .. "#")
+          if c == "" or c == "-1" then
+            return nil
+          end
+          return c
+        end
+        local fg = resolved("Normal", "fg") or "#808080"
+        local bg = resolved("Normal", "bg")
+        if not bg then -- transparent (cyberdream): tint against the solid palette bg
+          local ok, palette = pcall(require, "cyberdream.colors")
+          local raw = ok and (vim.o.background == "dark" and palette.default or palette.light) or nil
+          if raw and type(raw.bg) == "string" and raw.bg:match("^#") then
+            bg = raw.bg
+          end
+        end
+        bg = bg or (vim.o.background == "dark" and "#000000" or "#ffffff")
+        local f, b, rgb = {}, {}, {}
+        for i = 1, 3 do
+          f[i] = tonumber(fg:sub(2 + (i - 1) * 2, 3 + (i - 1) * 2), 16)
+          b[i] = tonumber(bg:sub(2 + (i - 1) * 2, 3 + (i - 1) * 2), 16)
+          rgb[i] = math.floor(f[i] + (b[i] - f[i]) * 0.96 + 0.5) -- 96% toward bg => 4% fg tint
+        end
+        vim.api.nvim_set_hl(0, "MoltenCell", { bg = ("#%02x%02x%02x"):format(rgb[1], rgb[2], rgb[3]) })
+      end
+      tint_molten_cell()
+      local molten_cell_group = vim.api.nvim_create_augroup("molten-cell-tint", { clear = true })
+      vim.api.nvim_create_autocmd("ColorScheme", { group = molten_cell_group, callback = tint_molten_cell })
+      vim.api.nvim_create_autocmd(
+        "OptionSet",
+        { pattern = "background", group = molten_cell_group, callback = tint_molten_cell }
+      )
     end,
   },
 }
