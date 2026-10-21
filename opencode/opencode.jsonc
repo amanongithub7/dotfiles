@@ -1,21 +1,54 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "agent": {
+  "model": "paratera/DeepSeek-V4.1-Flash",
+
+  // Search integration for the websearch tool.
+  // Needs TAVILY_API_KEY in the environment, or sign in with /connect in the TUI.
+  // Free tier: 1,000 credits/month, no credit card (1 credit = 1 basic search).
+  "websearch": {
+    "provider": "tavily",
+  },
+
+  // Skill sources: each entry is a directory OpenCode scans for SKILL.md files.
+  // Sources from every config file are combined, not replaced.
+  "skills": [
+    "~/.opencode-skills/nature-skills/skills",
+    "~/.opencode-skills/anthropic-skills/skills",
+  ],
+
+  // Superpowers is a plugin, not a skills directory: it registers its own skills.
+  // Requires OpenCode >= 2.0.4. Remove this line to uninstall.
+  "plugins": ["superpowers@git+https://github.com/obra/superpowers.git"],
+
+  // Global rules run first; agent rules are appended after them, so agents can
+  // re-allow what this denies. The academic-writing pack is only useful to the
+  // paper agent, so keep it out of every other agent's prompt.
+  //
+  // To restore V1 behavior of prompting before touching paths outside the
+  // project, add: { "action": "external_directory", "resource": "*", "effect": "ask" }
+  "permissions": [{ "action": "skill", "resource": "nature-*", "effect": "deny" }],
+
+  "agents": {
+    // Plain conversational assistant: no filesystem, no skills, no subagents.
+    // steps bounds the tool loop: after that many tool-using steps OpenCode
+    // removes the tools and forces a plain-text answer. Verified behavior:
+    // 2 = two searches then a clean answer; 3 = three searches, more sourced.
+    // Do NOT use 1: tools are removed before the first action, and the
+    // injected "maximum steps reached" notice made the model hallucinate.
     "chat": {
       "mode": "primary",
-      "prompt": "You are a conversational coding assistant. Answer questions directly and concisely. Do NOT explore the codebase, read files, or create plans unless explicitly asked. For trivial questions, just answer. Keep responses short and conversational.",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny",
-        "read": "deny",
-        "grep": "deny",
-        "glob": "deny",
-        "list": "deny",
-        "task": "deny",
-      },
-      "temperature": 0.3,
+      "description": "Conversational assistant with web search. No file access, no skills.",
+      "model": "paratera/DeepSeek-V4.1-Flash#chat",
+      "steps": 2,
+      "system": "Answer questions directly and concisely. Search the web only when the answer needs current or verifiable information; otherwise answer from your own knowledge. Reply in plain prose and cite source links when you searched. Do not explore the filesystem, load skills, or write plans. For questions about papers, references, or literature notes, tell the user to switch to the paper agent.",
+      "permissions": [
+        { "action": "*", "resource": "*", "effect": "deny" },
+        { "action": "websearch", "resource": "*", "effect": "allow" },
+        { "action": "webfetch", "resource": "*", "effect": "allow" },
+      ],
     },
   },
+
   "lsp": {
     "basedpyright": {
       "disabled": false,
@@ -26,12 +59,14 @@
       },
     },
   },
+
   "disabled_providers": ["opencode"],
-  "provider": {
+
+  "providers": {
     "paratera": {
       "name": "Paratera",
-      "npm": "@ai-sdk/openai-compatible",
-      "options": {
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "settings": {
         "baseURL": "https://llmapi.paratera.com",
       },
       "models": {
@@ -53,8 +88,13 @@
         "GLM-4-FlashX": {
           "name": "GLM 4 FlashX",
         },
+        // Variants are the only way to set per-agent request options in V2:
+        // an agent pins the model as provider/model#variant. Agent-level
+        // temperature is accepted but never sent, so the #chat variant above
+        // is what actually applies temperature 0.3.
         "DeepSeek-V4.1-Flash": {
           "name": "DeepSeek V4.1 Flash",
+          "variants": [{ "id": "chat", "body": { "temperature": 0.3 } }],
         },
         "GLM-5.3-Flash": {
           "name": "GLM 5.3 Flash",
