@@ -18,3 +18,15 @@ vim.opt.relativenumber = true
 
 -- use the virtualenv saved as "neovim" for python3
 vim.g.python3_host_prog = vim.fn.expand("~/.virtualenvs/neovim/bin/python3")
+
+-- Width of the snacks zen-mode viewport as a fraction of terminal columns.
+-- Single source of truth: snacks zen sizes its floating window with this and
+-- markdown buffers derive their textwidth from it (see ftplugin/markdown.lua)
+-- so a full line wraps exactly at the zen viewport edge.
+vim.g.zen_width = 0.55
+
+-- Neovim's markdown ftplugin sets list-friendly indent (expandtab, ts/sts/sw=4)
+-- when this is 1. LazyVim sets it to 0, leaving shiftwidth=2; markdown-plus' <Tab>
+-- then nests list items by 2 spaces, which is too shallow for a child of "1. "
+-- (needs >=3) in CommonMark, so Prettier hoists/un-nests the list on save.
+vim.g.markdown_recommended_style = 1

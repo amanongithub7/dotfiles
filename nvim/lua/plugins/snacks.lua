@@ -268,7 +268,7 @@ return {
     zen = {
       win = {
         style = "zen",
-        width = 0.55, -- 80% of terminal width
+        width = vim.g.zen_width, -- fraction of terminal width (see options.lua)
       },
     },
   },
