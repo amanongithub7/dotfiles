@@ -14,6 +14,12 @@ export PATH="/opt/homebrew/bin:$PATH"         # homebrew-installed binaries
 # disable homebrewe hints
 export HOMEBREW_NO_ENV_HINTS=1
 
+# API keys and other secrets
+# the file is gitignored; ~/.config/secrets.zsh is a symlink to dotfiles/zsh/secrets.zsh
+# NOTE: exports only -- powerlevel10k's instant prompt is already active above, so
+# anything this file writes to stdout/stderr would corrupt the prompt
+[[ -r ~/.config/secrets.zsh ]] && source ~/.config/secrets.zsh
+
 # nvm setup (lazy-loaded: nvm.sh is sourced on first nvm/node/npm/npx call to keep startup fast)
 export NVM_DIR="$HOME/.nvm"
 _load_nvm() {
