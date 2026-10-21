@@ -46,6 +46,9 @@ local imb = function(e) -- init molten buffer
     if kernel_name ~= nil then
       vim.cmd(("MoltenInit %s"):format(kernel_name))
     end
+    -- molten draws plots through image.nvim, which is ft-lazy: the BufAdd/
+    -- BufEnter import can beat the FileType event, so load it before importing
+    pcall(require("lazy").load, { plugins = { "image.nvim" } })
     vim.cmd("MoltenImportOutput")
   end)
 end
