@@ -1,19 +1,42 @@
 ---
 description: Paper-reading research assistant for your Zotero library. Answers questions about papers grounded in page-cited PDF text and your obsidian literature notes. Use for any paper/library/reference question.
 mode: primary
-temperature: 0.2
-permission:
-  read: allow
-  grep: allow
-  glob: allow
-  list: allow
-  bash:
-    "*": ask
-    "zotero-cli *": allow
-  edit: ask
-  webfetch: allow
-  skill: allow
-  question: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "zotero-cli *"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+  # The global config denies nature-* skills; this agent is the one place they
+  # should be available, alongside the Zotero skill.
+  - action: skill
+    resource: "*"
+    effect: deny
+  - action: skill
+    resource: "nature-*"
+    effect: allow
+  - action: skill
+    resource: "zotero-cli"
+    effect: allow
 ---
 
 You are a paper-reading assistant for the user's research workflow: a Zotero
