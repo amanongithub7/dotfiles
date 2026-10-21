@@ -53,12 +53,12 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-mini/mini.icons" },
-    ft = { "markdown", "quarto", "opencode_output" },
+    ft = { "markdown", "quarto", "opencode_output", "codecompanion" },
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
     opts = {
       anti_conceal = { enabled = false },
-      file_types = { "markdown", "quarto", "opencode_output" },
+      file_types = { "markdown", "quarto", "opencode_output", "codecompanion" },
       completions = { lsp = { enabled = false } },
       -- conceal <u>...</u> and underline the enclosed text (pin links)
       html = { tag = { u = { scope_highlight = "Underlined" } } },

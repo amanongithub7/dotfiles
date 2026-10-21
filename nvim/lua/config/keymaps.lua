@@ -195,6 +195,7 @@ vim.api.nvim_create_autocmd("FileType", {
 vim.schedule(function()
   local wk = require("which-key")
   wk.add({
+    { "<leader>a", group = "AI", icon = "󰚩" },
     { "<leader>b", desc = "Buffers", icon = "󰈔" },
     { "<leader>m", group = "bookmarks", icon = "󰂺" },
     { "<leader>o", group = "opencode", icon = { icon = "󱙺", color = "green" } },
