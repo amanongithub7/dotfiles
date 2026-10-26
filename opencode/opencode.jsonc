@@ -151,4 +151,35 @@
       },
     },
   },
+  "mcp": {
+    "servers": {
+      "gh_grep": {
+        "type": "remote",
+        "url": "https://mcp.grep.app"
+      },
+      "memory": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-memory@latest"
+        ],
+        "environment": {
+          "MEMORY_FILE_PATH": "/Users/aman/.local/share/opencode/memory/memory.jsonl"
+        }
+      },
+      // Local, free, no API key. Gives the model an explicit scratchpad for
+      // multi-step reasoning. Marginal for a model already running at high
+      // reasoning effort, so treat it as removable: delete this block if the
+      // extra tool schema in the execute catalogue is not worth it.
+      "sequential-thinking": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-sequential-thinking@latest"
+        ]
+      }
+    }
+  },
 }
