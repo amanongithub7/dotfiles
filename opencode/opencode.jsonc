@@ -22,7 +22,7 @@
 
   // Global rules run first; agent rules are appended after them, so agents can
   // re-allow what this denies. The academic-writing pack is only useful to the
-  // paper agent, so keep it out of every other agent's prompt.
+  // Paper agent, so keep it out of every other agent's prompt.
   //
   // To restore V1 behavior of prompting before touching paths outside the
   // project, add: { "action": "external_directory", "resource": "*", "effect": "ask" }
@@ -33,7 +33,7 @@
   // broadest config last. `provider.use` is the V2 replacement for the V1
   // `disabled_providers` list.
   //
-  // Do NOT move the nature-* skill denial in here. The paper agent re-allows it,
+  // Do NOT move the nature-* skill denial in here. The Paper agent re-allows it,
   // and a policy can only be lifted by broader config, never by an agent rule.
   //
   // OpenCode 2.0.25 reads these from `experimental.policies`; the top-level
@@ -68,7 +68,7 @@
   "references": {
     "vault": {
       "path": "~/vaults/climate-crisis",
-      "description": "Research vault. Literature notes are research-papers-🔬/notes/<citekey>.md; the paper agent owns this workflow.",
+      "description": "Research vault. Literature notes are research-papers-🔬/notes/<citekey>.md; the Paper agent owns this workflow.",
     },
     "dotfiles": {
       "path": "~/dotfiles",
@@ -77,18 +77,22 @@
   },
 
   "agents": {
+    // An agent has no display-name field. The name in the TUI is the agent ID,
+    // and for `agents` entries the ID is the JSON key, so "Chat" here is both
+    // the ID and the label. (Same rule for Markdown agents: the filename.)
+    //
     // Plain conversational assistant: no filesystem, no skills, no subagents.
     // steps bounds the tool loop: after that many tool-using steps OpenCode
     // removes the tools and forces a plain-text answer. Verified behavior:
     // 2 = two searches then a clean answer; 3 = three searches, more sourced.
     // Do NOT use 1: tools are removed before the first action, and the
     // injected "maximum steps reached" notice made the model hallucinate.
-    "chat": {
+    "Chat": {
       "mode": "primary",
       "description": "Conversational assistant with web search. No file access, no skills.",
       "model": "paratera/DeepSeek-V4.1-Flash#chat",
       "steps": 2,
-      "system": "Answer questions directly and concisely. Search the web only when the answer needs current or verifiable information; otherwise answer from your own knowledge. Reply in plain prose and cite source links when you searched. Do not explore the filesystem, load skills, or write plans. For questions about papers, references, or literature notes, tell the user to switch to the paper agent.",
+      "system": "Answer questions directly and concisely. Search the web only when the answer needs current or verifiable information; otherwise answer from your own knowledge. Reply in plain prose and cite source links when you searched. Do not explore the filesystem, load skills, or write plans. For questions about papers, references, or literature notes, tell the user to switch to the Paper agent.",
       "permissions": [
         { "action": "*", "resource": "*", "effect": "deny" },
         { "action": "websearch", "resource": "*", "effect": "allow" },
@@ -141,6 +145,8 @@
         // an agent pins the model as provider/model#variant. Agent-level
         // temperature is accepted but never sent, so the #chat variant above
         // is what actually applies temperature 0.3.
+        // The variant id `chat` is unrelated to the `Chat` agent - variants are
+        // named freely and this one only carries the temperature for it.
         "DeepSeek-V4.1-Flash": {
           "name": "DeepSeek V4.1 Flash",
           "variants": [{ "id": "chat", "body": { "temperature": 0.3 } }],

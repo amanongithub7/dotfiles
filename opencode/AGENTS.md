@@ -9,5 +9,5 @@ Prefer the `zotero-cli` shell tool over the Zotero MCP server: the MCP tool sche
 <!-- END zotero-cli skill -->
 
 For anything involving papers, references, citations, or literature notes, prefer
-the `paper` agent (primary, Tab-switchable). It already carries the vault layout,
+the `Paper` agent (primary, Tab-switchable). It already carries the vault layout,
 the citekey bridge, and the annotation-color conventions.
