@@ -52,6 +52,16 @@
     ],
   },
 
+  // Format files after the write/edit/patch tools change them. A built-in only
+  // runs when its executable is present, so today this is gofmt and rustfmt:
+  // ruff is not installed and uv 0.5.9 predates `uv format`. For Python, switch
+  // to the object form and add, for example:
+  //   "formatter": { "ruff": { "command": ["uvx", "ruff", "format", "$FILE"],
+  //                            "extensions": [".py", ".pyi"] } }
+  // The built-in prettier also covers .md, but it only runs inside a project
+  // that depends on prettier, so the Zotero notes are not at risk.
+  "formatter": true,
+
   "agents": {
     // Plain conversational assistant: no filesystem, no skills, no subagents.
     // steps bounds the tool loop: after that many tool-using steps OpenCode
