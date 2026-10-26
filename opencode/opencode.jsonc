@@ -62,6 +62,20 @@
   // that depends on prettier, so the Zotero notes are not at risk.
   "formatter": true,
 
+  // Named directories outside the project, advertised to agents by description.
+  // References grant no permissions: reads and edits still go through the read,
+  // edit and external_directory rules.
+  "references": {
+    "vault": {
+      "path": "~/vaults/climate-crisis",
+      "description": "Research vault. Literature notes are research-papers-🔬/notes/<citekey>.md; the paper agent owns this workflow.",
+    },
+    "dotfiles": {
+      "path": "~/dotfiles",
+      "description": "Personal dotfiles: this OpenCode config, nvim, zsh, tmux.",
+    },
+  },
+
   "agents": {
     // Plain conversational assistant: no filesystem, no skills, no subagents.
     // steps bounds the tool loop: after that many tool-using steps OpenCode
