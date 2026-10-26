@@ -28,6 +28,30 @@
   // project, add: { "action": "external_directory", "resource": "*", "effect": "ask" }
   "permissions": [{ "action": "skill", "resource": "nature-*", "effect": "deny" }],
 
+  // Hard denials that no agent rule or saved "Allow always" approval can lift,
+  // and that a cloned repo cannot re-enable: policies are evaluated from the
+  // broadest config last. `provider.use` is the V2 replacement for the V1
+  // `disabled_providers` list.
+  //
+  // Do NOT move the nature-* skill denial in here. The paper agent re-allows it,
+  // and a policy can only be lifted by broader config, never by an agent rule.
+  //
+  // OpenCode 2.0.25 reads these from `experimental.policies`; the top-level
+  // `policies` key in the published docs postdates this build. On 2.0.25 the
+  // `experimental` schema is exactly { portable_shell_scanner, subagent_depth,
+  // policies } — there is no `todo`, so the todowrite tool the docs describe is
+  // not available until OpenCode is upgraded past 2.0.25.
+  "experimental": {
+    "policies": [
+      { "action": "provider.use", "resource": "opencode", "effect": "deny" },
+      { "action": "tool.use", "resource": "read:*/.ssh/*", "effect": "deny" },
+      { "action": "tool.use", "resource": "edit:*/.ssh/*", "effect": "deny" },
+      { "action": "tool.use", "resource": "read:*/.gnupg/*", "effect": "deny" },
+      { "action": "tool.use", "resource": "edit:*/.gnupg/*", "effect": "deny" },
+      { "action": "tool.use", "resource": "read:*/.aws/credentials", "effect": "deny" },
+    ],
+  },
+
   "agents": {
     // Plain conversational assistant: no filesystem, no skills, no subagents.
     // steps bounds the tool loop: after that many tool-using steps OpenCode
@@ -60,7 +84,8 @@
     },
   },
 
-  "disabled_providers": ["opencode"],
+  // The `opencode` provider is denied under `policies` above; this replaces the
+  // V1 `disabled_providers` list.
 
   "providers": {
     "paratera": {
