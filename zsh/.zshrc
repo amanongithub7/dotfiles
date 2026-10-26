@@ -101,9 +101,13 @@ export LESSOPEN='|~/.lessfilter.sh %s'
 zinit ice depth=1; zinit light romkatv/powerlevel10k
 
 # oh-my-zsh setup with plugins
+# NOTE: everything oh-my-zsh reads during its own initialization (compinit, the
+# update check) must be set BEFORE it is sourced -- oh-my-zsh.sh runs them itself.
 export ZSH="$HOME/.oh-my-zsh"
+export ZSH_COMPDUMP=$ZSH/cache/.zcompdump # dump zsh completions in the specified directory, not in $HOME
+export ZSH_DISABLE_COMPFIX=true            # skip compaudit's security scan of every fpath dir
+zstyle ':omz:update' mode disabled         # no git-fetch on startup; run `omz update` manually
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting web-search macos)
-export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST # dump zsh completions in the specified directory, not in $HOME
 source $ZSH/oh-my-zsh.sh
 
 # fzf-tab needs to be loaded after compinit (initialized by oh-my-zsh above)
@@ -123,8 +127,7 @@ setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups 
 
-# auto-update oh-my-zsh
-zstyle ':omz:update' mode auto
+# oh-my-zsh update policy is set above, before oh-my-zsh.sh is sourced
 
 # auto-completion key bindings for previous and next
 bindkey '^p' history-search-backward
@@ -186,6 +189,10 @@ export PATH="$PATH:/Users/aman/.local/bin"
 source ~/.zsh_functions/venv_wrapper.sh
 
 # required by pyenv
+# NOTE: deliberately NOT `eval "$(pyenv init -)"` -- that runs `pyenv rehash` on
+# every shell start (~0.24s) and forks a `bash` subshell to rewrite PATH. Putting
+# the shims on PATH directly resolves versions identically without paying that.
+# Tradeoff: loses pyenv's argument tab-completion and `pyenv shell` switching;
+# `pyenv local` / `pyenv global` and all shims still work.
 export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
