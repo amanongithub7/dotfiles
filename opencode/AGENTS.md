@@ -11,3 +11,9 @@ Prefer the `zotero-cli` shell tool over the Zotero MCP server: the MCP tool sche
 For anything involving papers, references, citations, or literature notes, prefer
 the `Paper` agent (primary, Tab-switchable). It already carries the vault layout,
 the citekey bridge, and the annotation-color conventions.
+
+For research and analysis work whose deliverable is a document - desk research,
+market or policy surveys, comparisons, cost/benefit and financial modelling,
+reports and printable PDFs - prefer the `General Assistant` agent. It carries the
+evidence-labelling, source-ranking and file-output conventions, and writes durable
+findings to the `memory` MCP server so they survive across sessions.
