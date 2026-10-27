@@ -6,7 +6,7 @@ directory, so edits here are live (reload with `:` → `reload`, or restart).
 | File | Purpose |
 | --- | --- |
 | `keys_user.config` | keybindings (overrides the built-in `keys.config`) |
-| `prefs_user.config` | preferences: colours (Catppuccin Latte), scroll ratio, etc. |
+| `prefs_user.config` | preferences: scroll ratio, cursor zoom, etc. (colours = stock defaults) |
 
 Version tracked: sioyek 2.0.0 (Homebrew cask).
 
@@ -54,8 +54,10 @@ Version tracked: sioyek 2.0.0 (Homebrew cask).
 
 ## Notes / gotchas
 
-- `visual_mark_color` must be **4 values** (`r g b alpha`); a hex value is
-  rejected and silently falls back to the default.
+- Colours are sioyek's stock defaults; `prefs_user.config` sets none. The old
+  Catppuccin Latte/Mocha palette is in `git log -- sioyek/` if you want it back.
+- If you do re-add colours: `visual_mark_color` must be **4 values**
+  (`r g b alpha`); a hex value is rejected and silently falls back to the default.
 - Unknown command names in `keys_user.config` are ignored **without warning** —
   verify a command exists in the built-in `keys.config` before relying on it
   (e.g. the previous `prev_page` was a no-op; the real name is `previous_page`).
