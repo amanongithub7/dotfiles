@@ -6,7 +6,7 @@ directory, so edits here are live (reload with `:` → `reload`, or restart).
 | File | Purpose |
 | --- | --- |
 | `keys_user.config` | keybindings (overrides the built-in `keys.config`) |
-| `prefs_user.config` | preferences: scroll ratio, cursor zoom, etc. (colours = stock defaults) |
+| `prefs_user.config` | preferences: startup behaviour, scroll ratio, cursor zoom, etc. (colours = stock defaults) |
 
 Version tracked: sioyek 2.0.0 (Homebrew cask).
 
@@ -54,6 +54,26 @@ Version tracked: sioyek 2.0.0 (Homebrew cask).
 
 ## Notes / gotchas
 
+- **Don't resurrect the last document.** Sioyek reopens the last opened document
+  when it starts with no file argument; on macOS a double-clicked/`open`ed PDF
+  arrives as an Apple Event a moment later, so you'd get the old PDF *plus* the
+  one you asked for in a second window (upstream
+  [issue #1488](https://github.com/ahrm/sioyek/issues/1488)). `prefs_user.config`
+  sets `open_last_file_on_startup 0` (the official fix — **development branch
+  only**, the 2.0.0 cask ignores it) and `should_load_tutorial_when_no_other_file 0`
+  (otherwise the bundled tutorial takes the empty window's place instead).
+- **Do not set `should_launch_new_window 0`.** It does hide the resurrected
+  document, but it also makes every PDF you open replace the one already on
+  screen — no side-by-side reading. Left at the stock `1`.
+- **The session file is neutered (how it's fixed on 2.0.0).**
+  `~/Library/Application Support/sioyek/last_document_path.txt` is the file
+  sioyek records the current document in, so it can reopen it next launch. It
+  now contains a single line pointing at a path that does not exist and is
+  `chmod 444`, so sioyek's write on quit fails silently and startup finds nothing
+  to restore. Result: the PDF you open gets the first window, and a second PDF
+  still opens in its own window. The old contents are kept next to it as
+  `last_document_path.txt.orig`. **To undo:** delete the file (sioyek recreates
+  it on the next quit) or restore `.orig` and `chmod 644` it.
 - Colours are sioyek's stock defaults; `prefs_user.config` sets none. The old
   Catppuccin Latte/Mocha palette is in `git log -- sioyek/` if you want it back.
 - If you do re-add colours: `visual_mark_color` must be **4 values**
