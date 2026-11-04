@@ -1,0 +1,11 @@
+# chat: one plain model call, reachable as the `chat` tool and the /chat
+# command. No agent, no tools, no loop - the provider is queried once and its
+# reply is returned as text.
+- insert:
+    - id: chat
+      name: '@aman/dsh-chat'
+      config:
+        # Default target. Both can be overridden per call by the chat tool.
+        provider: paratera
+        model: DeepSeek-V4.1-Flash
+        maxChars: 12000

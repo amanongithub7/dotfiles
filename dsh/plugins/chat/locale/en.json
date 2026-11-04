@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Chat",
+    "description": "Ask a configured model provider directly - one request, no agent, tools or loop."
+  }
+}

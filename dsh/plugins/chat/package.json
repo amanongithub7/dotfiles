@@ -1,0 +1,24 @@
+{
+  "name": "@aman/dsh-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ask a model provider directly, with no agent, tools or loop",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
