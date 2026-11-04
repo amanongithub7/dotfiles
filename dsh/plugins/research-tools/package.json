@@ -1,0 +1,24 @@
+{
+  "name": "@aman/dsh-research-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zotero, Neovim, scholarly search and a versioned research context for DeepSeek Harness",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

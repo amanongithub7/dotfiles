@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Research Tools",
+    "description": "Zotero library tools, a Neovim bridge, OpenAlex scholarly search, and a versioned research context."
+  }
+}

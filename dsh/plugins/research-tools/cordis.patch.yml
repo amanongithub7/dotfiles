@@ -1,0 +1,19 @@
+# research-tools: the research plumbing this profile adds to the Harness.
+#
+# One row, one plugin: it registers the Zotero and Neovim tools, the OpenAlex
+# search provider, and the research-context contribution. Each capability
+# degrades on its own, so a missing zotero-cli or a closed Neovim only fails
+# that capability.
+#
+# Values below are the plugin's own defaults, restated so this file is the one
+# place to change them. Delete a key to fall back to the default.
+- insert:
+    - id: research-tools
+      name: '@aman/dsh-research-tools'
+      config:
+        # Absolute path or a bare PATH name.
+        zoteroCommand: zotero-cli
+        # The socket `nvim --listen` created; see nvim/lua/config/harness-bridge.lua.
+        nvimSocket: !!js process.env.HOME + '/.cache/nvim/dsh.sock'
+        # Every session sees this file as standing context.
+        contextFile: !!js process.env.HOME + '/dotfiles/dsh/research-context.md'
