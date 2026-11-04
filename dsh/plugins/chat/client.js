@@ -560,8 +560,10 @@ window.__ModuleLoader__.load({
       const nodes = []
       let last = 0
       let index = 0
-      let match = INLINE_PATTERN.exec(source)
+      // The pattern is shared and stateful, so the scan starts from zero: a
+      // stale lastIndex would skip or repeat the first token of the next call.
       INLINE_PATTERN.lastIndex = 0
+      let match = INLINE_PATTERN.exec(source)
       while (match !== null) {
         if (match.index > last) nodes.push(source.slice(last, match.index))
         const token = match[0]
@@ -888,6 +890,9 @@ window.__ModuleLoader__.load({
       const [note, setNote] = useState('')
       const [status, setStatus] = useState(null)
       const scrollRef = useRef(null)
+      // The chat in hand, so a create or a send does not re-fetch what the
+      // response already delivered.
+      const loadedRef = useRef(null)
 
       const fail = useCallback((error) => setNote(`${t('failed')}: ${text(error?.message ?? error)}`), [t])
 
@@ -915,10 +920,13 @@ window.__ModuleLoader__.load({
           setChat(null)
           return undefined
         }
+        if (loadedRef.current === activeId) return undefined
         let live = true
         request('/get', { id: activeId })
           .then((payload) => {
-            if (live) setChat(payload.chat ?? null)
+            if (!live) return
+            setChat(payload.chat ?? null)
+            loadedRef.current = payload.chat?.id ?? null
           })
           .catch(fail)
         return () => {
@@ -936,6 +944,7 @@ window.__ModuleLoader__.load({
         request('/new', {})
           .then((payload) => {
             setChat(payload.chat ?? null)
+            loadedRef.current = payload.chat?.id ?? null
             setActiveId(payload.chat?.id ?? null)
             setChats(Array.isArray(payload.chats) ? payload.chats : [])
             setNote('')
@@ -949,6 +958,7 @@ window.__ModuleLoader__.load({
           .then((payload) => {
             setChats(Array.isArray(payload.chats) ? payload.chats : [])
             if (id === activeId) {
+              loadedRef.current = null
               setActiveId(null)
               setChat(null)
             }
@@ -977,6 +987,7 @@ window.__ModuleLoader__.load({
         request('/ask', { id: activeId, prompt, web, files: attached.map((file) => file.id) })
           .then((payload) => {
             setChat(payload.chat ?? null)
+            loadedRef.current = payload.chat?.id ?? null
             setActiveId(payload.chat?.id ?? null)
             if (payload.summary?.id) {
               const summary = payload.summary

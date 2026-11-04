@@ -37,6 +37,19 @@ const llm = {
   },
 }
 
+let imageInputs = ['text', 'image']
+llm.resolveModelInfo = async () => ({ inputModalities: imageInputs })
+
+const savedImages = []
+let failSaveImage = false
+const attachments = {
+  async saveImage({ data, mediaType, name }) {
+    if (failSaveImage) throw new Error('Unsupported or malformed image data.')
+    savedImages.push({ mediaType, name, bytes: data.length })
+    return { attachmentId: `att-${savedImages.length}`, mediaType, bytes: data.length, width: 4, height: 4 }
+  },
+}
+
 const subprocess = {
   async resolveExecutable(command) {
     return command
@@ -87,6 +100,7 @@ const get = (key) => {
   if (key === 'llm') return llm
   if (key === 'connection') return connection
   if (key === 'subprocess') return subprocess
+  if (key === 'attachments') return attachments
   return undefined
 }
 
@@ -184,6 +198,41 @@ assert.match(sent().messages[0].content[0].text, /Sea level rose\./, 'the file t
 chunks = [text('unreadable'), stop]
 await registrations.tool.execute({ prompt: 'summarise', files: [path.join(workDir, 'missing.md')] }, {})
 assert.match(sent().messages[0].content[0].text, /could not be read/, 'a missing file is reported, not thrown')
+
+// ── the tool with an image ──────────────────────────────────────────────────
+const pngPath = path.join(workDir, 'chart.png')
+await fs.writeFile(pngPath, Buffer.from('89504e470d0a1a0a', 'hex'))
+chunks = [text('seen'), stop]
+await registrations.tool.execute({ prompt: 'what is in the chart?', files: [pngPath] }, {})
+assert.equal(savedImages.length, 1, 'an image goes to the attachment service when the model accepts images')
+assert.equal(savedImages[0].mediaType, 'image/png')
+assert.deepEqual(
+  sent().messages[0].content.filter((block) => block.type === 'image').map((block) => block.attachment.attachmentId),
+  ['att-1'],
+  'the request carries the image as a block, after the text',
+)
+assert.equal(sent().messages[0].content[0].type, 'text', 'the text block stays first')
+assert.match(sent().messages[0].content[0].text, /\[attached image chart\.png: attached as an image\]/)
+
+imageInputs = ['text']
+chunks = [text('blind'), stop]
+await registrations.tool.execute({ prompt: 'what is in the chart?', files: [pngPath] }, {})
+assert.equal(sent().messages[0].content.length, 1, 'a text-only model is sent no image block')
+assert.match(sent().messages[0].content[0].text, /does not accept images/, 'a text-only model is told why the image is missing')
+assert.equal(savedImages.length, 1, 'nothing is stored for a model that cannot read it')
+
+imageInputs = ['text', 'image']
+failSaveImage = true
+chunks = [text('no image'), stop]
+await registrations.tool.execute({ prompt: 'what is in the chart?', files: [pngPath] }, {})
+assert.match(
+  sent().messages[0].content[0].text,
+  /\[attached image chart\.png: the image could not be attached \(Unsupported or malformed image data\.\)\]/,
+  'an image the attachment store rejects is reported with its reason',
+)
+assert.equal(sent().messages[0].content.length, 1, 'a rejected image is not sent as a block')
+failSaveImage = false
+imageInputs = ['text', 'image']
 
 // ── the /chat command ───────────────────────────────────────────────────────
 chunks = [text('from the command'), stop]

@@ -146,3 +146,9 @@ the HOST half".
   plugin puts in its prompt can be read back by asking the model to quote every
   bracketed note verbatim. That is how the injection error and the `tvly` exit
   code surfaced.
+- A shared `/g` regular expression is stateful: reset `lastIndex = 0` before the
+  *first* `exec`, not after it, or the next call skips or repeats a token. A
+  hidden duplicate in rendered markdown came from exactly that.
+- The attachment store decodes image bytes, so a hand-made or truncated PNG is
+  rejected with `Unsupported or malformed image data.` while still looking like a
+  PNG to `file`. Generate a correctly CRC'd PNG when testing uploads.

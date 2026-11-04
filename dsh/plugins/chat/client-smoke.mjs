@@ -12,12 +12,17 @@ import assert from 'node:assert/strict'
 
 // ── a small React ───────────────────────────────────────────────────────────
 const hookStore = new Map()
-const ranEffects = new Set()
 let hooks = []
 let cursor = 0
 let currentKey = ''
 let pendingEffects = []
 let dirty = false
+
+function sameDeps(previous, next) {
+  if (previous === undefined || next === undefined) return false
+  if (previous.length !== next.length) return false
+  return previous.every((value, index) => Object.is(value, next[index]))
+}
 
 const React = {
   createElement(type, props, ...children) {
@@ -50,10 +55,22 @@ const React = {
     cursor += 1
     return fn
   },
-  useEffect(fn) {
-    const key = `${currentKey}|${cursor}`
+  useEffect(fn, deps) {
+    const store = hooks
+    const index = cursor
     cursor += 1
-    if (!ranEffects.has(key)) pendingEffects.push({ key, fn })
+    const previous = store[index]
+    if (previous !== undefined && sameDeps(previous.deps, deps)) return
+    const slot = { deps, cleanup: undefined }
+    store[index] = slot
+    pendingEffects.push({
+      key: `${currentKey}|${index}`,
+      run() {
+        if (typeof previous?.cleanup === 'function') previous.cleanup()
+        const cleanup = fn()
+        slot.cleanup = typeof cleanup === 'function' ? cleanup : undefined
+      },
+    })
   },
 }
 
@@ -96,10 +113,7 @@ function renderOnce() {
   root = renderTree(factory())
   const effects = pendingEffects
   pendingEffects = []
-  for (const effect of effects) {
-    ranEffects.add(effect.key)
-    effect.fn()
-  }
+  for (const effect of effects) effect.run()
 }
 
 async function settle(rounds = 10) {
@@ -139,7 +153,37 @@ globalThis.fetch = async (url, options = {}) => {
   calls.push({ url: String(url), method: options.method ?? 'GET', body })
   const target = String(url)
   if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true })
-  if (target.endsWith('/list')) return json({ chats: [{ id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 }] })
+  if (target.endsWith('/list')) {
+    return json({
+      chats: [
+        { id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 },
+        { id: 'c2', title: 'Sea ice trends', updatedAt: Date.now() - 3_600_000, messages: 4 },
+      ],
+    })
+  }
+  if (target.endsWith('/get')) {
+    const title = body.id === 'c2' ? 'Sea ice trends' : 'CMIP6 scenarios'
+    return json({
+      chat: {
+        id: body.id,
+        title,
+        messages: [
+          { id: 'm1', role: 'user', at: Date.now(), text: 'Show me the trend' },
+          {
+            id: 'm2',
+            role: 'assistant',
+            at: Date.now(),
+            provider: 'paratera',
+            model: 'DeepSeek-V4.1-Flash',
+            text: '## Findings\n\n- a **decline** of `12.2%` per decade\n- see [NSIDC](https://nsidc.test)\n\n```python\nprint(1)\n```',
+          },
+        ],
+      },
+    })
+  }
+  if (target.endsWith('/delete')) {
+    return json({ chats: [{ id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 }] })
+  }
   if (target.endsWith('/ask') && askStatus !== 200) return json({ error: 'unauthorized' }, askStatus)
   if (target.endsWith('/ask')) {
     return json({
@@ -209,6 +253,12 @@ assert.deepEqual(
   'the panel loads the history and the host status on mount',
 )
 assert.match(allText(root).join(' '), /CMIP6 scenarios/, 'a previous chat is listed')
+assert.match(allText(root).join(' '), /Sea ice trends/, 'every previous chat is listed')
+assert.equal(
+  findAll(root, (node) => node.props.className === 'aman-chat-item').length,
+  2,
+  'one list row per chat',
+)
 
 // ── one submit through the composer ─────────────────────────────────────────
 const editors = findAll(root, (node) => node.props.contentEditable === true)
@@ -225,6 +275,7 @@ assert.deepEqual(ask[0].body, { id: null, prompt: 'What are the SSP scenarios?',
 const rendered = allText(root).join(' ')
 assert.match(rendered, /Forty scenarios across five SSPs\./, 'the reply is added to the thread')
 assert.match(rendered, /A source/, 'the sources are listed under the reply')
+assert.equal(calls.filter((call) => call.url.endsWith('/get')).length, 0, 'the chat the reply arrived in is not fetched again')
 assert.equal(editors[0].props.ref.current.innerText, '', 'the composer is cleared by the send')
 
 // ── a failed request is reported, not swallowed ─────────────────────────────
@@ -234,4 +285,40 @@ forms[0].props.onSubmit({ preventDefault() {} })
 await settle()
 assert.match(allText(root).join(' '), /Request failed: unauthorized/, 'a rejected request is reported')
 
-console.log('client.js smoke test passed: registrations, icon, list render, submit, failure path')
+// ── opening an earlier chat renders its markdown ────────────────────────────
+const rows = findAll(root, (node) => node.props.className === 'aman-chat-item')
+rows[1].props.onClick()
+await settle()
+const gets = calls.filter((call) => call.url.endsWith('/get'))
+assert.equal(gets.length, 1, 'clicking a chat loads it once')
+assert.deepEqual(gets[0].body, { id: 'c2' }, 'the clicked chat is the one requested')
+
+const headings = findAll(root, (node) => node.type === 'h2')
+assert.equal(allText(headings[0]).join(''), 'Findings', 'a markdown heading renders as a heading')
+assert.equal(findAll(root, (node) => node.type === 'strong').length, 1, 'bold renders as strong, exactly once')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-chat-inline-code').length, 1, 'inline code is marked')
+const links = findAll(root, (node) => node.type === 'a' && String(node.props.href).startsWith('https://nsidc.test'))
+assert.equal(links.length, 1, 'a markdown link renders as an anchor')
+assert.equal(allText(links[0]).join(''), 'NSIDC')
+const blocks = findAll(root, (node) => node.props.className === 'md-code-block')
+assert.equal(blocks.length, 1, 'a fenced block gets the shipped code-block class')
+assert.match(allText(blocks[0]).join(''), /print\(1\)/, 'the code keeps its text')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-chat-codelang').length, 1, 'the fence language is shown')
+
+// ── the web switch, and deleting a chat ─────────────────────────────────────
+const switches = findAll(root, (node) => node.props.role === 'switch')
+assert.equal(switches.length, 1, 'one web switch')
+assert.equal(switches[0].props['aria-checked'], 'true', 'web grounding is on by default')
+switches[0].props.onClick()
+await settle()
+assert.equal(findAll(root, (node) => node.props.role === 'switch')[0].props['aria-checked'], 'false', 'the switch flips')
+
+const removes = findAll(root, (node) => node.props.className === 'aman-chat-file-remove')
+assert.equal(removes.length, 2, 'each chat row offers a delete')
+removes[0].props.onClick()
+await settle()
+const deletes = calls.filter((call) => call.url.endsWith('/delete'))
+assert.equal(deletes.length, 1, 'deleting posts once')
+assert.deepEqual(deletes[0].body, { id: 'c1' }, 'the clicked row is the one deleted')
+
+console.log('client.js smoke test passed: registrations, icon, list render, submit, markdown, switching, web switch, delete, failure path')

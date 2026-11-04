@@ -424,7 +424,13 @@ async function runTurn(ctx, settings, store, input, signal) {
 // ── registration ────────────────────────────────────────────────────────────
 
 /** File paths given to the tool, reduced to text the same way an upload is. */
-async function readToolFiles(ctx, settings, locations) {
+/**
+ * Read the tool's `files`: text and PDFs become prompt text, and an image goes
+ * through the attachment service when the chosen model takes image input. The
+ * two callers therefore hand a model the same thing for the same file.
+ */
+async function readToolFiles(ctx, settings, locations, provider, model) {
+  const wantsImages = await imageSupport(ctx, settings, provider, model)
   const attachments = []
   for (const location of Array.isArray(locations) ? locations : []) {
     const resolved = path.resolve(text(location))
@@ -433,6 +439,17 @@ async function readToolFiles(ctx, settings, locations) {
       const stats = await fs.stat(resolved)
       if (!stats.isFile()) throw new Error('not a file')
       const mime = mimeFromName(resolved)
+      if (IMAGE_MEDIA.has(mime)) {
+        if (!wantsImages) {
+          attachments.push({ name, mime, text: '', note: `the model ${model} does not accept images, so it was not attached` })
+          continue
+        }
+        const attached = await attachImage(ctx, { path: resolved }, mime, name)
+        const entry = { name, mime, text: '', note: attached.note === '' ? 'attached as an image' : attached.note }
+        if (attached.ref !== null) entry.image = attached.ref
+        attachments.push(entry)
+        continue
+      }
       const extracted = await extractFile(ctx, settings, { path: resolved, name, mime, bytes: stats.size })
       attachments.push({ name, text: extracted.text, note: extracted.note, mime })
     } catch (error) {
@@ -446,7 +463,7 @@ function registerTool(ctx, settings) {
   return ctx.tools.register({
     name: 'chat',
     description:
-      'Ask a model provider one question directly and get its reply as text. This is a plain chat completion: no agent, no tools and no loop, so it cannot act on the answer. Use `web` to ground the answer in a Tavily web search, and `files` to attach local files (PDF text is extracted, images are described by name) without loading them into your own context.',
+      'Ask a model provider one question directly and get its reply as text. This is a plain chat completion: no agent, no tools and no loop, so it cannot act on the answer. Use `web` to ground the answer in a Tavily web search, and `files` to attach local files without loading them into your own context: text is read, a PDF is extracted with pdftotext, and an image is sent as an image when the chosen model accepts one.',
     parameters: {
       type: 'object',
       properties: {
@@ -491,10 +508,19 @@ function registerTool(ctx, settings) {
       },
     },
     async execute(args, exec) {
-      const attachments = await readToolFiles(ctx, settings, args?.files)
+      const provider = text(args?.provider) || settings.provider
+      const model = text(args?.model) || settings.model
+      const attachments = await readToolFiles(ctx, settings, args?.files, provider, model)
       const parts = [text(args?.prompt)]
+      const images = []
       for (const file of attachments) {
-        parts.push(text(file.text).trim() === '' ? `[attached file ${file.name}: ${file.note}]` : `[attached file ${file.name}]\n${file.text}`)
+        const kind = text(file.mime).startsWith('image/') ? 'image' : 'file'
+        if (file.image !== undefined) {
+          images.push({ type: 'image', attachment: file.image })
+          parts.push(`[attached ${kind} ${file.name}: ${file.note}]`)
+          continue
+        }
+        parts.push(text(file.text).trim() === '' ? `[attached ${kind} ${file.name}: ${file.note}]` : `[attached file ${file.name}]\n${file.text}`)
       }
 
       const search = args?.web === true ? await tavilySearch(ctx, settings, text(args?.prompt), exec?.signal) : null
@@ -511,10 +537,10 @@ function registerTool(ctx, settings) {
       ].filter((part) => text(part) !== '').join('\n\n')
 
       const result = await converse(ctx, settings, {
-        messages: [{ role: 'user', content: [{ type: 'text', text: parts.join('\n\n') }] }],
+        messages: [{ role: 'user', content: [{ type: 'text', text: parts.join('\n\n') }, ...images] }],
         system,
-        provider: args?.provider,
-        model: args?.model,
+        provider,
+        model,
       }, exec?.signal)
 
       if (result.failure !== null) throw new Error(`${result.provider}/${result.model} failed - ${result.failure.message}`)
