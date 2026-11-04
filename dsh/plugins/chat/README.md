@@ -7,8 +7,26 @@ its reply comes back as text: no agent turn, no tools, no loop, no subagent.
 |---|---|
 | Agent | the `chat` tool (`prompt`, optional `provider`/`model`) |
 | User | `/chat <prompt>` in the composer |
+| Panel | the **Chat** entry in the sidebar panel list |
 
-Both share one `ask()`, so they cannot drift apart.
+All three share one `ask()`, so they cannot drift apart.
+
+## The sidebar panel
+
+`client.js` registers a `Chat` entry in `sidebar.panellist` (id `chat`, order
+20) and the matching page in the keyed `main` slot. The page is a chat box: type
+a prompt, press Enter, read the reply. It keeps no history beyond the page and
+appends nothing to any session.
+
+The browser half does **not** use `host.call`, which routes through the generated
+Remote namespace that a plain-JavaScript bundle cannot produce. It posts to one
+exact Fetch route instead, registered by the host half:
+
+    POST /api/aman-chat/ask   {"prompt": "…"}   →   {"text": "…", "provider": "…", "model": "…"}
+
+`/api` is the shared connection channel, and it authenticates before routing, so
+the browser's own credential authorizes the call. Exact routes must live under
+`/api`, and every later segment must match `/^[A-Za-z0-9_$.-]+$/`.
 
 ## Configuration
 
@@ -19,54 +37,22 @@ Both share one `ask()`, so they cannot drift apart.
 | `maxChars` | `12000` | Cap on the returned reply |
 | `timeoutMs` | `180000` | Deadline for one call |
 
-The defaults match this profile's `agent-default-model` row, but they are
-copied rather than read from it: switching the default model in Settings does
-not move the chat target. Change them in `cordis.patch.yml` instead.
+The defaults are copied from this profile's `agent-default-model` row rather than
+read from it: switching the default model in Settings does not move the chat
+target. Change them in `cordis.patch.yml` instead.
 
-## Why there is no sidebar panel yet
+## Loading a change
 
-The requested shape is a **Chat panel in the sidebar**. The page half is
-straightforward - the `main` slot is keyed by sidebar entry id and a
-non-`conversation` key receives no Session binding, so an agentless panel is
-exactly what it is for, and `sidebar.panellist` takes an id, an order and a
-label.
-
-What blocks it is the host half. A dynamic Client half can only reach its own
-Host half through the package-private `host.call(method, args)` RPC, and
-exposing a method on the Host side needs DSH's `@Remote` decorator. A bundle
-installed from `~/dotfiles` cannot resolve `@deepseek-ai/dsh-*`: Node resolves
-imports from the package's real path, the profile's `node_modules` holds only
-the linked bundles, and npm publishes those packages at `0.0.1-rc.1` while this
-Harness runs `0.2.1-rc.5`.
-
-So the panel needs one of:
-
-1. DSH packages resolvable at the running version from the bundle's own
-   directory - a `node_modules` symlinked to a source checkout of the same
-   version works today;
-2. a Harness-side seam for exposing a host method without the decorator;
-3. the bundle developed inside a DSH source checkout, where imports resolve.
-
-Until then the capability itself is available through the tool and the command
-above. Recorded in `../../ideas/plugin-backlog.md`.
+The client module graph is built at startup, so a new browser half appears only
+after the Harness restarts. Host-side JavaScript reloads when the *profile* patch
+changes; a bare file write, or reinstalling the bundle, is not enough.
 
 ## Verification
 
 ```bash
-node --check index.js
+node --check index.js && node --check client.js
 ```
 
-Then call the `chat` tool once: a reply proves the provider route, the stream
-collection and the failure path.
-
-## Probe results
-
-- The browser half's only outbound channel is `host.call`, and browser globals
-  are withheld: touching `fetch` throws "network belongs to the HOST half".
-  So a self-registered `ctx.connection.rpc` channel does not help it.
-- `host.call` routes through the Remote namespace, whose codec is generated from
-  decorated host methods. A plain-JavaScript bundle cannot generate one, and
-  `@deepseek-ai/dsh-*` does not resolve from `~/dotfiles` at the running version.
-- The plain-JS `harness.handle(method, fn)` seam exists only inside the
-  dynamic-package sandbox (Creator mode), and dynamic packages re-run per page
-  load, so they do not make a permanent panel either.
+- Host: call the `chat` tool and read the reply.
+- Panel: the client Inspect Slots tree lists this bundle as an occupant of
+  `sidebar.panellist` with id `chat`.

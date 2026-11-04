@@ -122,9 +122,12 @@
     selectedDefault: cordis
 
 # Bundles installed from ~/dotfiles/dsh/plugins (see ../README.md). Editing a
-# bundle's JavaScript needs a composition reload to re-import it: an edit to
-# this file is one, a bare file write is not.
+# bundle's JavaScript needs a composition reload to re-import it, and an edit to
+# this file is the only reliable way to get one: a bare write to the plugin file
+# is not, and neither is reinstalling the bundle. Exact Fetch routes a bundle
+# registers must live under /api and match the endpoint segment pattern.
 #   @aman/dsh-personal-presets  the `paper` and `general-assistant` presets
 #   @aman/dsh-research-tools    Zotero, a Neovim bridge, scholarly search, research context
-#   @aman/dsh-chat              one plain model call, as the `chat` tool and /chat
-#                               (its sidebar panel is blocked; see ideas/plugin-backlog.md)
+#   @aman/dsh-chat              one plain model call: the `chat` tool, /chat, and
+#                               the Chat sidebar panel, whose browser half posts
+#                               to the exact Fetch route /api/aman-chat/ask

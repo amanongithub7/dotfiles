@@ -20,6 +20,11 @@ const DEFAULTS = {
   timeoutMs: 180_000,
 }
 
+// The panel's browser half posts here. Exact Fetch routes must live under the
+// shared /api channel, and every segment after it must match the endpoint
+// pattern. Keep the two halves in step.
+const ROUTE = '/api/aman-chat/ask'
+
 function withDefaults(config) {
   const settings = { ...DEFAULTS }
   for (const [key, value] of Object.entries(config ?? {})) {
@@ -154,4 +159,56 @@ export function apply(ctx, config) {
       }
     },
   })
+
+  // The browser half has no `host.call` route to this package: that path runs
+  // through a generated Remote codec, which a plain-JavaScript bundle cannot
+  // produce. It posts to one exact Fetch route instead. Registering it needs no
+  // imports, and the same ask() serves the tool, the command and the panel.
+  if (typeof ctx.inject === 'function') {
+    ctx.inject(['connection'], (scope) => {
+      const connection = scope.get?.('connection') ?? scope.connection
+      if (connection?.fetch?.register === undefined) {
+        ctx.logger?.warn?.('[chat] the connection service has no Fetch registry; the Chat panel will not load')
+        return
+      }
+      const json = (body, status = 200) =>
+        new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+      let dispose
+      try {
+        dispose = connection.fetch.register({
+          path: ROUTE,
+          methods: ['POST'],
+          requestBody: 'buffered',
+          async fetch(request) {
+            // Connection's own Host/Origin checks and browser authentication do
+            // not cover a route registered beside them, so apply them here.
+            const rejection = connection.requestRejection?.(request)
+            if (rejection !== undefined) return json({ error: 'not authorized' }, rejection)
+            let payload
+            try {
+              payload = await request.json()
+            } catch {
+              return json({ error: 'the request body must be JSON' }, 400)
+            }
+            const prompt = typeof payload?.prompt === 'string' ? payload.prompt.trim() : ''
+            if (prompt === '') return json({ error: 'a non-empty prompt is required' }, 400)
+            try {
+              const reply = await ask(scope, settings, prompt, { provider: payload.provider, model: payload.model }, request.signal)
+              return json({ ...reply, text: reply.text.slice(0, settings.maxChars) })
+            } catch (error) {
+              return json({ error: error?.message ?? String(error) }, 502)
+            }
+          },
+        })
+      } catch (error) {
+        ctx.logger?.warn?.(`[chat] could not register ${ROUTE}: ${error?.message ?? error}`)
+        return
+      }
+      return () => {
+        void dispose?.()
+      }
+    })
+  } else {
+    ctx.logger?.warn?.('[chat] ctx.inject is unavailable; the Chat panel will not load')
+  }
 }

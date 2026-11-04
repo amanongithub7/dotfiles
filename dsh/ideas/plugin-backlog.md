@@ -86,70 +86,35 @@ allocation flag, and whether job output should stream into a session.
 - **Scholar coverage.** The providers cover what could be verified without an
   API key; PubMed and Semantic Scholar would need keys in the credentials store.
 
-## 0. Chat sidebar panel (host half blocked)
+## 0. Chat sidebar panel — built
 
-**Goal.** The `Chat` panel: a sidebar entry that queries a provider with no
-agent, tools or loop.
+**Status.** Built and installed as `../plugins/chat` (v1.1.0): the `chat` tool,
+the `/chat` command, and a **Chat** entry in the sidebar panel list whose page
+queries one provider with no agent, tools or loop. All three call one `ask()`.
 
-**Already built.** The capability itself ships in `../plugins/chat` as the
-`chat` tool and the `/chat` command; both call one `ask()`, which streams once
-through `ctx.llm` and collects only `text-delta` chunks.
+**How the browser half reaches the host.** Not through `host.call`: that routes
+through the generated Remote namespace, which a plain-JavaScript bundle cannot
+produce (npm carries the DSH packages at `0.0.1-rc.1` against a running
+`0.2.1-rc.5`). Instead the host registers one exact Fetch route and the browser
+half posts to it with plain `fetch` — available to a *bundled* half, unlike a
+dynamic package's sandboxed half, whose `fetch` trap reads "network belongs to
+the HOST half".
 
-**What blocks the panel.** A dynamic Client half reaches its own Host half only
-through the package-private `host.call(method, args)` RPC, and exposing a Host
-method needs DSH's `@Remote` decorator. A bundle linked from `~/dotfiles`
-cannot resolve `@deepseek-ai/dsh-*`: Node resolves imports from the package's
-real path, the profile's `node_modules` holds only the linked bundles, and npm
-publishes those packages at `0.0.1-rc.1` while this Harness runs `0.2.1-rc.5`.
+**Rules that cost time to learn.**
 
-**Unblocks, in order of preference.**
-
-1. Give the bundle a `node_modules` whose `@deepseek-ai/*` point at a source
-   checkout of the same version.
-2. A Harness seam that exposes a Host method to its Client half without the
-   decorator.
-3. Develop the bundle inside a DSH source checkout.
-
-The page half is ready to write: `main` is keyed by sidebar entry id, a key
-other than `conversation` receives no Session binding, and `sidebar.panellist`
-takes an id, an order and a label.
-
-## Operational notes for whoever picks this up
-
-- A bundle linked from `~/dotfiles` does not reload its JavaScript when the file
-  changes: a bare write is not picked up, and waiting does not help. Restart the
-  Harness, or reinstall the bundle, after editing plugin code. Row and config
-  changes in `cordis.patch.yml` do apply live.
-- `pnpm` rewrites the profile `package.json` with a rename, which replaces the
-  symlink with a regular file. `../relink.sh --adopt` reports the drift, copies
-  the live file back into the repo, and restores the link.
-- `ctx.llm.stream()` yields a closed union discriminated on **`type`**, not
-  `kind`: `block-start | text-delta | reasoning-delta | tool-call-delta |
-  block-end | usage | finish`. `reasoning-delta` carries a `text` field too, so
-  a collector that accepts text from any chunk pastes the model's private
-  planning into its answer.
-
-### Probe results (what the runtime actually offers)
-
-- `ctx.connection.rpc.handle(channel, handler)` is an import-free generic RPC
-  channel registry. The browser half still cannot use it: its only outbound
-  channel is `host.call`, and browser globals are withheld — touching `fetch`
-  throws "network belongs to the HOST half: register a handler there with
-  harness.handle(method, fn) and call it here via host.call(method, args)".
-- `host.call` "routes through the Remote namespace", and that namespace's codec
-  is generated from decorated (`@Remote`) host methods. A plain-JavaScript
-  bundle has no build step to generate one, and `@deepseek-ai/dsh-*` does not
-  resolve from `~/dotfiles` at the running version.
-- The harness *does* have a plain-JS host-half seam — `harness.handle(method,
-  fn)` on the host side, `host.call(method, args)` on the browser side — but
-  `harness` is the dynamic-package sandbox seat: it belongs to Creator-mode
-  definitions, not to a bundle. Dynamic packages also re-run per page load ("a
-  refresh starts clean by design"), which does not fit a permanent panel.
-- Confirmed reload trigger: editing `cordis.patch.yml` re-imports changed plugin
-  JavaScript within seconds. A bare write to a plugin file never does, however
-  long you wait.
-
-**Paths forward.** (1) Get the DSH packages resolvable at the *running* version
-from the bundle's own `node_modules` — npm publishes them at `0.0.1-rc.1` only.
-(2) Ask for a bundle-level equivalent of `harness.handle`. (3) Accept a dynamic
-package and re-run it after each refresh.
+- Exact Fetch routes must live under the shared `/api` channel: `register`
+  validates with `endpointFromPath('/api', path)`, so `/aman-chat/ask` throws
+  `invalid exact Fetch route`. Every segment after `/api/` must match
+  `/^[A-Za-z0-9_$.-]+$/`.
+- `/api` authenticates *before* routing, so an unauthenticated probe gets a
+  blanket 401 and cannot distinguish a registered route from an unrouted one.
+  Register a diagnostic through a tool instead when you need to know.
+- `sidebar.panellist` ids address matching `main` panels: register the list
+  entry with an id and the panel under the same key. The sidebar owns the
+  button, the label comes from list metadata, and the icon component receives
+  `{ size, active }`.
+- Installing a bundle does not load its browser half: the client module graph is
+  built at startup, so a new `dsh.client` half appears only after a restart. The
+  client Inspect Slots tree shows it as an occupant of `sidebar.panellist`.
+- A bundle's JavaScript reloads only when the *profile* patch changes: a bare
+  file write is not enough, and neither is reinstalling the bundle.
