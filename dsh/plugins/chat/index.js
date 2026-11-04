@@ -93,10 +93,13 @@ async function ask(ctx, settings, prompt, override = {}, signal) {
   if (failure !== undefined) {
     throw new Error(`${provider}/${model} failed - ${describeFailure(failure)}`)
   }
-  const reply = text.trim()
+  // Cap the model's own text, then add the note: slicing afterwards would cut
+  // the note off instead, which is how a truncated reply lost its explanation.
+  const reply = text.trim().slice(0, settings.maxChars)
   const body = reply === '' ? '(the provider returned no text)' : reply
+  const note = truncated ? '\n\n[reply truncated: the model reached its output limit]' : ''
   return {
-    text: truncated ? `${body}\n\n[reply truncated: the model reached its output limit]` : body,
+    text: `${body}${note}`,
     provider,
     model,
   }
@@ -139,8 +142,7 @@ export function apply(ctx, config) {
       render: (_args, value) => [{ type: 'text', text: value?.text ?? '(no reply)' }],
     },
     async execute(args, exec) {
-      const reply = await ask(ctx, settings, args.prompt, { provider: args.provider, model: args.model }, exec?.signal)
-      return { ...reply, text: reply.text.slice(0, settings.maxChars) }
+      return ask(ctx, settings, args.prompt, { provider: args.provider, model: args.model }, exec?.signal)
     },
   })
 
@@ -153,7 +155,7 @@ export function apply(ctx, config) {
       if (prompt === '') return { kind: 'error', text: 'Usage: /chat <prompt>' }
       try {
         const reply = await ask(ctx, settings, prompt, {}, invocation.signal)
-        return { kind: 'success', text: reply.text.slice(0, settings.maxChars) }
+        return { kind: 'success', text: reply.text }
       } catch (error) {
         return { kind: 'error', text: error?.message ?? String(error) }
       }
@@ -194,7 +196,7 @@ export function apply(ctx, config) {
             if (prompt === '') return json({ error: 'a non-empty prompt is required' }, 400)
             try {
               const reply = await ask(scope, settings, prompt, { provider: payload.provider, model: payload.model }, request.signal)
-              return json({ ...reply, text: reply.text.slice(0, settings.maxChars) })
+              return json(reply)
             } catch (error) {
               return json({ error: error?.message ?? String(error) }, 502)
             }

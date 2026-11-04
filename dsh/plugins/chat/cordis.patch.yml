@@ -1,6 +1,7 @@
-# chat: one plain model call, reachable as the `chat` tool and the /chat
-# command. No agent, no tools, no loop - the provider is queried once and its
-# reply is returned as text.
+# chat: one plain model call, reachable as the `chat` tool, the /chat command,
+# and the Chat sidebar panel, whose browser half posts to /api/aman-chat/ask.
+# No agent, no tools, no loop - the provider is queried once and its reply comes
+# back as text.
 - insert:
     - id: chat
       name: '@aman/dsh-chat'

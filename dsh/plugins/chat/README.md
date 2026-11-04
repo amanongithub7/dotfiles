@@ -55,14 +55,18 @@ changes; a bare file write, or reinstalling the bundle, is not enough.
 
 ```bash
 node --check index.js && node --check client.js
-node smoke.mjs     # browser half: registrations, render, submit, failure path
+node host-smoke.mjs     # host half: tool, command, route, failures
+node client-smoke.mjs   # browser half: registrations, render, submit, failure
 ```
 
-`smoke.mjs` stubs the module loader, React and `fetch`, then asserts that the
-half claims both slots, honours the requested icon size, posts one trimmed
-prompt to `/api/aman-chat/ask`, appends the reply with its target, and reports a
-rejected request instead of swallowing it. It is the only way to exercise the
-browser half without a page.
+Both halves are exercised without the app. `host-smoke.mjs` stubs the plugin
+context, `llm` and `connection`, and covers the request the tool builds, the
+visible-text-only collector, the truncation note, the `/chat` command's parsing,
+every status the panel route can return, and a profile with no connection
+service. `client-smoke.mjs` stubs the module loader, React and `fetch`, and
+covers the slot registrations, the icon size, one submit, and a rejected
+request. The host test is what caught the truncation note being cut by
+`maxChars`.
 
 - Host: call the `chat` tool and read the reply.
 - Panel: the client Inspect Slots tree lists this bundle as an occupant of
