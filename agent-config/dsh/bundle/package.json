@@ -1,0 +1,12 @@
+{
+  "name": "@aman/dsh-personal-presets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal DeepSeek Harness agent presets whose personas read the shared agent source in ~/dotfiles/agent-config/agents.",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

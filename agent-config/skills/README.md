@@ -1,7 +1,24 @@
 # Skills in this directory
 
-This is `~/.config/opencode/skills` (OpenCode scans it by default). Mostly
-hand-written, with a few vendored from upstream.
+Shared by OpenCode v2 and DeepSeek Harness. Both read it through a symlink:
+`~/.config/opencode/skills` -> here, and `~/.dsh/skills` -> here. See
+`../README.md` for the format contract and why there is one root per tool.
+
+Mostly hand-written, with a few vendored from upstream.
+
+## Layout rule
+
+Keep every skill flat - `<id>/SKILL.md` directly under this directory. DSH
+discovers one level only; a nested `SKILL.md` would work in OpenCode and be
+invisible in DSH.
+
+## Hand-written
+
+| Skill | Covers |
+|---|---|
+| `zotero-cli` | the whole Zotero library loop through the `zotero-cli` command; `reference.md` is the full command list |
+| `deep-research` | source-grounded desk research reported with provenance |
+| `find-docs` | current library/framework/SDK docs via the `ctx7` CLI |
 
 ## Vendored skills
 
@@ -20,7 +37,7 @@ location, so anything they regenerate has to be copied back here.
 Only 3 of the 8 upstream skills are vendored. The rest were left out on purpose:
 
 - `tavily-search` duplicates the built-in `websearch` tool, which is already
-  Tavily-backed in `../opencode.jsonc`.
+  Tavily-backed in `../../opencode/opencode.jsonc`.
 - `tavily-research` overlaps the `deep-research` skill and costs 15-250 credits
   per call.
 - `tavily-best-practices` is reference material for *building* Tavily
@@ -43,9 +60,13 @@ Moved here from `~/.agents/skills/playwright-cli` (now empty), which is the path
 came across, including `references/`.
 
 **Updating:** re-running that command recreates
-`~/.agents/skills/playwright-cli` and would leave you with the skill discovered
-twice. After upgrading the CLI, copy the regenerated directory over this one and
-delete the `~/.agents/skills/playwright-cli` copy.
+`~/.agents/skills/playwright-cli`, and OpenCode would then resolve that ID from
+two roots. After upgrading the CLI, copy the regenerated directory over this one
+and delete the `~/.agents/skills/playwright-cli` copy.
 
-The skill depends on `~/.playwright/cli.config.json`, which is also vendored —
+The skill depends on `~/.playwright/cli.config.json`, which is also vendored -
 see `../../playwright/README.md`.
+
+**Note:** `playwright-cli` and the `tavily-*` skills carry `allowed-tools`
+frontmatter. OpenCode enforces it; DSH ignores the key and applies its own
+sandbox and approval policy instead.

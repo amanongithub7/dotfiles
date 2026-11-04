@@ -1,0 +1,227 @@
+# Personal DeepSeek Harness agent presets.
+#
+# The persona text is NOT written here. Each `prefix` reads the body of the
+# matching markdown agent out of the shared source at activation time, so
+# ~/dotfiles/agent-config/agents/<name>.md stays the only place a prompt lives.
+# The `suffix` carries only the Harness-specific deltas.
+#
+# Install or reinstall from a Creator-mode session:
+#   plugin_manager { action: install_bundle, target: "/Users/aman/dotfiles/agent-config/dsh/bundle" }
+#
+# A prompt edit applies to Sessions created after the revision is rebuilt;
+# existing Sessions keep the revision they started with.
+
+- insert:
+    - id: preset-paper
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: paper
+        name: Paper
+        description: Paper reading grounded in page-cited PDF text and the climate-crisis vault notes.
+        order: 20
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: !!js '(() => { const fs = process.getBuiltinModule("node:fs"); const p = process.getBuiltinModule("node:path"); const file = p.join(process.env.HOME, "dotfiles/agent-config/agents/Paper.md"); try { const raw = fs.readFileSync(file, "utf8"); const m = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/); return (m ? raw.slice(m[0].length) : raw).trim(); } catch (err) { return "[persona source unreadable: " + file + " -- " + err.message + "]"; } })()'
+              suffix: |-
+                You are running inside DeepSeek Harness, not OpenCode. Deltas that matter:
+                - Web tools are `web_search` and `web_fetch`, not `websearch`/`webfetch`.
+                - The plumbing section above says to run `zotero-cli` as a bare command with no pipes or `&&`. That restriction is an OpenCode permission-scanner artifact and does not apply here; pipes, `jq` and shell loops are fine, and the Zotero commands themselves are unchanged.
+                - Shell runs under the Harness sandbox and its own per-call approval policy rather than an allow-list. Reads need no approval; treat any write to the vault or to a PDF as something to confirm first.
+                - Load the shared `zotero-cli` skill with the `skill` tool before the first library command. Its `reference.md` sits beside `SKILL.md`, and that directory is shared with OpenCode.
+                - `todo_write`, `subagent`, `subagent_fork`, `workflow` and `ask_user_question` are available here.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+
+    - id: preset-general-assistant
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: general-assistant
+        name: General Assistant
+        description: Analyst and thought partner for research, comparisons and document deliverables.
+        order: 21
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: !!js '(() => { const fs = process.getBuiltinModule("node:fs"); const p = process.getBuiltinModule("node:path"); const file = p.join(process.env.HOME, "dotfiles/agent-config/agents/General Assistant.md"); try { const raw = fs.readFileSync(file, "utf8"); const m = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/); return (m ? raw.slice(m[0].length) : raw).trim(); } catch (err) { return "[persona source unreadable: " + file + " -- " + err.message + "]"; } })()'
+              suffix: |-
+                You are running inside DeepSeek Harness, not OpenCode. Deltas that matter:
+                - Web tools are `web_search` and `web_fetch`, not `websearch`/`webfetch`.
+                - Shell runs under the Harness sandbox and its own per-call approval policy rather than a per-command allow-list. The read-only helpers named in the OpenCode rules (python3, ls, cat, head, tail, wc, tvly) are ordinary commands here and need whatever approval the sandbox asks for.
+                - The `memory` MCP server is not mounted in this profile yet. Keep durable findings in files in the project directory, and say plainly if you would otherwise have written something to memory.
+                - `subagent`, `subagent_fork` and `workflow` are the parallel-research fan-out; `present` declares finished files as deliverables the user can open from the GUI.
+                - Load the shared `deep-research`, `tavily-*` and `find-docs` skills with the `skill` tool. Office deliverables use the bundled `office`, `office-docx`, `office-xlsx`, `office-pptx` and `office-export-pdf` skills, not OpenCode's `docx`/`xlsx`/`pptx`/`pdf`.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'

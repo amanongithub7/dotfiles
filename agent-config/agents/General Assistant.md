@@ -1,7 +1,7 @@
 ---
 description: General-purpose analyst and thought partner. Heavy web research, source-grounded analysis, brainstorming, cost/benefit and financial modelling, and document deliverables (reports, plans, printable PDFs). Use for market surveys, desk research, comparison shopping, policy and regulation reading, and any question whose answer should end up in a document. Not for code changes.
 mode: all
-model: paratera/DeepSeek-V4-Pro-0813#high
+model: openrouter/deepseek/deepseek-v4.1-flash-1017
 steps: 60
 permissions:
   # Shell is ask-by-default; these deterministic, read-only helpers do not need
@@ -26,6 +26,12 @@ permissions:
     effect: allow
   - action: shell
     resource: "wc *"
+    effect: allow
+  # Tavily CLI — the crawl/extract/map skills drive it. Read-only network
+  # fetches for research; covered by the same "costs credits, spends no local
+  # state" reasoning as the read-only helpers above.
+  - action: shell
+    resource: "tvly *"
     effect: allow
   - action: read
     resource: "*"
@@ -81,6 +87,18 @@ permissions:
     effect: allow
   - action: skill
     resource: "deep-research"
+    effect: allow
+  # Tavily's CLI skills: crawl a docs site, bulk-extract pages, enumerate URLs.
+  # These are the tools deep-research reaches for when a question needs a whole
+  # site rather than ten search snippets.
+  - action: skill
+    resource: "tavily-crawl"
+    effect: allow
+  - action: skill
+    resource: "tavily-extract"
+    effect: allow
+  - action: skill
+    resource: "tavily-map"
     effect: allow
   - action: skill
     resource: "find-docs"

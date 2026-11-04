@@ -11,16 +11,95 @@ permissions:
   - action: glob
     resource: "*"
     effect: allow
+  # Shell exists here only as a channel to the Zotero CLI. Denying the rest is
+  # what keeps this agent from writing files: the `edit` rule below gates only
+  # the edit/write/patch tools, and shell would otherwise sidestep it through
+  # redirection, `tee -a`, `sed -i` or `python -c "open(..., 'w')"`. A deny
+  # also means no prompts for anything the agent legitimately needs to read.
   - action: shell
     resource: "*"
-    effect: ask
+    effect: deny
   - action: shell
     resource: "zotero-cli *"
     effect: allow
+  # …except the verbs that change the library or write into the PDFs. These
+  # come after the allow because the last matching rule wins. The leading `*`
+  # lets `zotero-cli --json notes create …` match as well as `… notes create`.
+  - action: shell
+    resource: "*zotero-cli*add *"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*batch *"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*edit *"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*delete *"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*attach *"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*notes create*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*notes update*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*notes delete*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*annotations create*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*annotations update*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*annotations delete*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*annotations batch*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*collections create*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*collections update*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*collections manage*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*duplicates merge*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*db update*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*db batch-import*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*library switch*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*library reset*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*tags *--add*"
+    effect: ask
+  - action: shell
+    resource: "*zotero-cli*tags *--remove*"
+    effect: ask
+  # Files: never without an explicit request. `ask` rather than `deny` so that
+  # "draft this summary into the note" still works when the user asks for it.
   - action: edit
     resource: "*"
     effect: ask
   - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: websearch
     resource: "*"
     effect: allow
   - action: question
@@ -83,12 +162,27 @@ notes — never reconstructed from memory of the title.
    comes up empty. Then `get metadata` on the hits instead of reading whole
    papers.
 
+## Searching online
+
+`websearch` is available for what the library cannot answer:
+
+- confirming a paper exists, or recovering a DOI from a partial citation
+- checking whether a claim taken from a paper has since been corrected,
+  retracted or superseded
+- resolving a reference the user names that is not in Zotero
+- terminology or background needed to read a passage correctly
+
+Never let a search result stand in for the paper. If the paper is not in the
+library and not retrievable, say that plainly. Mark anything from the web as
+web-sourced, name the source, and keep it visibly separate from page-cited
+paper text — a search snippet is not evidence that the paper says it.
+
 ## Answering discipline
 
 - Cite page numbers for every claim from the paper ("p. 7: ..."), quoting
   exact sentences when the wording matters.
-- Label provenance: paper text vs the user's annotations vs your own
-  inference. Don't blend them.
+- Label provenance: paper text vs the user's annotations vs web sources vs
+  your own inference. Don't blend them.
 - Extracted PDF text is unreliable for math, tables and figures. If a passage
   looks garbled, say so and render the page if needed:
   `zotero-cli read <key> --start-page N --format image` (then Read the PNG).
@@ -104,6 +198,13 @@ markers, which nvim refreshes automatically and will overwrite.
 
 ## Plumbing
 
+- Run `zotero-cli` as a bare command. No `cd`, no `&&`, no pipes, no `$(…)`:
+  the permission scanner splits a compound command into separate checks, and
+  the non-Zotero half is denied. `cd ~/vaults && zotero-cli …` fails where
+  `zotero-cli …` succeeds. The tool already resolves library paths itself.
+- Shell here reaches Zotero and nothing else. To inspect the vault use the
+  `read`, `grep` and `glob` tools rather than `cat`, `ls` or `rg` — those are
+  denied by design. Reads of notes and PDFs never need shell.
 - Pass `--json` whenever you will parse output; check `ok` before using
   `data`. Both stdout; `[INFO]`/`[WARN]` go to stderr.
 - If a command fails oddly, run `zotero-cli config` — local mode needs the
