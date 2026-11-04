@@ -291,6 +291,22 @@ assert.deepEqual(history[1].source, { kind: 'model', provider: 'paratera', model
 assert.equal(history[1].content[0].text, 'panel reply')
 assert.equal(history[2].content[0].text, 'and again')
 
+// ── an image uploaded through the panel's own path ──────────────────────────
+imageInputs = ['text', 'image']
+const beforeImage = savedImages.length
+const uploadedPng = await (await route('/upload').fetch(request({
+  name: 'red.png',
+  mime: 'image/png',
+  dataBase64: Buffer.from('89504e470d0a1a0a', 'hex').toString('base64'),
+}))).json()
+chunks = [text('I see red.'), stop]
+const imageTurn = await (await route('/ask').fetch(request({ id: created.chat.id, prompt: 'what colour is it?', files: [uploadedPng.file.id], web: false }))).json()
+assert.equal(savedImages.length, beforeImage + 1, 'an image uploaded to the panel goes to the attachment service')
+assert.equal(savedImages.at(-1).mediaType, 'image/png')
+assert.equal(sent().messages.at(-1).content.filter((block) => block.type === 'image').length, 1, 'the turn sends it as an image block')
+assert.equal(imageTurn.chat.messages.at(-2).attachments[0].image.attachmentId, `att-${savedImages.length}`, 'the stored question keeps the image reference')
+assert.equal(imageTurn.chat.messages.at(-1).text, 'I see red.')
+
 // ── route errors ────────────────────────────────────────────────────────────
 assert.equal((await route('/ask').fetch(request({ id: created.chat.id, prompt: '   ' }))).status, 400, 'an empty prompt is a client error')
 assert.equal((await route('/ask').fetch({ headers: {}, json: async () => { throw new Error('not json') } })).status, 400, 'an unparsable body is a client error')
@@ -314,6 +330,22 @@ assert.deepEqual(removed.chats, [], 'deleting the only chat empties the list')
 // The store validates ids before they reach a path, so traversal reads nothing.
 const store = apply(ctx, { dataDir }).store
 assert.equal(await store.get('../../etc/passwd'), null, 'a traversal id resolves to nothing')
+
+// ── the history budget ──────────────────────────────────────────────────────
+const capsDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aman-chat-caps-'))
+apply(ctx, { dataDir: capsDir, historyChars: 90, maxChars: 400 })
+chunks = [text('first reply'), stop]
+const capsChat = (await (await route('/new').fetch(request({}))).json()).chat
+await route('/ask').fetch(request({ id: capsChat.id, prompt: 'A'.repeat(40), web: false }))
+chunks = [text('second reply'), stop]
+await route('/ask').fetch(request({ id: capsChat.id, prompt: 'B'.repeat(40), web: false }))
+chunks = [text('third reply'), stop]
+await route('/ask').fetch(request({ id: capsChat.id, prompt: 'C'.repeat(40), web: false }))
+const capped = sent().messages.map((message) => message.content[0].text)
+assert.ok(capped.some((body) => body.includes('C'.repeat(40))), 'the newest turn is always sent')
+assert.ok(capped.every((body) => body.includes('A'.repeat(40)) === false), 'an over-budget history drops the oldest turn entirely')
+assert.ok(capped.length < 5, `the replayed history stays inside its budget (got ${capped.length} messages)`)
+await fs.rm(capsDir, { recursive: true, force: true })
 
 // ── a profile without the connection service ────────────────────────────────
 const bare = {
