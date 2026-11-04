@@ -88,9 +88,20 @@ allocation flag, and whether job output should stream into a session.
 
 ## 0. Chat sidebar panel — built
 
-**Status.** Built and installed as `../plugins/chat` (v1.1.0): the `chat` tool,
-the `/chat` command, and a **Chat** entry in the sidebar panel list whose page
-queries one provider with no agent, tools or loop. All three call one `ask()`.
+**Status.** Built and installed as `../plugins/chat` (v2.0.0): the `chat` tool
+(with a Tavily-grounded web option and file attachments), the `/chat` command,
+and a **Chat** entry in the sidebar panel list. The panel is a full client now:
+a left column of every previous chat, a thread with the shipped conversation
+styling, a composer with file uploads and a web toggle, and its own history on
+disk under `storages/aman-chat`. Chats are deliberately not sessions - that is
+what keeps the agent loop out - so the panel keeps its own store and calls the
+provider once per message. All three callers funnel through one `converse()`.
+
+**Why the history is not a sidebar section.** The sidebar has no additive section
+seat: its children are the brand marks, the footer action, the toggle badge,
+settings, the single `workspaces` slot, `panellist` and `panellist.actions`.
+Registering on `sidebar.workspaces` would shadow the shipped one, so the history
+list is the panel's left column, styled from the sidebar's own fill token.
 
 **How the browser half reaches the host.** Not through `host.call`: that routes
 through the generated Remote namespace, which a plain-JavaScript bundle cannot
@@ -118,3 +129,20 @@ the HOST half".
   client Inspect Slots tree shows it as an occupant of `sidebar.panellist`.
 - A bundle's JavaScript reloads only when the *profile* patch changes: a bare
   file write is not enough, and neither is reinstalling the bundle.
+- **Cordis refuses `ctx.<service>` without an injection**, even when the service
+  exists: reading it throws `cannot get property "x" without inject`. So the
+  `ctx.get?.('x') ?? ctx.x` idiom is a trap - `get()` succeeds without inject and
+  the `??` branch then throws. Use a guarded lookup that tries `get` first and
+  wraps the property read, or declare the service in `inject`.
+- The `inject: { required: […], optional: […] }` object form did **not** load in
+  this DSH version: the plugin's tool disappeared. The array form works.
+- A tool's returned value must be lossless JSON. A key that is present with
+  `undefined` is rejected as `value is not lossless JSON`, so optional fields must
+  be omitted rather than set to `undefined`.
+- `tvly` reports its own failures as JSON on **stdout** with a non-zero exit code
+  and an empty stderr - read stdout before blaming the exit code. Its keyless
+  tier is rate limited per IP, and the message says so.
+- Live-debugging trick for a tool's own diagnostics: the bracketed `[…]` notes a
+  plugin puts in its prompt can be read back by asking the model to quote every
+  bracketed note verbatim. That is how the injection error and the `tvly` exit
+  code surfaced.

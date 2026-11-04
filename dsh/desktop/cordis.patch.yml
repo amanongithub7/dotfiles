@@ -128,6 +128,9 @@
 # registers must live under /api and match the endpoint segment pattern.
 #   @aman/dsh-personal-presets  the `paper` and `general-assistant` presets
 #   @aman/dsh-research-tools    Zotero, a Neovim bridge, scholarly search, research context
-#   @aman/dsh-chat              one plain model call: the `chat` tool, /chat, and
-#                               the Chat sidebar panel, whose browser half posts
-#                               to the exact Fetch route /api/aman-chat/ask
+#   @aman/dsh-chat              one plain model call: the `chat` tool (with a
+#                               Tavily-grounded web option and file attachments),
+#                               the /chat command, and the Chat sidebar panel.
+#                               The panel's browser half posts to the exact Fetch
+#                               routes under /api/aman-chat: status, list, get,
+#                               new, rename, delete, upload, file and ask.

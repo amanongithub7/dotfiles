@@ -1,8 +1,8 @@
 {
   "name": "@aman/dsh-chat",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Ask a model provider directly, with no agent, tools or loop",
+  "description": "A chat client for Harness: one direct provider call per message, with file attachments and Tavily grounding, and no agent loop",
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -16,7 +16,11 @@
     "cordis.patch.yml",
     "README.md",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "store.js",
+    "ground.js",
+    "host-smoke.mjs",
+    "client-smoke.mjs"
   ],
   "dsh": {
     "bundle": {

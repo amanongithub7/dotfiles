@@ -1,135 +1,237 @@
 /**
  * Headless smoke test for the browser half.
  *
- * The panel cannot be rendered from a shell, so this stubs the module loader,
- * React and fetch, then exercises the three things that would otherwise only
- * fail in the page: the slot registrations, one render, and one submit.
+ * The panel cannot be rendered from a shell, so this stubs the module loader, a
+ * small React and fetch, then exercises what would otherwise only fail in the
+ * page: the slot registrations, the icon, a render of the chat list, one submit
+ * through the composer's contenteditable, and a failed request.
  *
- *   node smoke.mjs
+ *   node client-smoke.mjs
  */
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 
-const source = readFileSync(new URL('./client.js', import.meta.url), 'utf8')
-
-let loaded
-const window = { __ModuleLoader__: { load(entry) { loaded = entry } } }
-
-// A stateful-enough React: hooks keep their value between renders of the same
-// component, and createElement returns a plain tree this test can walk.
-const states = []
+// ── a small React ───────────────────────────────────────────────────────────
+const hookStore = new Map()
+const ranEffects = new Set()
+let hooks = []
 let cursor = 0
-let effects = []
-const h = (type, props, ...children) => ({ type, props: props ?? {}, children: children.flat() })
+let currentKey = ''
+let pendingEffects = []
+let dirty = false
+
 const React = {
-  createElement: h,
-  useState(initial) {
-    const index = cursor++
-    if (index >= states.length) states[index] = typeof initial === 'function' ? initial() : initial
-    return [states[index], (next) => { states[index] = typeof next === 'function' ? next(states[index]) : next }]
+  createElement(type, props, ...children) {
+    const node = {
+      type,
+      props: props ?? {},
+      children: children.flat(Infinity).filter((child) => child !== null && child !== undefined && child !== false),
+    }
+    if (node.props.ref !== undefined && node.props.ref !== null) node.props.ref.current = node
+    return node
   },
-  useEffect(effect) { effects.push(effect) },
-  useRef() { return { current: null } },
-  useCallback(fn) { return fn },
+  useState(initial) {
+    const store = hooks
+    const index = cursor
+    cursor += 1
+    if (!(index in store)) store[index] = typeof initial === 'function' ? initial() : initial
+    return [store[index], (value) => {
+      store[index] = typeof value === 'function' ? value(store[index]) : value
+      dirty = true
+    }]
+  },
+  useRef(initial) {
+    const store = hooks
+    const index = cursor
+    cursor += 1
+    if (!(index in store)) store[index] = { current: initial }
+    return store[index]
+  },
+  useCallback(fn) {
+    cursor += 1
+    return fn
+  },
+  useEffect(fn) {
+    const key = `${currentKey}|${cursor}`
+    cursor += 1
+    if (!ranEffects.has(key)) pendingEffects.push({ key, fn })
+  },
 }
+
+// Host elements keep their identity across renders, the way real DOM nodes do,
+// so a ref's element and anything written on it survive a state change.
+const nodes = new Map()
+
+function renderTree(node, key = 'root') {
+  if (node === null || node === undefined || node === false) return null
+  if (typeof node === 'string' || typeof node === 'number') return node
+  if (Array.isArray(node)) return node.map((child, index) => renderTree(child, `${key}.${index}`))
+  if (typeof node.type === 'function') {
+    const componentKey = `${key}|${node.type.name || 'anonymous'}`
+    const outerHooks = hooks
+    const outerKey = currentKey
+    hooks = hookStore.get(componentKey) ?? []
+    cursor = 0
+    currentKey = componentKey
+    const rendered = node.type(node.props)
+    hookStore.set(componentKey, hooks)
+    hooks = outerHooks
+    currentKey = outerKey
+    return renderTree(rendered, `${componentKey}.out`)
+  }
+  const existing = nodes.get(key)
+  const rendered = existing !== undefined && existing.type === node.type ? existing : { type: node.type, props: node.props, children: [] }
+  rendered.props = node.props
+  if (rendered.props.ref !== undefined && rendered.props.ref !== null) rendered.props.ref.current = rendered
+  rendered.children = node.children.map((child, index) => renderTree(child, `${key}.${index}`))
+  nodes.set(key, rendered)
+  return rendered
+}
+
+let root = null
+let factory = null
+
+function renderOnce() {
+  dirty = false
+  pendingEffects = []
+  root = renderTree(factory())
+  const effects = pendingEffects
+  pendingEffects = []
+  for (const effect of effects) {
+    ranEffects.add(effect.key)
+    effect.fn()
+  }
+}
+
+async function settle(rounds = 10) {
+  for (let round = 0; round < rounds; round += 1) {
+    await new Promise((resolve) => setImmediate(resolve))
+    if (dirty) renderOnce()
+  }
+}
+
+function findAll(node, predicate, found = []) {
+  if (node === null || typeof node !== 'object') return found
+  if (node.type !== undefined && predicate(node)) found.push(node)
+  for (const child of node.children ?? []) findAll(child, predicate, found)
+  return found
+}
+
+function allText(node, collected = []) {
+  if (typeof node === 'string' || typeof node === 'number') {
+    collected.push(String(node))
+    return collected
+  }
+  if (node === null || typeof node !== 'object') return collected
+  for (const child of node.children ?? []) allText(child, collected)
+  return collected
+}
+
+// ── the page's environment ──────────────────────────────────────────────────
+let captured = null
+globalThis.window = { __ModuleLoader__: { load: (entry) => { captured = entry } } }
+
+const calls = []
+const json = (value, status = 200) => ({ ok: status < 400, status, json: async () => value })
+let askStatus = 200
+
+globalThis.fetch = async (url, options = {}) => {
+  const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+  calls.push({ url: String(url), method: options.method ?? 'GET', body })
+  const target = String(url)
+  if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true })
+  if (target.endsWith('/list')) return json({ chats: [{ id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 }] })
+  if (target.endsWith('/ask') && askStatus !== 200) return json({ error: 'unauthorized' }, askStatus)
+  if (target.endsWith('/ask')) {
+    return json({
+      chat: {
+        id: 'c1',
+        title: 'CMIP6 scenarios',
+        messages: [
+          { id: 'm1', role: 'user', at: Date.now(), text: body.prompt },
+          { id: 'm2', role: 'assistant', at: Date.now(), text: 'Forty scenarios across five SSPs.', provider: 'paratera', model: 'DeepSeek-V4.1-Flash', sources: [{ title: 'A source', url: 'https://example.test/a' }] },
+        ],
+      },
+      summary: { id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 },
+      search: null,
+      failure: null,
+    })
+  }
+  return json({})
+}
+
+globalThis.FileReader = class {
+  readAsDataURL() {
+    this.result = 'data:text/plain;base64,aGk='
+    this.onload()
+  }
+}
+globalThis.URL.createObjectURL = () => 'blob:test'
+
+// ── load and register ───────────────────────────────────────────────────────
 const requireStub = (id) => {
-  assert.equal(id, 'react', `the browser half must not require(${id})`)
-  return React
+  if (id === 'react') return React
+  throw new Error(`unexpected import: ${id}`)
 }
 
-new Function('window', 'require', source)(window, requireStub)
-assert.equal(loaded?.id, '@aman/dsh-chat', 'the loader id must be the package name')
+await import('./client.js')
+assert.ok(captured !== null, 'the module loader receives the bundle')
+assert.equal(captured.id, '@aman/dsh-chat')
 
-const plugin = loaded.factory(requireStub)
-assert.deepEqual(plugin.inject, ['slots'], 'the plugin injects slots')
+const plugin = captured.factory(requireStub)
+assert.deepEqual(plugin.inject, ['slots'], 'the half declares the slots service')
 
-const registrations = []
-const owners = []
+const slots = []
 plugin.apply({
+  get: () => undefined,
+  effect: () => {},
   slots: {
-    inject(owner, register) { owners.push(owner); registrations.push(register()) },
-    register(options, component) { return { options, component } },
+    inject: (owner, callback) => callback(),
+    register: (options, Component) => slots.push({ options, Component }),
   },
 })
 
-const find = (node, predicate) => {
-  if (!node || typeof node !== 'object') return undefined
-  if (predicate(node)) return node
-  for (const child of node.children ?? []) {
-    const hit = find(child, predicate)
-    if (hit) return hit
-  }
-  return undefined
-}
-const collectText = (node) => {
-  if (node === null || node === undefined || node === false) return ''
-  if (typeof node === 'string') return node
-  if (Array.isArray(node)) return node.map(collectText).join('')
-  return collectText(node.children)
-}
+assert.equal(slots.length, 2, 'the half claims the icon and the page')
+assert.deepEqual(slots[0].options, { name: 'sidebar.panellist', id: 'chat', order: 20, label: 'Chat' })
+assert.deepEqual(slots[1].options, { name: 'main', key: 'chat' })
 
-const render = (component, props = {}) => { cursor = 0; return component(props) }
-// onSubmit hands the work to `void submit()`, so the test must let the promise
-// chain drain before reading the state it produced.
-const settle = () => new Promise((resolve) => setImmediate(resolve))
+const icon = renderTree(React.createElement(slots[0].Component, { size: 22, active: true }))
+assert.equal(icon.props.width, 22, 'the icon honours the requested size')
+assert.match(String(icon.props.stroke), /brand-primary/, 'the active icon uses the brand token')
 
-// --- registrations -----------------------------------------------------------
-assert.deepEqual(owners, ['sidebar.panellist', 'main'], 'both slots are claimed through inject')
-const panellist = registrations[0]
-const main = registrations[1]
-assert.equal(panellist.options.name, 'sidebar.panellist')
-assert.equal(panellist.options.id, 'chat', 'the sidebar entry id addresses the main panel')
-assert.equal(panellist.options.label, 'Chat')
-assert.equal(main.options.name, 'main')
-assert.equal(main.options.key, 'chat', 'the main panel answers the sidebar id')
-
-// --- icon --------------------------------------------------------------------
-const icon = render(panellist.component, { size: 20, active: true })
-assert.equal(icon.props.width, 20, 'the icon honours the requested size')
-assert.equal(icon.props.height, 20)
-
-// --- render ------------------------------------------------------------------
-let tree = render(main.component)
-const textarea = find(tree, (node) => node.type === 'textarea')
-const form = find(tree, (node) => node.type === 'form')
-assert.ok(textarea, 'the panel renders a prompt box')
-assert.ok(form, 'the panel renders a form')
-assert.match(collectText(tree), /no agent, no tools, no loop/, 'the empty state explains itself')
-
-// --- one submit --------------------------------------------------------------
-const posted = []
-globalThis.fetch = async (url, init) => {
-  posted.push({ url, init })
-  return {
-    ok: true,
-    status: 200,
-    json: async () => ({ text: 'Hello from the provider.', provider: 'paratera', model: 'DeepSeek-V4.1-Flash' }),
-  }
-}
-
-textarea.props.onChange({ target: { value: '  say hi  ' } })
-tree = render(main.component)
-find(tree, (node) => node.type === 'form').props.onSubmit({ preventDefault() {} })
+// ── the panel renders the chat list ─────────────────────────────────────────
+factory = slots[1].Component
+renderOnce()
 await settle()
 
-assert.equal(posted.length, 1, 'one request per submit')
-assert.equal(posted[0].url, '/api/aman-chat/ask', 'the request goes to the registered route')
-assert.equal(posted[0].init.method, 'POST')
-assert.deepEqual(JSON.parse(posted[0].init.body), { prompt: 'say hi' }, 'the prompt is trimmed and sent alone')
+assert.deepEqual(
+  calls.filter((call) => call.method === 'GET').map((call) => call.url.replace('/api/aman-chat', '')),
+  ['/list', '/status'],
+  'the panel loads the history and the host status on mount',
+)
+assert.match(allText(root).join(' '), /CMIP6 scenarios/, 'a previous chat is listed')
 
-tree = render(main.component)
-const body = collectText(tree)
-assert.match(body, /say hi/, 'the prompt is kept in the log')
-assert.match(body, /Hello from the provider\./, 'the reply is appended')
-assert.match(body, /paratera\/DeepSeek-V4\.1-Flash/, 'the reply names its target')
-assert.doesNotMatch(body, /Waiting for the provider/, 'the pending row is replaced')
-
-// --- a failing route ---------------------------------------------------------
-globalThis.fetch = async () => ({ ok: false, status: 401, json: async () => ({ error: 'unauthorized' }) })
-textarea.props.onChange({ target: { value: 'again' } })
-tree = render(main.component)
-find(tree, (node) => node.type === 'form').props.onSubmit({ preventDefault() {} })
+// ── one submit through the composer ─────────────────────────────────────────
+const editors = findAll(root, (node) => node.props.contentEditable === true)
+assert.equal(editors.length, 1, 'the composer has one contenteditable')
+editors[0].props.ref.current.innerText = 'What are the SSP scenarios?'
+const forms = findAll(root, (node) => node.type === 'form')
+assert.equal(forms.length, 1)
+forms[0].props.onSubmit({ preventDefault() {} })
 await settle()
-assert.match(collectText(render(main.component)), /Request failed \(401\): unauthorized/, 'a rejection is reported, not swallowed')
 
-console.log('client.js smoke test passed: registrations, render, submit, failure path')
+const ask = calls.filter((call) => call.url.endsWith('/ask'))
+assert.equal(ask.length, 1, 'submitting posts exactly once')
+assert.deepEqual(ask[0].body, { id: null, prompt: 'What are the SSP scenarios?', web: true, files: [] })
+const rendered = allText(root).join(' ')
+assert.match(rendered, /Forty scenarios across five SSPs\./, 'the reply is added to the thread')
+assert.match(rendered, /A source/, 'the sources are listed under the reply')
+assert.equal(editors[0].props.ref.current.innerText, '', 'the composer is cleared by the send')
+
+// ── a failed request is reported, not swallowed ─────────────────────────────
+askStatus = 401
+editors[0].props.ref.current.innerText = 'again'
+forms[0].props.onSubmit({ preventDefault() {} })
+await settle()
+assert.match(allText(root).join(' '), /Request failed: unauthorized/, 'a rejected request is reported')
+
+console.log('client.js smoke test passed: registrations, icon, list render, submit, failure path')
