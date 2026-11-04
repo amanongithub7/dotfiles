@@ -614,7 +614,17 @@ function registerRoutes(ctx, settings, store) {
         tavily: { command: settings.tvlyCommand, path: await resolveTavily(ctx, settings) },
         web: settings.web === true,
         images: settings.images,
+        ui: (await store.panel()).ui ?? {},
       })),
+
+      route(['POST'], '/ui', async (request) => {
+        const payload = await readBody(request)
+        const patch = {}
+        if (typeof payload.historyCollapsed === 'boolean') patch.historyCollapsed = payload.historyCollapsed
+        if (Object.keys(patch).length === 0) throw new RequestError('nothing to save')
+        const record = await store.savePanel({ ui: { ...((await store.panel()).ui ?? {}), ...patch } })
+        return json({ ui: record.ui ?? {} })
+      }),
 
       route(['GET'], '/list', async () => json({ chats: await store.list() })),
 

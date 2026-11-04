@@ -182,13 +182,35 @@ export function createStore(dataDir) {
   const panelPath = () => path.join(dataDir, 'panel.json')
   let lastTouch = 0
 
+  /**
+   * The panel's own small state (which parts of it are folded away) lives beside
+   * the beacon, so a reload or a second window opens the way the user left it.
+   * Reading never throws: a missing or broken file is just no state.
+   */
+  async function panel() {
+    try {
+      const record = await readJson(panelPath())
+      return record !== null && typeof record === 'object' ? record : {}
+    } catch {
+      return {}
+    }
+  }
+
+  async function savePanel(patch) {
+    await ensure()
+    const record = { ...(await panel()), ...patch, at: Date.now() }
+    await writeJsonAtomic(panelPath(), record)
+    return record
+  }
+
   async function touch() {
     const now = Date.now()
     if (now - lastTouch < 30_000) return lastTouch
     lastTouch = now
     try {
       await ensure()
-      await writeJsonAtomic(panelPath(), { at: now })
+      // Merged, not replaced: the beacon shares its file with the panel state.
+      await writeJsonAtomic(panelPath(), { ...(await panel()), at: now })
     } catch {
       // Panel activity is diagnostic; it must never fail a real request.
     }
@@ -196,13 +218,8 @@ export function createStore(dataDir) {
   }
 
   async function lastSeen() {
-    try {
-      const record = await readJson(panelPath())
-      return Number(record?.at) || 0
-    } catch {
-      return 0
-    }
+    return Number((await panel()).at) || 0
   }
 
-  return { dataDir, chatsDir, filesDir, list, get, save, create, remove, putFile, getFile, summary, touch, lastSeen }
+  return { dataDir, chatsDir, filesDir, list, get, save, create, remove, putFile, getFile, summary, touch, lastSeen, panel, savePanel }
 }

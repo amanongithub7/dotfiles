@@ -37,6 +37,8 @@ window.__ModuleLoader__.load({
       webHint: 'Search the web with Tavily and answer from the results',
       webMissing: 'tvly was not found, so search is unavailable',
       delete: 'Delete chat',
+      showHistory: 'Show chats',
+      hideHistory: 'Hide chats',
       sources: 'Sources',
       failed: 'Request failed',
       thinking: 'Waiting for the provider',
@@ -138,11 +140,29 @@ window.__ModuleLoader__.load({
   border-bottom: 1px solid var(--dsw-alias-border-l1);
 }
 .aman-chat-head-title {
+  flex: 1;
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.aman-chat-icon {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+.aman-chat-icon:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
 }
 .aman-chat-scroll {
   flex: 1;
@@ -689,6 +709,14 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'aman-chat-md' }, blocks)
     }
 
+    function ChevronIcon(props) {
+      return h(
+        'svg',
+        { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true' },
+        h('path', { key: 'chevron', d: props.collapsed === true ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6' }),
+      )
+    }
+
     function AtomIcon() {
       return h(
         'svg',
@@ -925,6 +953,7 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState(false)
       const [note, setNote] = useState('')
       const [status, setStatus] = useState(null)
+      const [collapsed, setCollapsed] = useState(false)
       const scrollRef = useRef(null)
       // The chat in hand, so a create or a send does not re-fetch what the
       // response already delivered.
@@ -944,6 +973,7 @@ window.__ModuleLoader__.load({
             if (!live) return
             setStatus(payload)
             if (payload?.web === false) setWeb(false)
+            if (payload?.ui?.historyCollapsed === true) setCollapsed(true)
           })
           .catch(() => {})
         return () => {
@@ -976,8 +1006,18 @@ window.__ModuleLoader__.load({
         if (node !== null) node.scrollTop = node.scrollHeight
       }, [activeId, messages.length, busy])
 
-      const startNew = useCallback(() => {
-        request('/new', {})
+      /**
+       * Fold the history column away, and remember the choice on the host so the
+       * next page opens the same way. A failed save is cosmetic, so it stays
+       * quiet rather than raising the error note.
+       */
+      const toggleHistory = useCallback(() => {
+        const next = collapsed !== true
+        setCollapsed(next)
+        request('/ui', { historyCollapsed: next }).catch(() => {})
+      }, [collapsed])
+
+      const startNew = useCallback(() => {        request('/new', {})
           .then((payload) => {
             setChat(payload.chat ?? null)
             loadedRef.current = payload.chat?.id ?? null
@@ -1070,25 +1110,39 @@ window.__ModuleLoader__.load({
         'div',
         { className: 'aman-chat-root' },
         h('style', { key: 'css' }, CSS),
-        h(
-          'aside',
-          { key: 'list', className: 'aman-chat-list' },
-          h(
-            'div',
-            { key: 'head', className: 'aman-chat-list-head' },
-            h('span', { key: 'label', className: 'aman-chat-list-title' }, t('history')),
-            h('button', { key: 'new', type: 'button', className: 'aman-chat-toggle', onClick: startNew }, t('newChat')),
+        collapsed === true
+          ? null
+          : h(
+            'aside',
+            { key: 'list', className: 'aman-chat-list' },
+            h(
+              'div',
+              { key: 'head', className: 'aman-chat-list-head' },
+              h('span', { key: 'label', className: 'aman-chat-list-title' }, t('history')),
+              h('button', { key: 'new', type: 'button', className: 'aman-chat-toggle', onClick: startNew }, t('newChat')),
+            ),
+            h('div', { key: 'items', className: 'aman-chat-items' },
+              items.length > 0 ? items : h('div', { className: 'aman-chat-note', style: { padding: '8px 10px' } }, t('noChats'))),
           ),
-          h('div', { key: 'items', className: 'aman-chat-items' },
-            items.length > 0 ? items : h('div', { className: 'aman-chat-note', style: { padding: '8px 10px' } }, t('noChats'))),
-        ),
         h(
           'section',
           { key: 'thread', className: 'aman-chat-thread' },
           h(
             'header',
             { key: 'head', className: 'aman-chat-head' },
+            h('button', {
+              key: 'fold',
+              type: 'button',
+              className: 'aman-chat-icon',
+              'aria-expanded': collapsed === true ? 'false' : 'true',
+              title: collapsed === true ? t('showHistory') : t('hideHistory'),
+              'aria-label': collapsed === true ? t('showHistory') : t('hideHistory'),
+              onClick: toggleHistory,
+            }, h(ChevronIcon, { key: 'chevron', collapsed })),
             h('span', { key: 'title', className: 'aman-chat-head-title' }, text(chat?.title) || t('title')),
+            collapsed === true
+              ? h('button', { key: 'new', type: 'button', className: 'aman-chat-toggle', onClick: startNew }, t('newChat'))
+              : null,
             chat === null
               ? null
               : h('button', { key: 'del', type: 'button', className: 'aman-chat-toggle', onClick: () => removeChat(chat.id) }, t('delete')),

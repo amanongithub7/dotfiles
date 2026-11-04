@@ -152,3 +152,7 @@ the HOST half".
 - The attachment store decodes image bytes, so a hand-made or truncated PNG is
   rejected with `Unsupported or malformed image data.` while still looking like a
   PNG to `file`. Generate a correctly CRC'd PNG when testing uploads.
+- Two writers to one state file must merge, not replace: the panel beacon
+  rewrote `panel.json` with only its timestamp, which would have silently erased
+  the panel layout saved beside it. Test that with a *fresh* store - the beacon is
+  throttled, so a used instance returns early and never writes.

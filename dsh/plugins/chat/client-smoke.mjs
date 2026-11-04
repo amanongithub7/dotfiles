@@ -150,12 +150,18 @@ let askStatus = 200
 // Lets a test hold the answer open and look at the panel while it waits.
 let deferAsk = false
 let releaseAsk = null
+// The layout the host hands back on /status.
+let statusUi = {}
 
 globalThis.fetch = async (url, options = {}) => {
   const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
   calls.push({ url: String(url), method: options.method ?? 'GET', body })
   const target = String(url)
-  if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true })
+  if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true, ui: statusUi })
+  if (target.endsWith('/ui')) {
+    statusUi = { ...statusUi, ...body }
+    return json({ ui: statusUi })
+  }
   if (target.endsWith('/list')) {
     return json({
       chats: [
@@ -369,4 +375,39 @@ const deletes = calls.filter((call) => call.url.endsWith('/delete'))
 assert.equal(deletes.length, 1, 'deleting posts once')
 assert.deepEqual(deletes[0].body, { id: 'c1' }, 'the clicked row is the one deleted')
 
-console.log('client.js smoke test passed: registrations, icon, list render, submit, pending dots, composer layout, atom toggle, markdown, switching, delete, failure path')
+// ── the history column folds away, and the choice is kept ───────────────────
+const aside = () => findAll(root, (node) => node.props.className === 'aman-chat-list')
+const folds = () => findAll(root, (node) => node.props.className === 'aman-chat-icon')
+const newChat = () => findAll(root, (node) => node.props.className === 'aman-chat-toggle' && allText(node).join('') === 'New chat')
+assert.equal(aside().length, 1, 'the history column starts open')
+assert.equal(folds().length, 1, 'the thread header carries the fold control')
+assert.equal(folds()[0].props['aria-expanded'], 'true')
+assert.equal(folds()[0].props['aria-label'], 'Hide chats')
+
+folds()[0].props.onClick()
+await settle()
+assert.equal(aside().length, 0, 'folding removes the history column')
+assert.equal(folds()[0].props['aria-expanded'], 'false', 'the control now offers to show it')
+assert.equal(folds()[0].props['aria-label'], 'Show chats')
+assert.equal(newChat().length, 1, 'New chat stays reachable while folded')
+assert.match(
+  String(findAll(root, (node) => node.type === 'path' && String(node.props.d).startsWith('M9 6l6 6'))[0]?.props.d),
+  /M9 6l6 6/,
+  'the chevron turns to point right',
+)
+assert.deepEqual(calls.filter((call) => call.url.endsWith('/ui')).at(-1).body, { historyCollapsed: true }, 'the fold is saved on the host')
+
+folds()[0].props.onClick()
+await settle()
+assert.equal(aside().length, 1, 'the column comes back')
+assert.deepEqual(calls.filter((call) => call.url.endsWith('/ui')).at(-1).body, { historyCollapsed: false }, 'unfolding is saved too')
+
+// ── a fresh page opens the way it was left ──────────────────────────────────
+statusUi = { historyCollapsed: true }
+hookStore.clear()
+renderOnce()
+await settle()
+assert.equal(aside().length, 0, 'a page opened after folding shows no history column')
+assert.equal(folds()[0].props['aria-expanded'], 'false', 'and the control starts on show')
+
+console.log('client.js smoke test passed: registrations, icon, list render, submit, pending dots, composer layout, atom toggle, markdown, switching, delete, fold, failure path')

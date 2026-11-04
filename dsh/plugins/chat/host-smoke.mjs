@@ -15,6 +15,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { apply, inject, name } from './index.js'
+import { createStore } from './store.js'
 
 assert.equal(name, 'chat')
 assert.deepEqual(inject, ['tools', 'commands', 'subprocess'], 'the plugin declares its services; subprocess must be injected to be readable')
@@ -118,7 +119,7 @@ apply(ctx, { dataDir, maxUploadBytes: 4096, maxChars: 20, timeoutMs: 5000, webRe
 
 assert.ok(registrations.tool, 'the chat tool is registered')
 assert.ok(registrations.command, 'the /chat command is registered')
-assert.equal(routes.size, 9, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
+assert.equal(routes.size, 10, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
 assert.deepEqual(warnings, [], 'registration warned about nothing')
 
 const text = (value) => ({ type: 'text-delta', text: value })
@@ -255,6 +256,7 @@ assert.equal(status.tavily.command, 'tvly')
 assert.equal(status.tavily.path, 'tvly', 'the status reports where tvly was found')
 assert.equal(status.llm.available, true)
 assert.equal(status.dataDir, dataDir)
+assert.deepEqual(status.ui, {}, 'a fresh panel has no saved layout')
 
 assert.deepEqual((await (await route('/list').fetch(request({}))).json()).chats, [], 'a fresh store lists no chats')
 
@@ -306,6 +308,26 @@ assert.equal(savedImages.at(-1).mediaType, 'image/png')
 assert.equal(sent().messages.at(-1).content.filter((block) => block.type === 'image').length, 1, 'the turn sends it as an image block')
 assert.equal(imageTurn.chat.messages.at(-2).attachments[0].image.attachmentId, `att-${savedImages.length}`, 'the stored question keeps the image reference')
 assert.equal(imageTurn.chat.messages.at(-1).text, 'I see red.')
+
+// ── the panel's layout, saved on the host ───────────────────────────────────
+const folded = await (await route('/ui').fetch(request({ historyCollapsed: true }))).json()
+assert.deepEqual(folded.ui, { historyCollapsed: true }, 'folding the history is saved')
+assert.equal((await (await route('/status').fetch(request({}))).json()).ui.historyCollapsed, true, 'the status hands it back')
+assert.deepEqual((await (await route('/ui').fetch(request({ historyCollapsed: false }))).json()).ui, { historyCollapsed: false }, 'unfolding is saved too')
+assert.equal((await route('/ui').fetch(request({}))).status, 400, 'an empty layout patch is rejected')
+assert.equal((await route('/ui').fetch(request({ historyCollapsed: 'yes' }))).status, 400, 'a non-boolean fold is rejected')
+assert.equal((await route('/ui').fetch(request({ historyCollapsed: true }))).status, 200, 'a boolean is accepted')
+
+// The beacon shares panel.json, so a touch must not wipe the layout beside it.
+const uiDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aman-chat-ui-'))
+const uiStore = createStore(uiDir)
+await uiStore.savePanel({ ui: { historyCollapsed: true } })
+await uiStore.touch()
+const panelFile = JSON.parse(await fs.readFile(path.join(uiDir, 'panel.json'), 'utf8'))
+assert.deepEqual(panelFile.ui, { historyCollapsed: true }, 'the beacon keeps the panel layout')
+assert.ok(panelFile.at > 0, 'and still records when the panel was last seen')
+assert.equal(await uiStore.lastSeen(), panelFile.at, 'lastSeen reads the same beacon')
+await fs.rm(uiDir, { recursive: true, force: true })
 
 // ── route errors ────────────────────────────────────────────────────────────
 assert.equal((await route('/ask').fetch(request({ id: created.chat.id, prompt: '   ' }))).status, 400, 'an empty prompt is a client error')

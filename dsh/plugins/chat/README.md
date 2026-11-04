@@ -36,6 +36,11 @@ client:
 - **While waiting** - the assistant row holds three pulsing dots rather than a
   sentence; the wording lives on as the indicator's `aria-label`, and
   `prefers-reduced-motion` replaces the pulse with a static fade.
+- **Folding the history** - the chevron at the left of the thread header hides
+  the left column and gives the thread the full width; while folded, the header
+  also carries the new-chat button so nothing becomes unreachable. The choice is
+  saved with `POST ui` and reapplied from `GET status` on the next load, so the
+  panel opens the way it was left.
 
 Chats are **not** sessions: the panel keeps its own history on disk under
 `$DSH_HOME/storages/aman-chat` (one JSON file per chat, plus an uploaded-file
@@ -50,7 +55,7 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 
 | Route | Body | Result |
 |---|---|---|
-| `GET status` | - | routes, providers, `tvly` path, data directory |
+| `GET status` | - | routes, providers, `tvly` path, data directory, saved layout |
 | `GET list` | - | chat summaries, newest first |
 | `POST get` | `{id}` | one chat with its messages |
 | `POST new` | - | a new empty chat (and the refreshed list) |
@@ -59,6 +64,7 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 | `POST upload` | `{name, mime, dataBase64}` | `{file: {id, name, bytes, mime}}` |
 | `POST file` | `{id}` | `{dataBase64}` |
 | `POST ask` | `{id, prompt, web, files}` | the chat, its summary, the search, the failure |
+| `POST ui` | `{historyCollapsed}` | the saved panel layout |
 
 `/api` is the shared connection channel and it authenticates before routing, so
 the browser's own credential authorizes the call; the host half still applies the
