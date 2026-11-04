@@ -1,0 +1,16 @@
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@aman/dsh-personal-presets": "link:/Users/aman/dotfiles/agent-config/dsh/bundle"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@aman/dsh-personal-presets"
+      ]
+    }
+  }
+}
