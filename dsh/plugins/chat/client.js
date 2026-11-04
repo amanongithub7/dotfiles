@@ -4,10 +4,10 @@
  * A bundled browser half is an ordinary page script, so unlike a dynamic
  * package's sandboxed half it may use browser globals. It has no `host.call`
  * route to this package without a generated Remote codec, so it posts to the
- * one exact Fetch route the host half registers instead. Styles are inline:
- * `color: inherit` plus `color-mix` against `currentColor` keeps the panel on
- * whatever theme the shell is using, with no stylesheet and no token names to
- * guess.
+ * one exact Fetch route the host half registers instead.
+ *
+ * Styles are inline and built from the documented `--dsw-alias-*` theme tokens
+ * so the panel follows light/dark and any future theme without a stylesheet.
  */
 window.__ModuleLoader__.load({
   id: '@aman/dsh-chat',
@@ -17,8 +17,17 @@ window.__ModuleLoader__.load({
 
     // Exact Fetch routes live under the shared /api channel.
     const ROUTE = '/api/aman-chat/ask'
-    const HAIRLINE = '1px solid color-mix(in srgb, currentColor 18%, transparent)'
-    const MUTED = { opacity: 0.65 }
+
+    const TOKEN = {
+      text: 'var(--dsw-alias-label-primary)',
+      muted: 'var(--dsw-alias-label-secondary)',
+      borderSubtle: 'var(--dsw-alias-border-l1)',
+      borderStrong: 'var(--dsw-alias-border-l2)',
+      raised: 'var(--dsw-alias-bg-layer-1)',
+      nested: 'var(--dsw-alias-bg-layer-2)',
+      base: 'var(--dsw-alias-bg-base)',
+      error: 'var(--dsw-alias-state-error-primary)',
+    }
 
     function ChatIcon(props) {
       const size = typeof props?.size === 'number' ? props.size : 16
@@ -100,38 +109,63 @@ window.__ModuleLoader__.load({
             maxWidth: '72ch',
             padding: '8px 12px',
             borderRadius: 10,
+            lineHeight: 1.55,
             whiteSpace: 'pre-wrap',
             overflowWrap: 'anywhere',
             alignSelf: isYou ? 'flex-end' : 'flex-start',
-            background: isYou ? 'color-mix(in srgb, currentColor 10%, transparent)' : 'transparent',
-            border: isYou ? '1px solid transparent' : HAIRLINE,
+            background: isYou ? TOKEN.raised : 'transparent',
+            border: `1px solid ${isYou ? 'transparent' : TOKEN.borderSubtle}`,
             opacity: entry.role === 'pending' ? 0.6 : 1,
-            color: entry.role === 'error' ? '#e5484d' : 'inherit',
+            color: entry.role === 'error' ? TOKEN.error : TOKEN.text,
           },
         },
           entry.text,
           entry.meta
-            ? h('div', { style: { ...MUTED, fontSize: '0.78em', marginTop: 6 } }, entry.meta)
+            ? h('div', { style: { color: TOKEN.muted, fontSize: '0.78em', marginTop: 6 } }, entry.meta)
             : null)
       })
 
       const empty = h('div', {
-        style: { ...MUTED, margin: 'auto', textAlign: 'center', maxWidth: '46ch', lineHeight: 1.5 },
+        style: { color: TOKEN.muted, margin: 'auto', textAlign: 'center', maxWidth: '46ch', lineHeight: 1.6 },
       }, 'Ask a provider directly. One request, no agent, no tools, no loop.')
 
+      const canSend = !busy && draft.trim() !== ''
+
       return h('div', {
-        style: { display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, color: 'inherit', font: 'inherit' },
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: 0,
+          background: TOKEN.base,
+          color: TOKEN.text,
+          font: 'inherit',
+        },
       },
         h('div', {
           ref: logRef,
-          style: { flex: '1 1 auto', minHeight: 0, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 },
+          style: {
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          },
         }, entries.length === 0 ? empty : rows),
         h('form', {
           onSubmit: (event) => {
             event.preventDefault()
             void submit()
           },
-          style: { flex: '0 0 auto', display: 'flex', gap: 8, padding: '12px 20px 18px', borderTop: HAIRLINE },
+          style: {
+            flex: '0 0 auto',
+            display: 'flex',
+            gap: 8,
+            padding: '12px 20px 18px',
+            borderTop: `1px solid ${TOKEN.borderSubtle}`,
+          },
         },
           h('textarea', {
             value: draft,
@@ -147,26 +181,26 @@ window.__ModuleLoader__.load({
               maxHeight: 180,
               padding: '10px 12px',
               borderRadius: 10,
-              border: HAIRLINE,
-              background: 'transparent',
-              color: 'inherit',
+              border: `1px solid ${TOKEN.borderSubtle}`,
+              background: TOKEN.raised,
+              color: TOKEN.text,
               font: 'inherit',
             },
           }),
           h('button', {
             type: 'submit',
-            disabled: busy || draft.trim() === '',
+            disabled: !canSend,
             style: {
               flex: '0 0 auto',
               alignSelf: 'stretch',
               padding: '0 16px',
               borderRadius: 10,
-              border: HAIRLINE,
-              background: 'color-mix(in srgb, currentColor 10%, transparent)',
-              color: 'inherit',
+              border: `1px solid ${TOKEN.borderStrong}`,
+              background: TOKEN.nested,
+              color: TOKEN.text,
               font: 'inherit',
-              cursor: busy ? 'default' : 'pointer',
-              opacity: busy || draft.trim() === '' ? 0.5 : 1,
+              cursor: canSend ? 'pointer' : 'default',
+              opacity: canSend ? 1 : 0.5,
             },
           }, busy ? 'Asking…' : 'Send')))
     }

@@ -28,6 +28,10 @@ exact Fetch route instead, registered by the host half:
 the browser's own credential authorizes the call. Exact routes must live under
 `/api`, and every later segment must match `/^[A-Za-z0-9_$.-]+$/`.
 
+The page styles itself inline from the documented `--dsw-alias-*` theme tokens,
+so it follows light/dark and any future theme without a stylesheet, and it never
+reaches outside its own subtree.
+
 ## Configuration
 
 | Key | Default | Meaning |
@@ -51,7 +55,14 @@ changes; a bare file write, or reinstalling the bundle, is not enough.
 
 ```bash
 node --check index.js && node --check client.js
+node smoke.mjs     # browser half: registrations, render, submit, failure path
 ```
+
+`smoke.mjs` stubs the module loader, React and `fetch`, then asserts that the
+half claims both slots, honours the requested icon size, posts one trimmed
+prompt to `/api/aman-chat/ask`, appends the reply with its target, and reports a
+rejected request instead of swallowing it. It is the only way to exercise the
+browser half without a page.
 
 - Host: call the `chat` tool and read the reply.
 - Panel: the client Inspect Slots tree lists this bundle as an occupant of
