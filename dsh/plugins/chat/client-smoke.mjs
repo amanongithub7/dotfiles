@@ -147,6 +147,9 @@ globalThis.window = { __ModuleLoader__: { load: (entry) => { captured = entry } 
 const calls = []
 const json = (value, status = 200) => ({ ok: status < 400, status, json: async () => value })
 let askStatus = 200
+// Lets a test hold the answer open and look at the panel while it waits.
+let deferAsk = false
+let releaseAsk = null
 
 globalThis.fetch = async (url, options = {}) => {
   const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
@@ -186,7 +189,7 @@ globalThis.fetch = async (url, options = {}) => {
   }
   if (target.endsWith('/ask') && askStatus !== 200) return json({ error: 'unauthorized' }, askStatus)
   if (target.endsWith('/ask')) {
-    return json({
+    const payload = {
       chat: {
         id: 'c1',
         title: 'CMIP6 scenarios',
@@ -198,7 +201,14 @@ globalThis.fetch = async (url, options = {}) => {
       summary: { id: 'c1', title: 'CMIP6 scenarios', updatedAt: Date.now(), messages: 2 },
       search: null,
       failure: null,
-    })
+    }
+    if (deferAsk === true) {
+      deferAsk = false
+      return new Promise((resolve) => {
+        releaseAsk = () => resolve(json(payload))
+      })
+    }
+    return json(payload)
   }
   return json({})
 }
@@ -278,6 +288,47 @@ assert.match(rendered, /A source/, 'the sources are listed under the reply')
 assert.equal(calls.filter((call) => call.url.endsWith('/get')).length, 0, 'the chat the reply arrived in is not fetched again')
 assert.equal(editors[0].props.ref.current.innerText, '', 'the composer is cleared by the send')
 
+// ── the composer: a paperclip left of send, an atom on Search ───────────────
+const actions = findAll(root, (node) => node.props.className === 'aman-chat-row-actions')
+assert.equal(actions.length, 1, 'the composer has one action row')
+assert.deepEqual(
+  actions[0].children.map((child) => child.props.className),
+  ['aman-chat-toggle', 'aman-chat-hidden', 'aman-chat-grow', 'aman-chat-add', 'aman-chat-primary'],
+  'the paperclip sits directly left of the send button',
+)
+assert.equal(
+  findAll(root, (node) => node.type === 'path' && String(node.props.d).startsWith('M21.44')).length,
+  1,
+  'the attach button draws a paperclip',
+)
+
+const switches = findAll(root, (node) => node.props.role === 'switch')
+assert.equal(switches.length, 1, 'one search switch')
+assert.equal(allText(switches[0]).join(''), 'Search', 'the toggle is labelled Search')
+assert.equal(switches[0].props['aria-checked'], 'true', 'search grounding is on by default')
+assert.equal(findAll(switches[0], (node) => node.props.className === 'aman-chat-dot').length, 0, 'the state dot is gone')
+const orbits = findAll(switches[0], (node) => node.type === 'ellipse')
+assert.equal(orbits.length, 2, 'the icon is two orbits')
+assert.ok(orbits.some((node) => String(node.props.transform).includes('rotate(90')), 'the orbits are perpendicular')
+assert.equal(findAll(switches[0], (node) => node.type === 'circle' && node.props.fill === 'currentColor').length, 1, 'and one filled nucleus')
+
+// ── waiting shows animated dots, not a sentence ─────────────────────────────
+deferAsk = true
+editors[0].props.ref.current.innerText = 'is it thinking?'
+forms[0].props.onSubmit({ preventDefault() {} })
+await settle()
+const pendingRows = findAll(root, (node) => node.props['data-pending'] === 'true')
+assert.equal(pendingRows.length, 1, 'a pending assistant row appears while the provider works')
+const dots = findAll(pendingRows[0], (node) => node.props.className === 'aman-chat-dots')
+assert.equal(dots.length, 1, 'the pending row carries the dot indicator')
+assert.equal(dots[0].children.length, 3, 'three dots')
+assert.equal(dots[0].props.role, 'status', 'the indicator is announced as a live status')
+assert.equal(dots[0].props['aria-label'], 'Waiting for the provider', 'the wording survives as the accessible label')
+assert.equal(allText(root).join(' ').includes('Waiting for the provider'), false, 'the sentence is no longer rendered as text')
+releaseAsk()
+await settle()
+assert.equal(findAll(root, (node) => node.props['data-pending'] === 'true').length, 0, 'the indicator goes when the reply lands')
+
 // ── a failed request is reported, not swallowed ─────────────────────────────
 askStatus = 401
 editors[0].props.ref.current.innerText = 'again'
@@ -305,10 +356,7 @@ assert.equal(blocks.length, 1, 'a fenced block gets the shipped code-block class
 assert.match(allText(blocks[0]).join(''), /print\(1\)/, 'the code keeps its text')
 assert.equal(findAll(root, (node) => node.props.className === 'aman-chat-codelang').length, 1, 'the fence language is shown')
 
-// ── the web switch, and deleting a chat ─────────────────────────────────────
-const switches = findAll(root, (node) => node.props.role === 'switch')
-assert.equal(switches.length, 1, 'one web switch')
-assert.equal(switches[0].props['aria-checked'], 'true', 'web grounding is on by default')
+// ── the search switch, and deleting a chat ──────────────────────────────────
 switches[0].props.onClick()
 await settle()
 assert.equal(findAll(root, (node) => node.props.role === 'switch')[0].props['aria-checked'], 'false', 'the switch flips')
@@ -321,4 +369,4 @@ const deletes = calls.filter((call) => call.url.endsWith('/delete'))
 assert.equal(deletes.length, 1, 'deleting posts once')
 assert.deepEqual(deletes[0].body, { id: 'c1' }, 'the clicked row is the one deleted')
 
-console.log('client.js smoke test passed: registrations, icon, list render, submit, markdown, switching, web switch, delete, failure path')
+console.log('client.js smoke test passed: registrations, icon, list render, submit, pending dots, composer layout, atom toggle, markdown, switching, delete, failure path')

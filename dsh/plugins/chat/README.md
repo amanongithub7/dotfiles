@@ -30,7 +30,12 @@ client:
   elements; no HTML string is ever injected.
 - **Composer** - a contenteditable with the shipped geometry, Enter sends,
   Shift+Enter adds a line, Enter during IME composition does not send. Attached
-  files appear as 240x64 cards. A `role="switch"` Web toggle controls grounding.
+  files appear as 240x64 cards. A paperclip button sits directly left of send. A
+  `role="switch"` Search toggle, marked with an atom (a nucleus in two
+  perpendicular orbits), controls Tavily grounding.
+- **While waiting** - the assistant row holds three pulsing dots rather than a
+  sentence; the wording lives on as the indicator's `aria-label`, and
+  `prefers-reduced-motion` replaces the pulse with a static fade.
 
 Chats are **not** sessions: the panel keeps its own history on disk under
 `$DSH_HOME/storages/aman-chat` (one JSON file per chat, plus an uploaded-file

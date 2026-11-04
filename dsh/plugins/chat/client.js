@@ -28,19 +28,18 @@ window.__ModuleLoader__.load({
       newChat: 'New chat',
       noChats: 'No chats yet',
       empty: 'No chat open',
-      emptyHint: 'Ask the provider directly: one call per message, no agent, no tools. Attach a file or turn on Web to ground the answer.',
+      emptyHint: 'Ask the provider directly: one call per message, no agent, no tools. Attach a file, or turn on Search to ground the answer.',
       placeholder: 'Ask anything. Enter sends, Shift+Enter adds a line.',
       send: 'Send message',
-      sending: 'Waiting for the provider',
       attach: 'Add files',
       remove: 'Remove',
-      web: 'Web',
-      webHint: 'Ground the answer in a Tavily web search',
-      webMissing: 'tvly was not found, so web grounding is unavailable',
+      web: 'Search',
+      webHint: 'Search the web with Tavily and answer from the results',
+      webMissing: 'tvly was not found, so search is unavailable',
       delete: 'Delete chat',
       sources: 'Sources',
       failed: 'Request failed',
-      thinking: 'Waiting for the provider…',
+      thinking: 'Waiting for the provider',
     }
 
     const CSS = `
@@ -438,14 +437,33 @@ window.__ModuleLoader__.load({
   border-color: var(--dsw-alias-brand-primary);
   color: var(--dsw-alias-brand-primary);
 }
-.aman-chat-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--dsw-alias-state-idle-primary);
-}
-.aman-chat-toggle[aria-checked="true"] .aman-chat-dot { background: var(--dsw-alias-brand-primary); }
+.aman-chat-toggle svg { flex: none; }
 .aman-chat-grow { flex: 1; }
+.aman-chat-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: calc(24px + var(--dsh-content-font-delta));
+}
+.aman-chat-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary);
+  animation: aman-chat-throb 1.2s ease-in-out infinite;
+}
+.aman-chat-dots span:nth-child(2) { animation-delay: 0.16s; }
+.aman-chat-dots span:nth-child(3) { animation-delay: 0.32s; }
+@keyframes aman-chat-throb {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0) scale(0.8); }
+  40% { opacity: 1; transform: translateY(-3px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aman-chat-dots span { animation: none; }
+  .aman-chat-dots span:nth-child(1) { opacity: 0.35; }
+  .aman-chat-dots span:nth-child(2) { opacity: 0.6; }
+  .aman-chat-dots span:nth-child(3) { opacity: 1; }
+}
 .aman-chat-note {
   font-size: 12px;
   line-height: 18px;
@@ -671,6 +689,24 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'aman-chat-md' }, blocks)
     }
 
+    function AtomIcon() {
+      return h(
+        'svg',
+        { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, 'aria-hidden': 'true' },
+        h('ellipse', { key: 'orbit-a', cx: 12, cy: 12, rx: 9.5, ry: 4.2 }),
+        h('ellipse', { key: 'orbit-b', cx: 12, cy: 12, rx: 9.5, ry: 4.2, transform: 'rotate(90 12 12)' }),
+        h('circle', { key: 'nucleus', cx: 12, cy: 12, r: 2, fill: 'currentColor', stroke: 'none' }),
+      )
+    }
+
+    function PaperclipIcon() {
+      return h(
+        'svg',
+        { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true' },
+        h('path', { key: 'clip', d: 'M21.44 11.05l-8.49 8.49a5.5 5.5 0 0 1-7.78-7.78l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a1.5 1.5 0 0 1-2.12-2.12l7.78-7.78' }),
+      )
+    }
+
     function FileIcon() {
       return h(
         'svg',
@@ -834,7 +870,7 @@ window.__ModuleLoader__.load({
                 title: t('webHint'),
                 onClick: onToggleWeb,
               },
-              h('span', { key: 'dot', className: 'aman-chat-dot' }),
+              h(AtomIcon, { key: 'atom' }),
               t('web'),
             ),
             h('input', {
@@ -848,6 +884,12 @@ window.__ModuleLoader__.load({
                 event.target.value = ''
               },
             }),
+            h('span', { key: 'grow', className: 'aman-chat-grow' }),
+            note !== ''
+              ? h('span', { key: 'note', className: 'aman-chat-note', 'data-error': 'true' }, note)
+              : webMissing
+                ? h('span', { key: 'note', className: 'aman-chat-note' }, t('webMissing'))
+                : null,
             h('button', {
               key: 'attach',
               type: 'button',
@@ -855,13 +897,7 @@ window.__ModuleLoader__.load({
               title: t('attach'),
               'aria-label': t('attach'),
               onClick: () => fileRef.current?.click(),
-            }, h(FileIcon)),
-            h('span', { key: 'grow', className: 'aman-chat-grow' }),
-            note !== ''
-              ? h('span', { key: 'note', className: 'aman-chat-note', 'data-error': 'true' }, note)
-              : webMissing
-                ? h('span', { key: 'note', className: 'aman-chat-note' }, t('webMissing'))
-                : null,
+            }, h(PaperclipIcon)),
             h('button', {
               key: 'send',
               type: 'submit',
@@ -1064,7 +1100,13 @@ window.__ModuleLoader__.load({
             busy
               ? h('div', { className: 'aman-chat-col' },
                   h('div', { className: 'aman-chat-row', 'data-role': 'assistant', 'data-pending': 'true' },
-                    h('div', { className: 'aman-chat-body' }, t('thinking'))))
+                    h(
+                      'div',
+                      { key: 'dots', className: 'aman-chat-dots', role: 'status', 'aria-label': t('thinking') },
+                      h('span', { key: 'a' }),
+                      h('span', { key: 'b' }),
+                      h('span', { key: 'c' }),
+                    )))
               : null,
           ),
           h(Composer, {
