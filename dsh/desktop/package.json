@@ -2,6 +2,7 @@
   "name": "dsh-profile-desktop",
   "private": true,
   "dependencies": {
+    "@aman/dsh-chat": "link:/Users/aman/dotfiles/dsh/plugins/chat",
     "@aman/dsh-personal-presets": "link:/Users/aman/dotfiles/agent-config/dsh/bundle",
     "@aman/dsh-research-tools": "link:/Users/aman/dotfiles/dsh/plugins/research-tools"
   },
@@ -11,7 +12,8 @@
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
         "@aman/dsh-personal-presets",
-        "@aman/dsh-research-tools"
+        "@aman/dsh-research-tools",
+        "@aman/dsh-chat"
       ]
     }
   }

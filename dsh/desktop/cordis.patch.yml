@@ -120,3 +120,10 @@
   config:
     default: standard
     selectedDefault: cordis
+
+# Bundles installed from ~/dotfiles/dsh/plugins (see ../README.md). Editing a
+# bundle's JavaScript needs a composition reload to re-import it: an edit to
+# this file is one, a bare file write is not.
+#   @aman/dsh-personal-presets  the `paper` and `general-assistant` presets
+#   @aman/dsh-research-tools    Zotero, a Neovim bridge, scholarly search, research context
+#   @aman/dsh-chat              one plain model call, as the `chat` tool and /chat
