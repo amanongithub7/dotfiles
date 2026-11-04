@@ -128,3 +128,28 @@ takes an id, an order and a label.
   block-end | usage | finish`. `reasoning-delta` carries a `text` field too, so
   a collector that accepts text from any chunk pastes the model's private
   planning into its answer.
+
+### Probe results (what the runtime actually offers)
+
+- `ctx.connection.rpc.handle(channel, handler)` is an import-free generic RPC
+  channel registry. The browser half still cannot use it: its only outbound
+  channel is `host.call`, and browser globals are withheld — touching `fetch`
+  throws "network belongs to the HOST half: register a handler there with
+  harness.handle(method, fn) and call it here via host.call(method, args)".
+- `host.call` "routes through the Remote namespace", and that namespace's codec
+  is generated from decorated (`@Remote`) host methods. A plain-JavaScript
+  bundle has no build step to generate one, and `@deepseek-ai/dsh-*` does not
+  resolve from `~/dotfiles` at the running version.
+- The harness *does* have a plain-JS host-half seam — `harness.handle(method,
+  fn)` on the host side, `host.call(method, args)` on the browser side — but
+  `harness` is the dynamic-package sandbox seat: it belongs to Creator-mode
+  definitions, not to a bundle. Dynamic packages also re-run per page load ("a
+  refresh starts clean by design"), which does not fit a permanent panel.
+- Confirmed reload trigger: editing `cordis.patch.yml` re-imports changed plugin
+  JavaScript within seconds. A bare write to a plugin file never does, however
+  long you wait.
+
+**Paths forward.** (1) Get the DSH packages resolvable at the *running* version
+from the bundle's own `node_modules` — npm publishes them at `0.0.1-rc.1` only.
+(2) Ask for a bundle-level equivalent of `harness.handle`. (3) Accept a dynamic
+package and re-run it after each refresh.

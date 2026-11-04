@@ -127,3 +127,4 @@
 #   @aman/dsh-personal-presets  the `paper` and `general-assistant` presets
 #   @aman/dsh-research-tools    Zotero, a Neovim bridge, scholarly search, research context
 #   @aman/dsh-chat              one plain model call, as the `chat` tool and /chat
+#                               (its sidebar panel is blocked; see ideas/plugin-backlog.md)

@@ -58,3 +58,15 @@ node --check index.js
 
 Then call the `chat` tool once: a reply proves the provider route, the stream
 collection and the failure path.
+
+## Probe results
+
+- The browser half's only outbound channel is `host.call`, and browser globals
+  are withheld: touching `fetch` throws "network belongs to the HOST half".
+  So a self-registered `ctx.connection.rpc` channel does not help it.
+- `host.call` routes through the Remote namespace, whose codec is generated from
+  decorated host methods. A plain-JavaScript bundle cannot generate one, and
+  `@deepseek-ai/dsh-*` does not resolve from `~/dotfiles` at the running version.
+- The plain-JS `harness.handle(method, fn)` seam exists only inside the
+  dynamic-package sandbox (Creator mode), and dynamic packages re-run per page
+  load, so they do not make a permanent panel either.
