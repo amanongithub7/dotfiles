@@ -106,6 +106,15 @@
             name: GLM-5.3-Flash
           - id: Kimi-K3
             name: Kimi-K3
+# Pin web search to the OpenAlex provider registered by the research-tools
+# bundle, so a search never depends on the DeepSeek credential this profile has
+# not stored. `fetchProvider` is left unset: research-tools registers no fetch
+# provider, so the shipped HTTP fetcher keeps auto-selecting.
+- id: web
+  name: "@deepseek-ai/dsh-web"
+  config:
+    searchProvider: scholar
+    fetchProvider: http
 - id: agent-preset-registry
   name: "@deepseek-ai/dsh-agent-preset-registry"
   config:
