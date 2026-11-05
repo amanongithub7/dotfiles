@@ -7,7 +7,7 @@
     "kind": "single",
     "scope": "root",
     "shippedOccupant": "@deepseek-ai/dsh-client-ui-workspace",
-    "note": "Single-occupant: registering replaces the shipped workspace browser, which is why the fork renders the whole region."
+    "note": "Single-occupant: registering replaces the shipped workspace browser, which is why the fork renders the whole region. The shipped occupant registers at priority 0, so the fork registers at priority 1 to take the seat deterministically."
   },
   "children": {
     "sidebar.workspaces.directoryFlow": {
@@ -19,12 +19,24 @@
     "sidebar.workspaces.session.menu.item": {
       "kind": "list",
       "scope": "root",
-      "injectHooks": ["menuOpenState", "shortcuts"],
+      "injectHooks": [
+        "menuOpenState",
+        "shortcuts"
+      ],
       "note": "The shipped menu items read both hooks; a bare declaration breaks every session row menu."
     },
-    "sidebar.workspaces.session.row.action": { "kind": "list", "scope": "root" },
-    "sidebar.session.row.leading": { "kind": "list", "scope": "root" },
-    "sidebar.session.row.hover": { "kind": "list", "scope": "root" }
+    "sidebar.workspaces.session.row.action": {
+      "kind": "list",
+      "scope": "root"
+    },
+    "sidebar.session.row.leading": {
+      "kind": "list",
+      "scope": "root"
+    },
+    "sidebar.session.row.hover": {
+      "kind": "list",
+      "scope": "root"
+    }
   },
   "standardProps": [
     "useRemoteAccess",
@@ -39,10 +51,31 @@
     "renderSlot"
   ],
   "services": {
-    "layout": ["selectPanel", "toggleSidebar"],
-    "uiWorkspace": ["openSession", "startSession", "forkSession", "archiveSession", "unarchiveSession", "pickDirectory", "listDirectory", "createDirectory"],
-    "workspaces": ["create", "rename", "delete", "insertSessionBefore"],
-    "sessions": ["search", "fork", "retain"]
+    "layout": [
+      "selectPanel",
+      "toggleSidebar"
+    ],
+    "uiWorkspace": [
+      "openSession",
+      "startSession",
+      "forkSession",
+      "archiveSession",
+      "unarchiveSession",
+      "pickDirectory",
+      "listDirectory",
+      "createDirectory"
+    ],
+    "workspaces": [
+      "create",
+      "rename",
+      "delete",
+      "insertSessionBefore"
+    ],
+    "sessions": [
+      "search",
+      "fork",
+      "retain"
+    ]
   },
   "sharedModules": [
     "react",
@@ -58,12 +91,46 @@
     "@deepseek-ai/dsh-client-ui-dockkit"
   ],
   "snapshots": {
-    "useWorkspaces": ["items[].workspaceId", "items[].path", "items[].title", "items[].createdAt", "items[].sessionIds", "phase", "state", "archivedSessionIds", "pinnedSessionIds"],
-    "useSessions": ["ids", "byId[id].id", "byId[id].title", "byId[id].blank", "byId[id].running", "byId[id].updatedAt", "byId[id].retainedBy.mainView", "projectionsBySession"],
-    "useSessionStatus": ["get(id).running", "get(id).completionUnread", "get(id).pendingInteraction.kind"]
+    "useWorkspaces": [
+      "items[].workspaceId",
+      "items[].path",
+      "items[].title",
+      "items[].createdAt",
+      "items[].sessionIds",
+      "phase",
+      "state",
+      "archivedSessionIds",
+      "pinnedSessionIds"
+    ],
+    "useSessions": [
+      "ids",
+      "byId[id].id",
+      "byId[id].title",
+      "byId[id].blank",
+      "byId[id].running",
+      "byId[id].updatedAt",
+      "byId[id].retainedBy.mainView",
+      "projectionsBySession"
+    ],
+    "useSessionStatus": [
+      "get(id).running",
+      "get(id).completionUnread",
+      "get(id).pendingInteraction.kind"
+    ]
   },
   "themes": {
     "note": "Every token the fork uses must exist in the app's CSS; the fork plan's section 7 lists how to re-check them.",
-    "requires": ["--dsw-alias-label-primary", "--dsw-alias-label-secondary", "--dsw-alias-label-tertiary", "--dsw-alias-interactive-bg-hover", "--dsw-alias-border-l1", "--dsw-alias-border-l2", "--dsw-radius-sm", "--dsw-radius-md", "--dsw-radius-lg", "--dsw-elevation-soft"]
+    "requires": [
+      "--dsw-alias-label-primary",
+      "--dsw-alias-label-secondary",
+      "--dsw-alias-label-tertiary",
+      "--dsw-alias-interactive-bg-hover",
+      "--dsw-alias-border-l1",
+      "--dsw-alias-border-l2",
+      "--dsw-radius-sm",
+      "--dsw-radius-md",
+      "--dsw-radius-lg",
+      "--dsw-elevation-soft"
+    ]
   }
 }

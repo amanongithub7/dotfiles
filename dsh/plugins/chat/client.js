@@ -2304,6 +2304,9 @@ window.__ModuleLoader__.load({
             ctx.slots.inject('sidebar.workspaces', () => {
               const registered = ctx.slots.register({
                 name: 'sidebar.workspaces',
+                // The shipped browser occupies this single slot at priority 0; the
+                // shadow has to outrank it or it would never take the seat.
+                priority: 1,
                 children: sidebarChildren(ctx),
                 inject: () => ({
                   openSession: (sessionId) => uiWorkspace?.openSession?.(sessionId),

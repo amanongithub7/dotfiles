@@ -51,7 +51,9 @@ session or trajectory, which is what keeps the loop out.
 
 ### The sidebar fork (`sidebarFork`)
 
-Off by default. When on, the browser half also occupies `sidebar.workspaces` and
+Off by default. When on, the browser half also occupies `sidebar.workspaces` at
+`priority: 1` (the shipped browser is priority 0, so the shadow takes the single
+seat deterministically) and
 renders the whole browsing region itself, both sections with the same header:
 **Workspaces** (session rows grouped by workspace or flat, search over the host
 message index, and the shipped row menus and actions through their own seats) and
