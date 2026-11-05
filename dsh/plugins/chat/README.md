@@ -51,10 +51,14 @@ session or trajectory, which is what keeps the loop out.
 
 ### The sidebar fork (`sidebarFork`) — shelved
 
-**Off and unmaintained.** It mounted on the live page and rendered both sections,
-but row clicks did nothing: sessions and chats opened nothing, so the injected
-`uiWorkspace.openSession` / `layout.selectPanel` path did not work from a
-shadowing occupant. The component now renders nothing unless the host explicitly
+**Off and unmaintained.** It mounted on the live page and read real data — the
+recorded report was `sessions: 4, chats: 2, workspaces: 1`, and both sections
+rendered — but row clicks did nothing: sessions and chats opened nothing. The most
+likely cause is the navigation inject face: `uiWorkspace` / `layout` resolved to
+nothing through `ctx.get` for a shadowing occupant, and every call site uses
+optional chaining, so the failure was silent. That is the first thing a second
+attempt should prove — log what those services resolve to before building any UI
+on them. The component now renders nothing unless the host explicitly
 reports `sidebarFork: true`, so it cannot affect a profile that has not opted in.
 Everything under `contract/` and `UPGRADE.md` is the record of why, and of what a
 second attempt should check first — start with that click path.
