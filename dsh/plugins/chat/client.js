@@ -2341,7 +2341,13 @@ window.__ModuleLoader__.load({
                   startSession: (workspaceId) => uiWorkspace?.startSession?.(workspaceId),
                   selectChat: (id) => {
                     chatSelection.set(id)
-                    layout?.selectPanel?.('chat')
+                    // A plugin-registered panel key is not guaranteed to be a valid
+                    // MainPanelId; a refusal must not break the row click.
+                    try {
+                      layout?.selectPanel?.('chat')
+                    } catch (error) {
+                      console.warn('chat: could not switch to the chat panel:', error)
+                    }
                   },
                   onFailure: abandon,
                 }),

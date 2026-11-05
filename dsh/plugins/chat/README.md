@@ -51,7 +51,7 @@ session or trajectory, which is what keeps the loop out.
 
 ### The sidebar fork (`sidebarFork`)
 
-Off by default. When on, the browser half also occupies `sidebar.workspaces` at
+On by default. When on, the browser half also occupies `sidebar.workspaces` at
 `priority: 1` (the shipped browser is priority 0, so the shadow takes the single
 seat deterministically) and
 renders the whole browsing region itself, both sections with the same header:
@@ -153,6 +153,7 @@ matter. Nothing else needs configuring.
 | `fileMaxChars` | `40000` | Cap on one attachment's text |
 | `maxUploadBytes` | `26214400` | Largest accepted upload |
 | `dataDir` | `$DSH_HOME/storages/aman-chat` | Where chats and uploads live |
+| `sidebarFork` | `true` | Shadow `sidebar.workspaces` to render the Chats section; `false` keeps the shipped browser |
 
 The defaults are copied from this profile's `agent-default-model` row rather than
 read from it: switching the default model in Settings does not move the chat
