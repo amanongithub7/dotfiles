@@ -339,6 +339,8 @@ const offSaved = await (await route('/ui').fetch(request({ sidebarForkOff: true 
 assert.equal(offSaved.ui.sidebarForkOff, true, 'the runtime off-switch is saved')
 assert.equal((await route('/ui').fetch(request({ sidebarForkOff: 'no' }))).status, 400, 'a non-boolean switch is rejected')
 await route('/ui').fetch(request({ sidebarForkOff: false }))
+assert.equal((await (await route('/ui').fetch(request({ chatsGroup: 'model' }))).json()).ui.chatsGroup, 'model', 'the chats grouping is saved')
+assert.equal((await route('/ui').fetch(request({ chatsGroup: 'by-constellation' }))).status, 400, 'an unknown grouping is rejected')
 assert.equal(status.sidebarFork, false, 'the sidebar fork is off unless configured')
 
 // The beacon shares panel.json, so a touch must not wipe the layout beside it.

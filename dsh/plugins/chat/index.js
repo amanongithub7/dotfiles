@@ -684,6 +684,7 @@ function registerRoutes(ctx, settings, store) {
         if (typeof payload.sidebarForkError === 'string') patch.sidebarForkError = payload.sidebarForkError.slice(0, 200)
         if (typeof payload.sidebarForkMounted === 'number') patch.sidebarForkMounted = payload.sidebarForkMounted
         if (typeof payload.sidebarForkOff === 'boolean') patch.sidebarForkOff = payload.sidebarForkOff
+        if (payload.chatsGroup === 'date' || payload.chatsGroup === 'model') patch.chatsGroup = payload.chatsGroup
         if (Object.keys(patch).length === 0) throw new RequestError('nothing to save')
         const record = await store.savePanel({ ui: { ...((await store.panel()).ui ?? {}), ...patch } })
         return json({ ui: record.ui ?? {} })

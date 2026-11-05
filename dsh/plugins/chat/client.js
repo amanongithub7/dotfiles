@@ -57,6 +57,10 @@ window.__ModuleLoader__.load({
       groupByDate: 'Date',
       groupByModel: 'Model',
       newSession: 'New session',
+      chatMenu: 'Chat actions',
+      rename: 'Rename',
+      save: 'Save',
+      cancel: 'Cancel',
       sessionMenu: 'Session actions',
       untitled: 'Untitled',
     }
@@ -743,6 +747,20 @@ window.__ModuleLoader__.load({
 .aman-sb-item:hover,
 .aman-sb-item[data-on="true"] { background: var(--dsw-alias-interactive-bg-hover); }
 .aman-sb-empty { padding: 8px 10px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.aman-sb-rename {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  margin: 0 6px 0 4px;
+  padding: 0 4px;
+  border: 1px solid var(--dsw-alias-border-l4, var(--dsw-alias-border-l2));
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-button-elevated-fill, var(--dsw-alias-bg-layer-1));
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
 .aman-chat-setting { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
 .aman-chat-setting-text { min-width: 0; flex: 1; }
 .aman-chat-setting-label { font-size: 14px; line-height: 20px; color: var(--dsw-alias-label-primary); }
@@ -1552,6 +1570,9 @@ window.__ModuleLoader__.load({
       const [groupMode, setGroupMode] = useState('date')
       const [groupOpen, setGroupOpen] = useState(false)
       const [collapsed, setCollapsed] = useState({})
+      const [renaming, setRenaming] = useState(null)
+      const [renameText, setRenameText] = useState('')
+      const [menuFor, setMenuFor] = useState(null)
 
       useEffect(() => {
         if (sidebarPropsReady(props) === false) {
@@ -1570,7 +1591,36 @@ window.__ModuleLoader__.load({
 
       useEffect(() => {
         refresh()
+        request('/status', null, 'GET')
+          .then((payload) => {
+            const saved = payload?.ui?.chatsGroup
+            if (saved === 'date' || saved === 'model') setGroupMode(saved)
+          })
+          .catch(() => {})
       }, [refresh])
+
+      const chooseGrouping = (mode) => {
+        setGroupMode(mode)
+        request('/ui', { chatsGroup: mode }).catch(() => {})
+      }
+
+      const removeChat = (id) => {
+        request('/delete', { id })
+          .then(() => {
+            if (chatSelection.get() === id) chatSelection.set(null)
+            refresh()
+          })
+          .catch(() => {})
+      }
+
+      const commitRename = (id) => {
+        const title = renameText.trim()
+        setRenaming(null)
+        if (title === '') return
+        request('/rename', { id, title })
+          .then(() => refresh())
+          .catch(() => {})
+      }
 
       const summaries = list?.byId ?? {}
       const pinned = new Set(workspaceState?.pinnedSessionIds ?? [])
@@ -1629,19 +1679,115 @@ window.__ModuleLoader__.load({
           })
         : undefined
 
-      const chatSection = h(
-        'div',
-        { key: 'chats', className: 'aman-sb-section' },
-        h(
-          SbHeader,
-          { label: t('chats'), search: searchField },
+      const renderChatRow = (entry) => {
+        const menuOpen = menuFor === entry.id
+        const titleNode = renaming === entry.id
+          ? h('input', {
+              key: 'rename',
+              className: 'aman-sb-rename',
+              value: renameText,
+              autoFocus: true,
+              onClick: (event) => event.stopPropagation(),
+              onInput: (event) => setRenameText(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') commitRename(entry.id)
+                if (event.key === 'Escape') setRenaming(null)
+              },
+              onBlur: () => commitRename(entry.id),
+            })
+          : h('span', { key: 'title', className: 'aman-sb-title' }, text(entry.title) || t('newChat'))
+        const menuNode = menuOpen
+          ? h(SbPopover, { key: 'pop', onClose: () => setMenuFor(null) },
+              h('button', {
+                key: 'rename',
+                type: 'button',
+                className: 'aman-sb-item',
+                onClick: () => {
+                  setMenuFor(null)
+                  setRenameText(text(entry.title))
+                  setRenaming(entry.id)
+                },
+              }, t('rename')),
+              h('button', {
+                key: 'delete',
+                type: 'button',
+                className: 'aman-sb-item',
+                onClick: () => {
+                  setMenuFor(null)
+                  removeChat(entry.id)
+                },
+              }, t('delete')))
+          : null
+        const actionsNode = h('span', { key: 'actions', className: 'aman-sb-actions' },
+          h('span', { key: 'menu', className: 'aman-sb-anchor' },
+            h('button', {
+              type: 'button',
+              className: 'aman-sb-row-icon',
+              title: t('chatMenu'),
+              'aria-label': t('chatMenu'),
+              onClick: (event) => {
+                event.stopPropagation()
+                setMenuFor((current) => (current === entry.id ? null : entry.id))
+              },
+            }, h(SbIcon, { name: 'ellipsis', size: 16 })),
+            menuNode))
+        return h('div', {
+          key: entry.id,
+          className: 'aman-sb-row',
+          'data-active': chatSelection.get() === entry.id ? 'true' : 'false',
+          'data-menu': menuOpen ? 'true' : 'false',
+          onClick: () => {
+            if (menuOpen) return
+            selectChat(entry.id)
+          },
+        },
+        h('span', { key: 'slot', className: 'aman-sb-slot' }),
+        titleNode,
+        h('span', { key: 'time', className: 'aman-sb-time' }, when(entry.updatedAt)),
+        actionsNode)
+      }
+
+      const renderChatGroup = (group) => {
+        const key = `chats:${group.key}`
+        const collapsedGroup = collapsed[key] === true
+        return h('div', { key: group.key, className: 'aman-sb-group' },
+          h('button', {
+            type: 'button',
+            className: 'aman-sb-group-head',
+            onClick: () => toggle(key),
+          },
+          h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsedGroup ? 'false' : 'true' }, h(SbIcon, { name: 'chevron', size: 14 })),
+          h('span', { key: 'label', className: 'aman-sb-group-label' }, group.key)),
+          collapsedGroup ? null : group.entries.map(renderChatRow))
+      }
+
+      const chatSection = h('div', { key: 'chats', className: 'aman-sb-section' },
+        h(SbHeader, { label: t('chats'), search: searchField },
           h(SbButton, { icon: 'search', label: t('searchChats'), onClick: () => setSearchOpen((value) => value !== true) }),
           h('span', { key: 'group', className: 'aman-sb-anchor' },
             h(SbButton, { icon: 'sliders', label: t('groupBy'), onClick: () => setGroupOpen((value) => value !== true) }),
             groupOpen
               ? h(SbPopover, { key: 'pop', onClose: () => setGroupOpen(false) },
-                  h('button', { key: 'date', type: 'button', className: 'aman-sb-item', 'data-on': groupMode === 'date' ? 'true' : 'false', onClick: () => { setGroupMode('date'); setGroupOpen(false) } }, t('groupByDate')),
-                  h('button', { key: 'model', type: 'button', className: 'aman-sb-item', 'data-on': groupMode === 'model' ? 'true' : 'false', onClick: () => { setGroupMode('model'); setGroupOpen(false) } }, t('groupByModel')))
+                  h('button', {
+                    key: 'date',
+                    type: 'button',
+                    className: 'aman-sb-item',
+                    'data-on': groupMode === 'date' ? 'true' : 'false',
+                    onClick: () => {
+                      chooseGrouping('date')
+                      setGroupOpen(false)
+                    },
+                  }, t('groupByDate')),
+                  h('button', {
+                    key: 'model',
+                    type: 'button',
+                    className: 'aman-sb-item',
+                    'data-on': groupMode === 'model' ? 'true' : 'false',
+                    onClick: () => {
+                      chooseGrouping('model')
+                      setGroupOpen(false)
+                    },
+                  }, t('groupByModel')))
               : null),
           h(SbButton, {
             icon: 'newChat',
@@ -1654,37 +1800,11 @@ window.__ModuleLoader__.load({
                 })
                 .catch(() => {})
             },
-          }),
-        ),
+          })),
         h('div', { className: 'aman-sb-rows' },
           chatGroups.length === 0
-              ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
-              : chatGroups.map((group) =>
-                  h(
-                    'div',
-                    { key: group.key, className: 'aman-sb-group' },
-                    h('button', {
-                      type: 'button',
-                      className: 'aman-sb-group-head',
-                      onClick: () => toggle(`chats:${group.key}`),
-                    },
-                    h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsed[`chats:${group.key}`] !== true ? 'true' : 'false' }, h(SbIcon, { name: 'chevron', size: 14 })),
-                    h('span', { key: 'label', className: 'aman-sb-group-label' }, group.key)),
-                    collapsed[`chats:${group.key}`] === true
-                      ? null
-                      : group.entries.map((entry) =>
-                          h(
-                            'div',
-                            { key: entry.id, className: 'aman-sb-row', 'data-active': 'false', onClick: () => selectChat(entry.id) },
-                            h('span', { key: 'slot', className: 'aman-sb-slot' }),
-                            h('span', { key: 'title', className: 'aman-sb-title' }, text(entry.title) || t('newChat')),
-                            h('span', { key: 'time', className: 'aman-sb-time' }, when(entry.updatedAt)),
-                          ),
-                        ),
-                  ),
-                ),
-        ),
-      )
+            ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
+            : chatGroups.map(renderChatGroup)))
 
       const workspaceSection = h(
         'div',

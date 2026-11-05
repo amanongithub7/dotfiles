@@ -606,6 +606,45 @@ const chatRow = findAll(root, (node) => node.props.className === 'aman-sb-row').
 chatRow.props.onClick()
 assert.equal(injected.chat, 'c2', 'clicking the last chat row selects that chat')
 
+// ── a chat row's own menu, and a remembered grouping ────────────────────────
+const rowMenuButtons = findAll(root, (node) => node.props.className === 'aman-sb-row-icon')
+assert.ok(rowMenuButtons.length >= 3, 'session rows and chat rows all carry a menu button')
+rowMenuButtons.at(-1).props.onClick({ stopPropagation() {} })
+await settle()
+const menuItems = findAll(root, (node) => node.props.className === 'aman-sb-item').map((node) => allText(node).join(''))
+assert.deepEqual(menuItems.slice(-2), ['rename', 'delete'], 'a chat row offers rename and delete')
+
+findAll(root, (node) => node.props.className === 'aman-sb-item').at(-2).props.onClick()
+await settle()
+const renameInput = findAll(root, (node) => node.props.className === 'aman-sb-rename')[0]
+assert.ok(renameInput, 'rename turns the row into an input')
+renameInput.props.onInput({ target: { value: 'renamed chat' } })
+await settle()
+// The commit reads the input event's state, so the field is re-read after the
+// re-render that a real browser would have had before the keydown.
+findAll(root, (node) => node.props.className === 'aman-sb-rename')[0].props.onKeyDown({ key: 'Enter' })
+await settle()
+assert.ok(
+  calls.some((call) => call.url.endsWith('/rename') && call.body.title === 'renamed chat'),
+  'committing a rename posts the new title',
+)
+
+findAll(root, (node) => node.props.className === 'aman-sb-row-icon').at(-1).props.onClick({ stopPropagation() {} })
+await settle()
+findAll(root, (node) => node.props.className === 'aman-sb-item').at(-1).props.onClick()
+await settle()
+assert.ok(calls.some((call) => call.url.endsWith('/delete')), 'delete removes the chat')
+
+// the grouping choice is kept on the host
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'groupBy')[0].props.onClick()
+await settle()
+findAll(root, (node) => node.props.className === 'aman-sb-item').find((node) => allText(node).join('') === 'groupByModel').props.onClick()
+await settle()
+assert.ok(
+  calls.some((call) => call.url.endsWith('/ui') && call.body.chatsGroup === 'model'),
+  'the grouping preference is remembered on the host',
+)
+
 // the boundary hands the sidebar back instead of leaving it empty
 let boundaryFellBack = false
 hookStore.clear()
