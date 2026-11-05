@@ -70,6 +70,12 @@ What keeps it safe:
   the snapshot shapes, the services, and how to re-verify after an upgrade.
 - A render error is caught by an error boundary that disposes the registration, so
   the **shipped browser takes the sidebar back** instead of leaving it empty.
+Known limitation, worth checking on the first live pass: the row menus and the
+grouping popovers render in place, inside `.aman-sb-root`, which scrolls — so one
+opened on a row near the edge can be clipped by the scroll container. The shipped
+browser portals its menus. If that bites, the fix is a portal via the shared
+`react-dom`, and it is deliberately deferred until someone has seen it happen.
+
 - The mount, a render report (`sidebarForkReport`: how many sessions, chats and
   workspaces the shadow actually read) and any fallback reason are recorded in
   `panel.json`, so both success and failure are visible without a browser console.
