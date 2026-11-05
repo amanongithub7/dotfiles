@@ -63,6 +63,7 @@ window.__ModuleLoader__.load({
       groupByDate: 'Date',
       groupByModel: 'Model',
       newSession: 'New session',
+      addWorkspace: 'Add workspace',
       chatMenu: 'Chat actions',
       rename: 'Rename',
       save: 'Save',
@@ -1435,6 +1436,7 @@ window.__ModuleLoader__.load({
       ellipsis: ['IconEllipsisOutlineRegular', 'M6 12h.01M12 12h.01M18 12h.01'],
       folder: ['IconFolderCloseRegular', 'M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z'],
       chevron: ['IconChevronRightOutlineRegular', 'M9.5 6l6 6-6 6'],
+      folderAdd: ['IconFolderAddOutlineRegular', 'M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5ZM12 11v5M9.5 13.5h5'],
     }
 
     function SbIcon(props) {
@@ -1622,6 +1624,9 @@ window.__ModuleLoader__.load({
       const [sessionMatches, setSessionMatches] = useState(null)
       const [sessionGroupOpen, setSessionGroupOpen] = useState(false)
       const [sessionLayout, setSessionLayout] = useState('workspace')
+      const [workspaceFlow, setWorkspaceFlow] = useState(false)
+      const [workspaceBusy, setWorkspaceBusy] = useState(false)
+      const [workspaceError, setWorkspaceError] = useState('')
 
       useEffect(() => {
         if (sidebarPropsReady(props) === false) {
@@ -2017,7 +2022,32 @@ window.__ModuleLoader__.load({
                   },
                 }, t('groupByFlat')))
             : null),
+        h(SbButton, { icon: 'folderAdd', label: t('addWorkspace'), onClick: () => setWorkspaceFlow(true) }),
         h(SbButton, { icon: 'newChat', label: t('newSession'), onClick: () => startSession(undefined) })),
+        workspaceError === ''
+          ? null
+          : h('div', { key: 'error', className: 'aman-sb-empty', style: { color: 'var(--dsw-alias-state-error-primary)' } }, workspaceError),
+        workspaceFlow
+          ? renderSlot('sidebar.workspaces.directoryFlow', {
+              open: true,
+              busy: workspaceBusy,
+              onPicked: (pickedPath) => {
+                setWorkspaceBusy(true)
+                Promise.resolve(props.createWorkspace?.(pickedPath))
+                  .then(() => {
+                    setWorkspaceFlow(false)
+                    setWorkspaceError('')
+                  })
+                  .catch((error) => setWorkspaceError(text(error?.message ?? error)))
+                  .finally(() => setWorkspaceBusy(false))
+              },
+              onCancel: () => setWorkspaceFlow(false),
+              onError: (message) => {
+                setWorkspaceError(text(message))
+                setWorkspaceFlow(false)
+              },
+            })
+          : null,
         h('div', { className: 'aman-sb-rows' }, sessionRows))
 
       return h('div', { className: 'aman-sb-root' }, h('style', { key: 'css' }, SIDEBAR_CSS), workspaceSection, chatSection)
@@ -2350,6 +2380,11 @@ window.__ModuleLoader__.load({
                     }
                   },
                   onFailure: abandon,
+                createWorkspace: (workspacePath) => {
+                  const workspaces = clientService(ctx, 'workspaces')
+                  if (typeof workspaces?.create !== 'function') throw new Error('this profile cannot create workspaces')
+                  return workspaces.create({ path: workspacePath })
+                },
                 }),
                 locale: NAMESPACE,
               }, (props) => h(SbBoundary, { onFailure: () => props.onFailure?.('the fork threw while rendering') }, h(SidebarFork, props)))

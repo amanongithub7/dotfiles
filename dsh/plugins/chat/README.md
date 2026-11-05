@@ -56,7 +56,8 @@ On by default. When on, the browser half also occupies `sidebar.workspaces` at
 seat deterministically) and
 renders the whole browsing region itself, both sections with the same header:
 **Workspaces** (session rows grouped by workspace or flat, search over the host
-message index, and the shipped row menus and actions through their own seats) and
+message index, add-workspace through the shipped picker seat, and the shipped row
+menus and actions through their own seats) and
 **Chats** (this plugin's chats, grouped by date or model, searchable by title and
 message content, with rename and delete on every row). Each header carries search,
 a grouping choice, and its new button. The shipped browser gives up the seat, which

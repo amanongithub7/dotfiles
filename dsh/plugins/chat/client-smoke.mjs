@@ -635,7 +635,7 @@ const rowTitles = findAll(root, (node) => node.props.className === 'aman-sb-titl
 assert.ok(rowTitles.includes('Sea ice') && rowTitles.includes('Heatwaves'), 'the session rows render from the snapshot')
 assert.ok(rowTitles.includes('CMIP6 scenarios'), 'the chats rows render from the host routes')
 assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-head-label').length, 2, 'two section headers')
-assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-icon').length, 6, 'search, group and new on both sections')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-icon').length, 7, 'search, group, add and new on the sections')
 assert.ok(slotCalls.some((call) => call.name === 'sidebar.session.row.leading'), 'the leading seat is rendered')
 assert.ok(slotCalls.some((call) => call.name === 'sidebar.workspaces.session.row.action'), 'the row actions seat is rendered')
 
@@ -704,6 +704,41 @@ assert.ok(
   findAll(root, (node) => node.props.className === 'aman-sb-empty').length === 0,
   'no empty-state is shown for a snapshot that has simply not arrived',
 )
+
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, forkProps)
+renderOnce()
+await settle()
+
+// ── adding a workspace goes through the shipped picker seat ─────────────────
+const addedPaths = []
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, {
+  ...forkProps,
+  createWorkspace: (workspacePath) => {
+    addedPaths.push(workspacePath)
+    return Promise.resolve({ workspaceId: 'w2' })
+  },
+})
+renderOnce()
+await settle()
+const flowFor = () => findAll(root, (node) => node.props.name === 'sidebar.workspaces.directoryFlow')
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'addWorkspace')[0].props.onClick()
+await settle()
+assert.equal(flowFor().length, 1, 'the add-workspace button raises the directory flow in its seat')
+const flowProps = slotCalls.filter((call) => call.name === 'sidebar.workspaces.directoryFlow').at(-1).owner
+assert.equal(flowProps.open, true, 'the flow is open')
+flowProps.onPicked('/Users/aman/new-project')
+await settle()
+assert.deepEqual(addedPaths, ['/Users/aman/new-project'], 'picking a directory creates the workspace')
+assert.equal(flowFor().length, 0, 'and the flow closes')
+
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'addWorkspace')[0].props.onClick()
+await settle()
+slotCalls.filter((call) => call.name === 'sidebar.workspaces.directoryFlow').at(-1).owner.onError('permission denied')
+await settle()
+assert.equal(flowFor().length, 0, 'an error closes the flow')
+assert.match(allText(root).join(' '), /permission denied/, 'and the reason is shown')
 
 hookStore.clear()
 factory = () => React.createElement(shadow.Component, forkProps)
