@@ -727,6 +727,9 @@ function registerRoutes(ctx, settings, store) {
 export function apply(ctx, config) {
   const settings = withDefaults(config)
   const store = createStore(settings.dataDir)
+  // Record what this half believes its own switches are, so a config override
+  // that never reached the plugin is visible instead of silent.
+  void store.savePanel({ flags: { sidebarFork: settings.sidebarFork === true, web: settings.web === true } }).catch(() => {})
 
   registerTool(ctx, settings)
   registerCommand(ctx, settings)

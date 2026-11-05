@@ -121,6 +121,14 @@
     default: standard
     selectedDefault: cordis
 
+# Turn on @aman/dsh-chat's fork of the sidebar: it occupies sidebar.workspaces
+# and renders the Workspaces region plus a Chats section of its own. Off is the
+# safe default -- delete this entry to fall back to the shipped browser. The
+# plugin also falls back by itself if the fork throws, and records why in
+# $DSH_HOME/storages/aman-chat/panel.json (sidebarForkError).
+- id: include:chat
+  config:
+    sidebarFork: true
 # Bundles installed from ~/dotfiles/dsh/plugins (see ../README.md). Editing a
 # bundle's JavaScript needs a composition reload to re-import it, and an edit to
 # this file is the only reliable way to get one: a bare write to the plugin file

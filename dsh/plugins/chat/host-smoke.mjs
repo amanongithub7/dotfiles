@@ -331,7 +331,7 @@ const panelFile = JSON.parse(await fs.readFile(path.join(uiDir, 'panel.json'), '
 assert.deepEqual(panelFile.ui, { historyCollapsed: true }, 'the beacon keeps the panel layout')
 assert.ok(panelFile.at > 0, 'and still records when the panel was last seen')
 assert.equal(await uiStore.lastSeen(), panelFile.at, 'lastSeen reads the same beacon')
-await fs.rm(uiDir, { recursive: true, force: true })
+await fs.rm(uiDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
 
 // ── route errors ────────────────────────────────────────────────────────────
 assert.equal((await route('/ask').fetch(request({ id: created.chat.id, prompt: '   ' }))).status, 400, 'an empty prompt is a client error')
@@ -371,7 +371,7 @@ const capped = sent().messages.map((message) => message.content[0].text)
 assert.ok(capped.some((body) => body.includes('C'.repeat(40))), 'the newest turn is always sent')
 assert.ok(capped.every((body) => body.includes('A'.repeat(40)) === false), 'an over-budget history drops the oldest turn entirely')
 assert.ok(capped.length < 5, `the replayed history stays inside its budget (got ${capped.length} messages)`)
-await fs.rm(capsDir, { recursive: true, force: true })
+await fs.rm(capsDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
 
 // ── a profile without the connection service ────────────────────────────────
 const bare = {
@@ -386,6 +386,6 @@ apply(bare, { dataDir })
 assert.equal(warnings.length, 1, 'a missing connection service is reported once')
 assert.match(warnings[0], /Fetch registry/)
 
-await fs.rm(dataDir, { recursive: true, force: true })
-await fs.rm(workDir, { recursive: true, force: true })
+await fs.rm(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
+await fs.rm(workDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
 console.log('index.js host test passed: tool, command, routes, grounding, attachments, history, failures')
