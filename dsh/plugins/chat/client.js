@@ -1613,6 +1613,7 @@ window.__ModuleLoader__.load({
       const [searchOpen, setSearchOpen] = useState(false)
       const [groupMode, setGroupMode] = useState('date')
       const [groupOpen, setGroupOpen] = useState(false)
+      const [forkEnabled, setForkEnabled] = useState(false)
       const [collapsed, setCollapsed] = useState({})
       const [renaming, setRenaming] = useState(null)
       const [renameText, setRenameText] = useState('')
@@ -1633,24 +1634,24 @@ window.__ModuleLoader__.load({
           props.onFailure?.('the sidebar fork is missing its standard props')
           return
         }
-        // The profile gets the last word, read here rather than at registration:
-        // the page is up by now, and the fork retires itself if it is switched off.
+        // The host has the last word, read here rather than at registration: the
+        // page is up by now. Anything short of an explicit yes retires the shadow,
+        // so a status that cannot be read leaves the shipped browser in place.
         request('/status', null, 'GET')
           .then((payload) => {
-            if (payload?.sidebarFork === false) {
-              props.onRetire?.('the sidebar fork is disabled in this profile')
+            if (payload?.sidebarFork !== true) {
+              props.onRetire?.('the sidebar fork is off in this profile')
               return
             }
             if (payload?.ui?.sidebarForkOff === true) {
               props.onRetire?.('the sidebar fork was switched off in Settings')
               return
             }
-            // Proof of life for anyone reading the host state: the fork mounted.
+            setForkEnabled(true)
             request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
           })
           .catch(() => {
-            // No status means no reason to hide the sidebar: stay on the default.
-            request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
+            props.onRetire?.('the host did not answer for the sidebar fork')
           })
       }, [])
 
@@ -1969,6 +1970,7 @@ window.__ModuleLoader__.load({
         .sort((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
 
       useEffect(() => {
+        if (forkEnabled !== true) return
         const report = {
           sessions: flatSessions.length,
           chats: chats.length,
@@ -2067,6 +2069,9 @@ window.__ModuleLoader__.load({
           : null,
         h('div', { className: 'aman-sb-rows' }, sessionRows))
 
+      // Nothing renders until the host has said the fork is wanted: an unknown
+      // answer must leave the shipped sidebar exactly as it was.
+      if (forkEnabled !== true) return null
       return h('div', { className: 'aman-sb-root' }, h('style', { key: 'css' }, SIDEBAR_CSS), workspaceSection, chatSection)
     }
 

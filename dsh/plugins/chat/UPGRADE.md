@@ -1,3 +1,6 @@
+> **Shelved.** The fork is off by default and unmaintained; this runbook is kept as
+> the record of what a second attempt must re-check.
+
 # Upgrading the sidebar fork to a new DeepSeek Harness
 
 The fork never patches the app, so an update cannot conflict with it. What can

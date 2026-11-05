@@ -344,10 +344,10 @@ assert.equal((await route('/ui').fetch(request({ chatsGroup: 'by-constellation' 
 const reported = await (await route('/ui').fetch(request({ sidebarForkReport: { sessions: 3, chats: 2, workspaces: 1, junk: 'x' } }))).json()
 assert.deepEqual(reported.ui.sidebarForkReport, { sessions: 3, chats: 2, workspaces: 1 }, 'the render report keeps only numeric counts')
 assert.equal((await route('/ui').fetch(request({ sidebarForkReport: 'nope' }))).status, 400, 'a malformed report is rejected')
-assert.equal(status.sidebarFork, true, 'the sidebar fork is on by default')
+assert.equal(status.sidebarFork, false, 'the sidebar fork is shelved and off by default')
 // and the config can still hold it back, for a profile that wants the stock browser
-const offSettings = withDefaults({ sidebarFork: false })
-assert.equal(offSettings.sidebarFork, false, 'an explicit config disables it')
+const onSettings = withDefaults({ sidebarFork: true })
+assert.equal(onSettings.sidebarFork, true, 'a profile can still opt in')
 
 // The beacon shares panel.json, so a touch must not wipe the layout beside it.
 const uiDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aman-chat-ui-'))

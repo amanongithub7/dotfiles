@@ -1,3 +1,6 @@
+> **Shelved.** Kept as the contract reference for a second attempt; the fork is off
+> by default. See the README's shelved note for the failure that stopped it.
+
 # Contract: `sidebar.workspaces` (what the fork depends on)
 
 Verified against DSH `0.2.1-rc.5` by reading the shipped bundles out of

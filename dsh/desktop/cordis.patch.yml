@@ -121,9 +121,9 @@
     default: standard
     selectedDefault: cordis
 
-# The sidebar fork is on by default in @aman/dsh-chat (see its README): turn it
-# off there rather than here, or from Settings -> General, which writes
-# $DSH_HOME/storages/aman-chat/panel.json (ui.sidebarForkOff).
+# The sidebar fork in @aman/dsh-chat is shelved: it is off unless a profile sets
+# sidebarFork: true, so the shipped workspace browser owns the sidebar. The chat
+# panel, the /chat tool and the command are unaffected.
 # Bundles installed from ~/dotfiles/dsh/plugins (see ../README.md). Editing a
 # bundle's JavaScript needs a composition reload to re-import it, and an edit to
 # this file is the only reliable way to get one: a bare write to the plugin file

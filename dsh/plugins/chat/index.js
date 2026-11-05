@@ -78,11 +78,11 @@ const DEFAULTS = {
   maxUploadBytes: 26_214_400,
   dataDir: '',
   titleChars: 60,
-  // The sidebar fork is on by default. Three things make that safe: the error
-  // boundary hands the sidebar back to the shipped browser if the shadow throws,
-  // the runtime off-switch in Settings writes ui.sidebarForkOff for the next
-  // reload, and engines.dsh blocks an unverified DSH from activating at all.
-  sidebarFork: true,
+  // Shelved, and off unless a profile asks for it. The fork rendered its two
+  // sections, but row clicks did nothing on the live page: sessions and chats
+  // opened nothing, so the injected uiWorkspace.openSession / layout.selectPanel
+  // path did not work from a shadowing occupant. See the README's shelved note.
+  sidebarFork: false,
 }
 
 export function withDefaults(config) {

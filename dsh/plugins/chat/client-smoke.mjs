@@ -610,6 +610,8 @@ const forkProps = {
   },
 }
 const searched = []
+// the fork renders only when the host says yes, so say yes for this block
+sidebarFork = true
 hookStore.clear()
 factory = () => React.createElement(shadow.Component, forkProps)
 renderOnce()

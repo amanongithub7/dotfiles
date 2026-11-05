@@ -49,9 +49,17 @@ Chats are **not** sessions: the panel keeps its own history on disk under
 store), and a turn appends two messages to that file. Nothing is added to any
 session or trajectory, which is what keeps the loop out.
 
-### The sidebar fork (`sidebarFork`)
+### The sidebar fork (`sidebarFork`) — shelved
 
-On by default. When on, the browser half also occupies `sidebar.workspaces` at
+**Off and unmaintained.** It mounted on the live page and rendered both sections,
+but row clicks did nothing: sessions and chats opened nothing, so the injected
+`uiWorkspace.openSession` / `layout.selectPanel` path did not work from a
+shadowing occupant. The component now renders nothing unless the host explicitly
+reports `sidebarFork: true`, so it cannot affect a profile that has not opted in.
+Everything under `contract/` and `UPGRADE.md` is the record of why, and of what a
+second attempt should check first — start with that click path.
+
+When on, the browser half also occupies `sidebar.workspaces` at
 `priority: 1` (the shipped browser is priority 0, so the shadow takes the single
 seat deterministically) and
 renders the whole browsing region itself, both sections with the same header:
@@ -154,7 +162,7 @@ matter. Nothing else needs configuring.
 | `fileMaxChars` | `40000` | Cap on one attachment's text |
 | `maxUploadBytes` | `26214400` | Largest accepted upload |
 | `dataDir` | `$DSH_HOME/storages/aman-chat` | Where chats and uploads live |
-| `sidebarFork` | `true` | Shadow `sidebar.workspaces` to render the Chats section; `false` keeps the shipped browser |
+| `sidebarFork` | `false` | Shelved shadow of `sidebar.workspaces`; leave off to keep the shipped browser |
 
 The defaults are copied from this profile's `agent-default-model` row rather than
 read from it: switching the default model in Settings does not move the chat
