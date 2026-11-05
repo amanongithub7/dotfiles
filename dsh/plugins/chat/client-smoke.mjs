@@ -686,6 +686,30 @@ assert.ok(
   'the grouping preference is remembered on the host',
 )
 
+// ── the first render arrives before the snapshots do ────────────────────────
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, {
+  ...forkProps,
+  useSessions: (selector) => selector(undefined),
+  useWorkspaces: (selector) => selector(undefined),
+  useSessionStatus: (selector) => selector(undefined),
+})
+renderOnce()
+await settle()
+assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-head').length, 2, 'both headers render on cold snapshots')
+assert.ok(findAll(root, (node) => node.props.className === 'aman-sb-root').length === 1, 'the region itself renders')
+const coldTitles = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
+assert.ok(coldTitles.includes('CMIP6 scenarios'), 'the chats half still works while sessions are cold')
+assert.ok(
+  findAll(root, (node) => node.props.className === 'aman-sb-empty').length === 0,
+  'no empty-state is shown for a snapshot that has simply not arrived',
+)
+
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, forkProps)
+renderOnce()
+await settle()
+
 // ── the workspaces half searches and regroups too ──────────────────────────
 findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'searchSessions')[0].props.onClick()
 await settle()
