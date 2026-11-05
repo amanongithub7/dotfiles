@@ -142,9 +142,15 @@ command and the panel.
 ## Loading a change
 
 The client module graph is built at startup, so a new browser half appears only
-after the page (or the app) reloads. Host-side JavaScript reloads when the
-*profile* patch changes; a bare file write, or reinstalling the bundle, is not
-enough.
+after the page (or the app) reloads. Treat a **restart of the Harness app** as the
+reliable way to pick up any change to this bundle: an edit to the profile patch
+looked like a reload trigger more than once, but the behaviour that followed was
+always explained better by the restart that happened between sessions. A bare file
+write, or reinstalling the bundle, is never enough.
+
+Evidence that a host-side change actually landed, without a browser:
+`$DSH_HOME/storages/aman-chat/panel.json` gains `flags` at plugin start,
+`sidebarForkMounted` when the fork mounts, and `sidebarForkError` if it fell back.
 
 ## Verification
 
