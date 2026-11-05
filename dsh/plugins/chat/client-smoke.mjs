@@ -26,10 +26,13 @@ function sameDeps(previous, next) {
 
 const React = {
   createElement(type, props, ...children) {
+    const flat = children.flat(Infinity).filter((child) => child !== null && child !== undefined && child !== false)
     const node = {
       type,
-      props: props ?? {},
-      children: children.flat(Infinity).filter((child) => child !== null && child !== undefined && child !== false),
+      // React puts children on props as well as in the element; components that
+      // read `props.children` need the same shape here.
+      props: flat.length === 0 ? props ?? {} : { ...(props ?? {}), children: flat.length === 1 ? flat[0] : flat },
+      children: flat,
     }
     if (node.props.ref !== undefined && node.props.ref !== null) node.props.ref.current = node
     return node
@@ -82,6 +85,24 @@ function renderTree(node, key = 'root') {
   if (node === null || node === undefined || node === false) return null
   if (typeof node === 'string' || typeof node === 'number') return node
   if (Array.isArray(node)) return node.map((child, index) => renderTree(child, `${key}.${index}`))
+  if (typeof node.type === 'function' && typeof node.type.prototype?.render === 'function') {
+    // A class component, including an error boundary: render it, and on a throw
+    // hand it `getDerivedStateFromError` the way React would.
+    const componentKey = `${key}|${node.type.name || 'anonymous'}`
+    const instance = new node.type(node.props)
+    instance.props = node.props
+    try {
+      // The whole subtree renders inside the try: a boundary catches a child's
+      // throw, not only its own render body.
+      return renderTree(instance.render(), `${componentKey}.out`)
+    } catch (error) {
+      const derive = node.type.getDerivedStateFromError
+      if (typeof derive !== 'function') throw error
+      instance.state = { ...(instance.state ?? {}), ...derive(error) }
+      instance.componentDidCatch?.(error)
+      return renderTree(instance.render(), `${componentKey}.retry`)
+    }
+  }
   if (typeof node.type === 'function') {
     const componentKey = `${key}|${node.type.name || 'anonymous'}`
     const outerHooks = hooks
@@ -152,12 +173,14 @@ let deferAsk = false
 let releaseAsk = null
 // The layout the host hands back on /status.
 let statusUi = {}
+// Whether the host half enables the sidebar shadow.
+let sidebarFork = false
 
 globalThis.fetch = async (url, options = {}) => {
   const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
   calls.push({ url: String(url), method: options.method ?? 'GET', body })
   const target = String(url)
-  if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true, ui: statusUi })
+  if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true, sidebarFork, ui: statusUi })
   if (target.endsWith('/ui')) {
     statusUi = { ...statusUi, ...body }
     return json({ ui: statusUi })
@@ -219,6 +242,11 @@ globalThis.fetch = async (url, options = {}) => {
   return json({})
 }
 
+globalThis.document = {
+  addEventListener: () => {},
+  removeEventListener: () => {},
+}
+
 globalThis.FileReader = class {
   readAsDataURL() {
     this.result = 'data:text/plain;base64,aGk='
@@ -265,8 +293,8 @@ await settle()
 
 assert.deepEqual(
   calls.filter((call) => call.method === 'GET').map((call) => call.url.replace('/api/aman-chat', '')),
-  ['/list', '/status'],
-  'the panel loads the history and the host status on mount',
+  ['/status', '/list', '/status'],
+  'registering probes the fork flag, then the panel loads the history and the host status',
 )
 assert.match(allText(root).join(' '), /CMIP6 scenarios/, 'a previous chat is listed')
 assert.match(allText(root).join(' '), /Sea ice trends/, 'every previous chat is listed')
@@ -410,4 +438,115 @@ await settle()
 assert.equal(aside().length, 0, 'a page opened after folding shows no history column')
 assert.equal(folds()[0].props['aria-expanded'], 'false', 'and the control starts on show')
 
-console.log('client.js smoke test passed: registrations, icon, list render, submit, pending dots, composer layout, atom toggle, markdown, switching, delete, fold, failure path')
+// ── the sidebar fork: registered only on request ────────────────────────────
+sidebarFork = true
+const forkSlots = []
+const injected = {}
+const services = {
+  layout: { selectPanel: (id) => { injected.panel = id } },
+  uiWorkspace: {
+    openSession: (id) => { injected.session = id },
+    startSession: () => { injected.started = true },
+  },
+}
+plugin.apply({
+  get: (name) => services[name],
+  effect: () => {},
+  slots: {
+    inject: (owner, callback) => callback(),
+    register: (options, Component) => {
+      forkSlots.push({ options, Component })
+      return () => {}
+    },
+  },
+})
+await new Promise((resolve) => setImmediate(resolve))
+assert.equal(forkSlots.length, 3, 'the shadow joins the icon and the page')
+const shadow = forkSlots.find((entry) => entry.options.name === 'sidebar.workspaces')
+assert.ok(shadow, 'the shadow registers into sidebar.workspaces')
+assert.equal(shadow.options.locale, 'chat-panel', 'it reuses the plugin dictionary')
+assert.deepEqual(
+  Object.keys(shadow.options.children).sort(),
+  [
+    'sidebar.session.row.hover',
+    'sidebar.session.row.leading',
+    'sidebar.workspaces.directoryFlow',
+    'sidebar.workspaces.session.menu.item',
+    'sidebar.workspaces.session.row.action',
+  ],
+  'it re-declares every seat the shipped browser owns',
+)
+assert.equal(shadow.options.children['sidebar.workspaces.session.row.action'].kind, 'list')
+assert.ok(shadow.options.children['sidebar.workspaces.session.menu.item'].inject, 'the menu list keeps its hook contract')
+
+// ── and it renders both sections from the framework hooks ───────────────────
+const sessionsFixture = {
+  ids: ['s1', 's2'],
+  byId: {
+    s1: { id: 's1', title: 'Sea ice', blank: false, running: false, updatedAt: Date.now(), retainedBy: { mainView: 1 } },
+    s2: { id: 's2', title: 'Heatwaves', blank: false, running: true, updatedAt: Date.now() },
+  },
+  projectionsBySession: {},
+}
+const workspacesFixture = {
+  items: [{ workspaceId: 'w1', path: '/Users/x/phd', title: 'PhD', createdAt: new Date().toISOString(), sessionIds: ['s1', 's2'] }],
+  pinnedSessionIds: [],
+  archivedSessionIds: [],
+}
+const statusesFixture = new Map([['s2', { running: true }]])
+const slotCalls = []
+const forkProps = {
+  t: (key) => key,
+  renderSlot: (name, owner, options) => {
+    slotCalls.push({ name, owner, options })
+    return { type: 'slot', props: { name }, children: [] }
+  },
+  useSessions: (selector) => selector(sessionsFixture),
+  useWorkspaces: (selector) => selector(workspacesFixture),
+  useSessionStatus: (selector) => selector(statusesFixture),
+  openSession: (id) => { injected.session = id },
+  startSession: () => { injected.started = true },
+  selectChat: (id) => { injected.chat = id },
+}
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, forkProps)
+renderOnce()
+await settle()
+
+const rowTitles = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
+assert.ok(rowTitles.includes('Sea ice') && rowTitles.includes('Heatwaves'), 'the session rows render from the snapshot')
+assert.ok(rowTitles.includes('CMIP6 scenarios'), 'the chats rows render from the host routes')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-head-label').length, 2, 'two section headers')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-icon').length, 4, 'search, group, new chat, new session')
+assert.ok(slotCalls.some((call) => call.name === 'sidebar.session.row.leading'), 'the leading seat is rendered')
+assert.ok(slotCalls.some((call) => call.name === 'sidebar.workspaces.session.row.action'), 'the row actions seat is rendered')
+
+const sessionRow = findAll(root, (node) => node.props.className === 'aman-sb-row')[0]
+sessionRow.props.onClick()
+assert.equal(injected.session, 's1', 'clicking a session row opens that session')
+
+const chatRow = findAll(root, (node) => node.props.className === 'aman-sb-row').at(-1)
+chatRow.props.onClick()
+assert.equal(injected.chat, 'c2', 'clicking the last chat row selects that chat')
+
+// the boundary hands the sidebar back instead of leaving it empty
+let boundaryFellBack = false
+hookStore.clear()
+const Boundary = shadow.Component
+factory = () => React.createElement(Boundary, { ...forkProps, useSessions: () => { throw new Error('renamed snapshot field') }, onFailure: () => { boundaryFellBack = true } })
+renderOnce()
+assert.equal(boundaryFellBack, true, 'a throwing fork asks the caller to restore the shipped browser')
+assert.match(allText(root).join(' '), /sidebar fork is unavailable/, 'and leaves a visible note rather than a hole')
+
+hookStore.clear()
+factory = () => React.createElement(shadow.Component, forkProps)
+renderOnce()
+await settle()
+
+findAll(root, (node) => node.props.className === 'aman-sb-row-icon')[0].props.onClick({ stopPropagation() {} })
+await settle()
+const menuCall = slotCalls.filter((call) => call.name === 'sidebar.workspaces.session.menu.item').at(-1)
+assert.ok(menuCall, 'the ... menu renders the shipped menu items')
+assert.equal(menuCall.options.hookContext[0], true, 'the menu open state is threaded as hookContext')
+
+console.log('client.js smoke test passed: registrations, icon, list render, submit, pending dots, composer layout, atom toggle, markdown, switching, delete, fold, sidebar fork, failure path')

@@ -42,6 +42,16 @@ window.__ModuleLoader__.load({
       sources: 'Sources',
       failed: 'Request failed',
       thinking: 'Waiting for the provider',
+      chats: 'Chats',
+      workspaces: 'Workspaces',
+      workspace: 'Workspace',
+      searchChats: 'Search chats',
+      groupBy: 'Group chats by',
+      groupByDate: 'Date',
+      groupByModel: 'Model',
+      newSession: 'New session',
+      sessionMenu: 'Session actions',
+      untitled: 'Untitled',
     }
 
     const CSS = `
@@ -490,6 +500,179 @@ window.__ModuleLoader__.load({
   color: var(--dsw-alias-label-tertiary);
 }
 .aman-chat-note[data-error="true"] { color: var(--dsw-alias-state-error-primary); }
+.aman-sb-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--dsh-sidebar-inline-padding, 8px) 8px 0;
+  font-family: var(--dsw-font-family);
+  color: var(--dsw-alias-label-primary);
+}
+.aman-sb-section { display: flex; flex-direction: column; }
+.aman-sb-head {
+  box-sizing: border-box;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 2px -4px 4px 0;
+  padding-left: 4px;
+  border-radius: var(--dsw-radius-md);
+  color: var(--dsw-alias-label-tertiary);
+  overflow: hidden;
+}
+.aman-sb-head-label {
+  flex: none;
+  max-width: 45%;
+  margin-right: auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 20px;
+}
+.aman-sb-head-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.aman-sb-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: none;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+.aman-sb-icon:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-sb-search {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  margin-left: 4px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.aman-sb-rows { display: flex; flex-direction: column; gap: 1px; }
+.aman-sb-group { display: flex; flex-direction: column; }
+.aman-sb-group-head {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+.aman-sb-group-head:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-sb-chevron { display: inline-flex; flex: none; transition: transform 0.15s var(--ds-ease-in-out); }
+.aman-sb-chevron[data-open="true"] { transform: rotate(90deg); }
+.aman-sb-group-label { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.aman-sb-folder { display: inline-flex; flex: none; color: var(--dsw-alias-label-caption); }
+.aman-sb-row {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--dsw-radius-md);
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+  user-select: none;
+}
+.aman-sb-row:hover,
+.aman-sb-row[data-active="true"],
+.aman-sb-row[data-menu="true"] { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-sb-slot {
+  width: 16px;
+  height: 20px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-label-tertiary);
+}
+.aman-sb-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0 6px 0 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 20px;
+}
+.aman-sb-time { flex: none; color: var(--dsw-alias-label-tertiary); font-size: 10px; line-height: 16px; }
+.aman-sb-actions { flex: none; display: none; align-items: center; gap: 15px; }
+.aman-sb-row:hover .aman-sb-actions,
+.aman-sb-row[data-menu="true"] .aman-sb-actions { display: inline-flex; }
+.aman-sb-row:hover .aman-sb-time,
+.aman-sb-row[data-menu="true"] .aman-sb-time { display: none; }
+.aman-sb-anchor { position: relative; display: inline-flex; flex: none; }
+.aman-sb-row-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--dsw-radius-xs);
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+.aman-sb-row-icon:hover { color: var(--dsw-alias-label-primary); }
+.aman-sb-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-elevation-soft);
+}
+.aman-sb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: none;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.aman-sb-item:hover,
+.aman-sb-item[data-on="true"] { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-sb-empty { padding: 8px 10px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+
 .aman-chat-hidden { display: none; }
 `
 
@@ -513,6 +696,44 @@ window.__ModuleLoader__.load({
         return ctx?.locale
       } catch {
         return undefined
+      }
+    }
+
+    /**
+     * Read any client service by name. `ctx.get(name)` is always safe, so a
+     * profile without the service just yields undefined; the property is only
+     * tried inside a guard because reading an uninjected one throws.
+     */
+    function clientService(ctx, name) {
+      try {
+        const found = ctx.get?.(name)
+        if (found !== undefined && found !== null) return found
+      } catch {
+        // fall through to the property
+      }
+      try {
+        return ctx?.[name]
+      } catch {
+        return undefined
+      }
+    }
+
+    /**
+     * The seats the shipped browser declares, re-declared by the shadow so the
+     * shipped row menus, row actions, leading marks and hover cards keep working.
+     * The `menuOpenState`/`shortcuts` inject on the menu list is not decorative:
+     * the shipped menu items read both, and a bare declaration breaks them.
+     */
+    function sidebarChildren(ctx) {
+      const shortcuts = clientService(ctx, 'shortcuts')
+      const hooks = { menuOpenState: (_standard, state) => () => state }
+      if (shortcuts?.catalog !== undefined) hooks.shortcuts = shortcuts.catalog
+      return {
+        'sidebar.workspaces.directoryFlow': { kind: 'single', scope: 'root' },
+        'sidebar.workspaces.session.menu.item': { kind: 'list', scope: 'root', inject: { hooks } },
+        'sidebar.workspaces.session.row.action': { kind: 'list', scope: 'root' },
+        'sidebar.session.row.leading': { kind: 'list', scope: 'root' },
+        'sidebar.session.row.hover': { kind: 'list', scope: 'root' },
       }
     }
 
@@ -943,6 +1164,404 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ── the sidebar fork ──────────────────────────────────────────────────────
+    // One shadow of `sidebar.workspaces`: the workspace/session browser plus a
+    // Chats section of our own. The mirror contract lives in
+    // contract/sidebar-workspaces.md. It registers only when the host half says
+    // `sidebarFork`, so the shipped browser owns the sidebar by default and this
+    // stays a switch rather than an accident.
+
+    /** Selection shared with the Chat page, so a sidebar row can open a chat. */
+    const chatSelection = (() => {
+      let current = null
+      const listeners = new Set()
+      return {
+        get: () => current,
+        set(id) {
+          current = id ?? null
+          for (const listener of listeners) listener(current)
+        },
+        subscribe(listener) {
+          listeners.add(listener)
+          return () => {
+            listeners.delete(listener)
+          }
+        },
+      }
+    })()
+
+    /** The shell's primitives module, when this build exposes it to bundles. */
+    const primitives = (() => {
+      try {
+        return require('@deepseek-ai/dsh-client-ui-primitives') ?? {}
+      } catch {
+        return {}
+      }
+    })()
+
+    // Each entry is [primitives icon, fallback path], so a renumbered icon set
+    // degrades to a plain glyph instead of a hole.
+    const ICONS = {
+      search: ['IconSearchOutlineRegular', 'M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15ZM16 16l4.5 4.5'],
+      newChat: ['IconNewChatOutlineRegular', 'M12 5v14M5 12h14'],
+      sliders: ['IconSlidersTwoOutlineRegular', 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h9M17 17h3'],
+      ellipsis: ['IconEllipsisOutlineRegular', 'M6 12h.01M12 12h.01M18 12h.01'],
+      folder: ['IconFolderCloseRegular', 'M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z'],
+      chevron: ['IconChevronRightOutlineRegular', 'M9.5 6l6 6-6 6'],
+    }
+
+    function SbIcon(props) {
+      const [name, fallback] = ICONS[props.name] ?? ['', 'M12 12h.01']
+      const Candidate = primitives[name]
+      if (typeof Candidate === 'function') return h(Candidate, {})
+      return h(
+        'svg',
+        { width: props.size ?? 16, height: props.size ?? 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true' },
+        h('path', { d: fallback }),
+      )
+    }
+
+    function SbButton(props) {
+      return h('button', {
+        type: 'button',
+        className: 'aman-sb-icon',
+        title: props.label,
+        'aria-label': props.label,
+        onClick: props.onClick,
+      }, h(SbIcon, { name: props.icon }))
+    }
+
+    /** Section header: label on the left, its controls on the right. */
+    function SbHeader(props) {
+      return h(
+        'div',
+        { className: 'aman-sb-head' },
+        h('span', { key: 'label', className: 'aman-sb-head-label' }, props.label),
+        props.search === undefined ? null : props.search,
+        h('div', { key: 'actions', className: 'aman-sb-head-actions' }, props.children),
+      )
+    }
+
+    /** A tiny popover anchored under its trigger; closes on an outside click. */
+    function SbPopover(props) {
+      const ref = useRef(null)
+      useEffect(() => {
+        if (typeof document === 'undefined') return undefined
+        const close = (event) => {
+          if (ref.current !== null && ref.current.contains?.(event.target) === true) return
+          props.onClose()
+        }
+        document.addEventListener('mousedown', close)
+        return () => document.removeEventListener('mousedown', close)
+      }, [props])
+      return h('div', { ref, className: 'aman-sb-pop', onClick: (event) => event.stopPropagation() }, props.children)
+    }
+
+    function chatGroupKey(entry, mode) {
+      if (mode === 'model') return text(entry.model) || 'unknown'
+      const stamp = Number(entry.updatedAt) || 0
+      const start = new Date()
+      start.setHours(0, 0, 0, 0)
+      const today = start.getTime()
+      if (stamp >= today) return 'Today'
+      if (stamp >= today - 86_400_000) return 'Yesterday'
+      if (stamp >= today - 6 * 86_400_000) return 'Previous 7 days'
+      return 'Older'
+    }
+
+    function groupChats(entries, mode) {
+      const order = []
+      const groups = new Map()
+      for (const entry of entries) {
+        const key = chatGroupKey(entry, mode)
+        if (groups.has(key) === false) {
+          groups.set(key, [])
+          order.push(key)
+        }
+        groups.get(key).push(entry)
+      }
+      return order.map((key) => ({ key, entries: groups.get(key) }))
+    }
+
+    function SbSessionRow(props) {
+      const { node, active, renderSlot, t, onOpen } = props
+      const [open, setOpen] = useState(false)
+      const menuState = [open, setOpen]
+      return h(
+        'div',
+        {
+          className: 'aman-sb-row',
+          'data-active': active ? 'true' : 'false',
+          'data-menu': open ? 'true' : 'false',
+          onClick: () => {
+            if (open === false) onOpen(node.id)
+          },
+        },
+        h('span', { key: 'slot', className: 'aman-sb-slot' },
+          node.archived === true || node.blank === true ? null : renderSlot('sidebar.session.row.leading', { sessionId: node.id })),
+        h('span', { key: 'title', className: 'aman-sb-title' }, node.title || t('untitled')),
+        h('span', { key: 'time', className: 'aman-sb-time' }, when(node.updatedAt)),
+        h(
+          'span',
+          { key: 'actions', className: 'aman-sb-actions' },
+          h(
+            'span',
+            { key: 'menu', className: 'aman-sb-anchor' },
+            h('button', {
+              type: 'button',
+              className: 'aman-sb-row-icon',
+              title: t('sessionMenu'),
+              'aria-label': t('sessionMenu'),
+              onClick: (event) => {
+                event.stopPropagation()
+                setOpen((value) => value !== true)
+              },
+            }, h(SbIcon, { name: 'ellipsis', size: 16 })),
+            open
+              ? h(SbPopover, { key: 'pop', onClose: () => setOpen(false) },
+                  renderSlot(
+                    'sidebar.workspaces.session.menu.item',
+                    { sessionId: node.id, displayTitle: node.title },
+                    { hookContext: menuState },
+                  ))
+              : null,
+          ),
+          renderSlot('sidebar.workspaces.session.row.action', { sessionId: node.id, displayTitle: node.title }),
+        ),
+      )
+    }
+
+    /**
+     * Last line of defence for the shadow. If the fork throws — a renamed snapshot
+     * field, a missing hook — the boundary calls `onFailure`, the caller disposes
+     * the `sidebar.workspaces` registration, and the shipped browser takes the
+     * sidebar back. A broken fork must never be able to leave the column empty.
+     */
+    const BoundaryBase = typeof React.Component === 'function'
+      ? React.Component
+      : class { constructor(props) { this.props = props } }
+
+    class SbBoundary extends BoundaryBase {
+      constructor(props) {
+        super(props)
+        this.state = { failed: false }
+      }
+
+      static getDerivedStateFromError() {
+        return { failed: true }
+      }
+
+      componentDidCatch(error) {
+        console.warn('chat sidebar fork failed, falling back to the shipped browser:', error)
+        this.props.onFailure?.()
+      }
+
+      render() {
+        if (this.state.failed === true) return h('div', { className: 'aman-sb-empty' }, 'The sidebar fork is unavailable; restore it from Settings.')
+        return this.props.children
+      }
+    }
+
+    /** True when the framework standard props the fork needs are all present. */
+    function sidebarPropsReady(props) {
+      return typeof props.useSessions === 'function'
+        && typeof props.useWorkspaces === 'function'
+        && typeof props.useSessionStatus === 'function'
+        && typeof props.renderSlot === 'function'
+    }
+
+    function SidebarFork(props) {
+      const t = props.t
+      const renderSlot = props.renderSlot
+      const openSession = props.openSession
+      const startSession = props.startSession
+      const selectChat = props.selectChat
+      const list = props.useSessions((state) => state)
+      const workspaceState = props.useWorkspaces((state) => state)
+      const statuses = props.useSessionStatus((state) => state)
+      const [chats, setChats] = useState([])
+      const [query, setQuery] = useState('')
+      const [searchOpen, setSearchOpen] = useState(false)
+      const [groupMode, setGroupMode] = useState('date')
+      const [groupOpen, setGroupOpen] = useState(false)
+      const [collapsed, setCollapsed] = useState({})
+
+      useEffect(() => {
+        if (sidebarPropsReady(props) === false) {
+          props.onFailure?.('the sidebar fork is missing its standard props')
+          return
+        }
+        // Proof of life for anyone reading the host state: the fork mounted.
+        request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
+      }, [])
+
+      const refresh = useCallback(() => {
+        request('/list', null, 'GET')
+          .then((payload) => setChats(Array.isArray(payload.chats) ? payload.chats : []))
+          .catch(() => {})
+      }, [])
+
+      useEffect(() => {
+        refresh()
+      }, [refresh])
+
+      const summaries = list?.byId ?? {}
+      const pinned = new Set(workspaceState?.pinnedSessionIds ?? [])
+      const archived = new Set(workspaceState?.archivedSessionIds ?? [])
+      const nodeOf = (summary) => {
+        const status = statuses?.get?.(summary.id)
+        return {
+          id: summary.id,
+          title: summary.blank === true ? '' : text(summary.title).trim(),
+          blank: summary.blank === true,
+          running: status?.running ?? summary.running === true,
+          completed: status?.completionUnread === true,
+          archived: archived.has(summary.id),
+          pinned: archived.has(summary.id) === false && pinned.has(summary.id),
+          updatedAt: summary.updatedAt ?? 0,
+        }
+      }
+      const activeId = Object.values(summaries).find((summary) => (summary.retainedBy?.mainView ?? 0) > 0)?.id
+      const workspaceGroups = (workspaceState?.items ?? []).map((workspace) => ({
+        key: workspace.workspaceId,
+        label: text(workspace.title) || text(workspace.path) || t('workspace'),
+        sessions: (workspace.sessionIds ?? [])
+          .map((id) => summaries[id])
+          .filter((summary) => summary !== undefined && summary.blank !== true)
+          .map(nodeOf),
+      }))
+      const grouped = new Set(workspaceGroups.flatMap((group) => group.sessions.map((session) => session.id)))
+      const stray = (list?.ids ?? [])
+        .map((id) => summaries[id])
+        .filter((summary) => summary !== undefined && summary.blank !== true && grouped.has(summary.id) === false)
+        .map(nodeOf)
+      if (stray.length > 0) workspaceGroups.push({ key: '', label: '', sessions: stray })
+
+      const filtered = query.trim() === ''
+        ? chats
+        : chats.filter((entry) => text(entry.title).toLowerCase().includes(query.trim().toLowerCase()))
+      const chatGroups = groupChats(filtered, groupMode)
+
+      const toggle = (key) => setCollapsed((current) => ({ ...current, [key]: current[key] !== true }))
+
+      const searchField = searchOpen
+        ? h('input', {
+            key: 'search',
+            className: 'aman-sb-search',
+            value: query,
+            placeholder: t('searchChats'),
+            'aria-label': t('searchChats'),
+            autoFocus: true,
+            onInput: (event) => setQuery(event.target.value),
+            onKeyDown: (event) => {
+              if (event.key === 'Escape') {
+                setQuery('')
+                setSearchOpen(false)
+              }
+            },
+          })
+        : undefined
+
+      const chatSection = h(
+        'div',
+        { key: 'chats', className: 'aman-sb-section' },
+        h(
+          SbHeader,
+          { label: t('chats'), search: searchField },
+          h(SbButton, { icon: 'search', label: t('searchChats'), onClick: () => setSearchOpen((value) => value !== true) }),
+          h('span', { key: 'group', className: 'aman-sb-anchor' },
+            h(SbButton, { icon: 'sliders', label: t('groupBy'), onClick: () => setGroupOpen((value) => value !== true) }),
+            groupOpen
+              ? h(SbPopover, { key: 'pop', onClose: () => setGroupOpen(false) },
+                  h('button', { key: 'date', type: 'button', className: 'aman-sb-item', 'data-on': groupMode === 'date' ? 'true' : 'false', onClick: () => { setGroupMode('date'); setGroupOpen(false) } }, t('groupByDate')),
+                  h('button', { key: 'model', type: 'button', className: 'aman-sb-item', 'data-on': groupMode === 'model' ? 'true' : 'false', onClick: () => { setGroupMode('model'); setGroupOpen(false) } }, t('groupByModel')))
+              : null),
+          h(SbButton, {
+            icon: 'newChat',
+            label: t('newChat'),
+            onClick: () => {
+              request('/new', {})
+                .then((payload) => {
+                  refresh()
+                  if (payload?.chat?.id !== undefined) selectChat(payload.chat.id)
+                })
+                .catch(() => {})
+            },
+          }),
+        ),
+        h('div', { className: 'aman-sb-rows' },
+          chatGroups.length === 0
+              ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
+              : chatGroups.map((group) =>
+                  h(
+                    'div',
+                    { key: group.key, className: 'aman-sb-group' },
+                    h('button', {
+                      type: 'button',
+                      className: 'aman-sb-group-head',
+                      onClick: () => toggle(`chats:${group.key}`),
+                    },
+                    h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsed[`chats:${group.key}`] !== true ? 'true' : 'false' }, h(SbIcon, { name: 'chevron', size: 14 })),
+                    h('span', { key: 'label', className: 'aman-sb-group-label' }, group.key)),
+                    collapsed[`chats:${group.key}`] === true
+                      ? null
+                      : group.entries.map((entry) =>
+                          h(
+                            'div',
+                            { key: entry.id, className: 'aman-sb-row', 'data-active': 'false', onClick: () => selectChat(entry.id) },
+                            h('span', { key: 'slot', className: 'aman-sb-slot' }),
+                            h('span', { key: 'title', className: 'aman-sb-title' }, text(entry.title) || t('newChat')),
+                            h('span', { key: 'time', className: 'aman-sb-time' }, when(entry.updatedAt)),
+                          ),
+                        ),
+                  ),
+                ),
+        ),
+      )
+
+      const workspaceSection = h(
+        'div',
+        { key: 'workspaces', className: 'aman-sb-section' },
+        h(
+          SbHeader,
+          { label: t('workspaces') },
+          h(SbButton, { icon: 'newChat', label: t('newSession'), onClick: () => startSession(undefined) }),
+        ),
+        h('div', { className: 'aman-sb-rows' },
+          workspaceGroups.map((group) =>
+            h(
+              'div',
+              { key: group.key || 'stray', className: 'aman-sb-group' },
+              group.label === ''
+                ? null
+                : h('button', {
+                    type: 'button',
+                    className: 'aman-sb-group-head',
+                    onClick: () => toggle(`ws:${group.key}`),
+                  },
+                  h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsed[`ws:${group.key}`] !== true ? 'true' : 'false' }, h(SbIcon, { name: 'chevron', size: 14 })),
+                  h('span', { key: 'folder', className: 'aman-sb-folder' }, h(SbIcon, { name: 'folder', size: 14 })),
+                  h('span', { key: 'label', className: 'aman-sb-group-label' }, group.label)),
+              collapsed[`ws:${group.key}`] === true
+                ? null
+                : group.sessions.map((node) =>
+                    h(SbSessionRow, {
+                      key: node.id,
+                      node,
+                      active: node.id === activeId,
+                      renderSlot,
+                      t,
+                      onOpen: openSession,
+                    }),
+                  ),
+            ),
+          ),
+        ),
+      )
+
+      return h('div', { className: 'aman-sb-root' }, workspaceSection, chatSection)
+    }
+
     function ChatPanel(props) {
       const t = props.t
       const [chats, setChats] = useState([])
@@ -976,8 +1595,18 @@ window.__ModuleLoader__.load({
             if (payload?.ui?.historyCollapsed === true) setCollapsed(true)
           })
           .catch(() => {})
+        // A row in the sidebar's Chats section selects a chat for this page, and
+        // arriving with one already selected opens straight into it.
+        const unsubscribe = chatSelection.subscribe((id) => {
+          if (id === null) return
+          loadedRef.current = null
+          setActiveId(id)
+        })
+        const selected = chatSelection.get()
+        if (selected !== null) setActiveId(selected)
         return () => {
           live = false
+          unsubscribe()
         }
       }, [])
 
@@ -1193,6 +1822,42 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register({ name: 'sidebar.panellist', id: 'chat', order: 20, label: translate('title') }, ChatIcon))
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'chat' }, () => h(ChatPanel, { t: translate })))
+        // The shadow of the shipped workspace browser. Off unless the host half
+        // says so, and abandoned silently if the services it needs are missing —
+        // the shipped occupant then keeps owning the sidebar.
+        request('/status', null, 'GET')
+          .then((payload) => {
+            if (payload?.sidebarFork !== true) return
+            if (typeof ctx.slots?.inject !== 'function') return
+            const layout = clientService(ctx, 'layout')
+            const uiWorkspace = clientService(ctx, 'uiWorkspace')
+            let dispose = null
+            const abandon = (reason) => {
+              console.warn(`chat sidebar fork disabled: ${reason}`)
+              request('/ui', { sidebarForkError: text(reason) }).catch(() => {})
+              if (typeof dispose === 'function') dispose()
+              dispose = null
+            }
+            ctx.slots.inject('sidebar.workspaces', () => {
+              const registered = ctx.slots.register({
+                name: 'sidebar.workspaces',
+                children: sidebarChildren(ctx),
+                inject: () => ({
+                  openSession: (sessionId) => uiWorkspace?.openSession?.(sessionId),
+                  startSession: (workspaceId) => uiWorkspace?.startSession?.(workspaceId),
+                  selectChat: (id) => {
+                    chatSelection.set(id)
+                    layout?.selectPanel?.('chat')
+                  },
+                  onFailure: abandon,
+                }),
+                locale: NAMESPACE,
+              }, (props) => h(SbBoundary, { onFailure: () => props.onFailure?.('the fork threw while rendering') }, h(SidebarFork, props)))
+              dispose = registered
+              return registered
+            })
+          })
+          .catch(() => {})
       },
     }
   },

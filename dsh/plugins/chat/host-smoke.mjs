@@ -317,6 +317,10 @@ assert.deepEqual((await (await route('/ui').fetch(request({ historyCollapsed: fa
 assert.equal((await route('/ui').fetch(request({}))).status, 400, 'an empty layout patch is rejected')
 assert.equal((await route('/ui').fetch(request({ historyCollapsed: 'yes' }))).status, 400, 'a non-boolean fold is rejected')
 assert.equal((await route('/ui').fetch(request({ historyCollapsed: true }))).status, 200, 'a boolean is accepted')
+const recorded = await (await route('/ui').fetch(request({ sidebarForkError: 'the fork threw while rendering' }))).json()
+assert.equal(recorded.ui.sidebarForkError, 'the fork threw while rendering', 'a fallback reason is recorded for diagnosis')
+assert.equal((await route('/ui').fetch(request({ sidebarForkError: 7 }))).status, 400, 'a non-string reason is rejected')
+assert.equal(status.sidebarFork, false, 'the sidebar fork is off unless configured')
 
 // The beacon shares panel.json, so a touch must not wipe the layout beside it.
 const uiDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aman-chat-ui-'))

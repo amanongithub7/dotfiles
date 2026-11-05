@@ -47,6 +47,26 @@ Chats are **not** sessions: the panel keeps its own history on disk under
 store), and a turn appends two messages to that file. Nothing is added to any
 session or trajectory, which is what keeps the loop out.
 
+### The sidebar fork (`sidebarFork`)
+
+Off by default. When on, the browser half also occupies `sidebar.workspaces` and
+renders the whole browsing region itself: the Workspaces section (grouped session
+rows, the shipped row menus and actions through their own seats) plus a **Chats**
+section listing this plugin's chats. The shipped browser gives up the seat, which
+is the point: the sidebar has no additive section seat, so a Chats section means
+owning the region.
+
+What keeps it safe:
+
+- `contract/sidebar-workspaces.md` records exactly what is mirrored — the five
+  child seats, the `menuOpenState`/`shortcuts` inject the shipped menu items need,
+  the snapshot shapes, the services, and how to re-verify after an upgrade.
+- A render error is caught by an error boundary that disposes the registration, so
+  the **shipped browser takes the sidebar back** instead of leaving it empty.
+- Both the mount and any fallback reason are recorded in `panel.json`
+  (`sidebarForkMounted`, `sidebarForkError`), so a failure is visible without a
+  browser console.
+
 ### Routes
 
 The browser half does **not** use `host.call`, which routes through the generated
@@ -64,7 +84,7 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 | `POST upload` | `{name, mime, dataBase64}` | `{file: {id, name, bytes, mime}}` |
 | `POST file` | `{id}` | `{dataBase64}` |
 | `POST ask` | `{id, prompt, web, files}` | the chat, its summary, the search, the failure |
-| `POST ui` | `{historyCollapsed}` | the saved panel layout |
+| `POST ui` | `{historyCollapsed, sidebarForkMounted, sidebarForkError}` | the saved panel layout and fork diagnostics |
 
 `/api` is the shared connection channel and it authenticates before routing, so
 the browser's own credential authorizes the call; the host half still applies the

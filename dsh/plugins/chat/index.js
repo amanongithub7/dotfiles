@@ -78,6 +78,9 @@ const DEFAULTS = {
   maxUploadBytes: 26_214_400,
   dataDir: '',
   titleChars: 60,
+  // The sidebar fork stays off until its chats half is complete: with it off, the
+  // shipped workspace browser owns the sidebar and nothing changes for the user.
+  sidebarFork: false,
 }
 
 function withDefaults(config) {
@@ -614,6 +617,7 @@ function registerRoutes(ctx, settings, store) {
         tavily: { command: settings.tvlyCommand, path: await resolveTavily(ctx, settings) },
         web: settings.web === true,
         images: settings.images,
+        sidebarFork: settings.sidebarFork === true,
         ui: (await store.panel()).ui ?? {},
       })),
 
@@ -621,6 +625,10 @@ function registerRoutes(ctx, settings, store) {
         const payload = await readBody(request)
         const patch = {}
         if (typeof payload.historyCollapsed === 'boolean') patch.historyCollapsed = payload.historyCollapsed
+        // The browser half records a fallback here, so a failed shadow is visible
+        // in panel.json instead of only in a console nobody is watching.
+        if (typeof payload.sidebarForkError === 'string') patch.sidebarForkError = payload.sidebarForkError.slice(0, 200)
+        if (typeof payload.sidebarForkMounted === 'number') patch.sidebarForkMounted = payload.sidebarForkMounted
         if (Object.keys(patch).length === 0) throw new RequestError('nothing to save')
         const record = await store.savePanel({ ui: { ...((await store.panel()).ui ?? {}), ...patch } })
         return json({ ui: record.ui ?? {} })
