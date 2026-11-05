@@ -699,6 +699,16 @@ function registerRoutes(ctx, settings, store) {
         if (typeof payload.sidebarForkMounted === 'number') patch.sidebarForkMounted = payload.sidebarForkMounted
         if (typeof payload.sidebarForkOff === 'boolean') patch.sidebarForkOff = payload.sidebarForkOff
         if (payload.chatsGroup === 'date' || payload.chatsGroup === 'model') patch.chatsGroup = payload.chatsGroup
+        // What the mounted fork actually rendered: the live proof that the shadow
+        // took the seat and read both snapshots.
+        if (payload.sidebarForkReport !== null && typeof payload.sidebarForkReport === 'object') {
+          const numbers = ['sessions', 'chats', 'workspaces']
+          const report = {}
+          for (const key of numbers) {
+            if (Number.isFinite(payload.sidebarForkReport[key])) report[key] = Math.trunc(payload.sidebarForkReport[key])
+          }
+          if (Object.keys(report).length > 0) patch.sidebarForkReport = report
+        }
         if (Object.keys(patch).length === 0) throw new RequestError('nothing to save')
         const record = await store.savePanel({ ui: { ...((await store.panel()).ui ?? {}), ...patch } })
         return json({ ui: record.ui ?? {} })

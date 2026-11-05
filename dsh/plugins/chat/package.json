@@ -1,6 +1,6 @@
 {
   "name": "@aman/dsh-chat",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "private": true,
   "description": "A chat client for Harness: one direct provider call per message, with file attachments and Tavily grounding, and no agent loop",
   "type": "module",

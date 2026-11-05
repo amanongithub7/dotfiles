@@ -49,6 +49,7 @@ window.__ModuleLoader__.load({
       forkOff: 'The shipped sidebar is in use; a reload applies a change.',
       forkEnabled: 'Enabled',
       forkDisabled: 'Disabled',
+      forkFailed: 'Fell back to the shipped sidebar',
       chats: 'Chats',
       workspaces: 'Workspaces',
       workspace: 'Workspace',
@@ -1158,6 +1159,8 @@ window.__ModuleLoader__.load({
           .then((payload) => setState({
             available: payload?.sidebarFork === true,
             off: payload?.ui?.sidebarForkOff === true,
+            mounted: Number.isFinite(payload?.ui?.sidebarForkMounted),
+            failure: text(payload?.ui?.sidebarForkError),
           }))
           .catch(() => setState({ available: false, off: false }))
       }, [])
@@ -1173,7 +1176,10 @@ window.__ModuleLoader__.load({
         { className: 'aman-chat-setting' },
         h('div', { key: 'text', className: 'aman-chat-setting-text' },
           h('div', { key: 'label', className: 'aman-chat-setting-label' }, t('forkLabel')),
-          h('div', { key: 'hint', className: 'aman-chat-setting-hint' }, state.off === true ? t('forkOff') : t('forkOn'))),
+          h('div', { key: 'hint', className: 'aman-chat-setting-hint' }, state.off === true ? t('forkOff') : t('forkOn')),
+        state.failure === ''
+          ? null
+          : h('div', { key: 'failure', className: 'aman-chat-setting-hint', style: { color: 'var(--dsw-alias-state-error-primary)' } }, `${t('forkFailed')}: ${state.failure}`)),
         h('button', {
           key: 'toggle',
           type: 'button',
@@ -1911,6 +1917,16 @@ window.__ModuleLoader__.load({
         .filter((summary) => summary !== undefined && summary.blank !== true)
         .map(nodeOf)
         .sort((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
+
+      useEffect(() => {
+        const report = {
+          sessions: flatSessions.length,
+          chats: chats.length,
+          workspaces: (workspaceState?.items ?? []).length,
+        }
+        if (report.sessions === 0 && report.chats === 0) return
+        request('/ui', { sidebarForkReport: report }).catch(() => {})
+      }, [flatSessions.length, chats.length])
 
       const sessionRows = sessionMatches !== null
         ? sessionMatches.length === 0

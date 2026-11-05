@@ -341,6 +341,9 @@ assert.equal((await route('/ui').fetch(request({ sidebarForkOff: 'no' }))).statu
 await route('/ui').fetch(request({ sidebarForkOff: false }))
 assert.equal((await (await route('/ui').fetch(request({ chatsGroup: 'model' }))).json()).ui.chatsGroup, 'model', 'the chats grouping is saved')
 assert.equal((await route('/ui').fetch(request({ chatsGroup: 'by-constellation' }))).status, 400, 'an unknown grouping is rejected')
+const reported = await (await route('/ui').fetch(request({ sidebarForkReport: { sessions: 3, chats: 2, workspaces: 1, junk: 'x' } }))).json()
+assert.deepEqual(reported.ui.sidebarForkReport, { sessions: 3, chats: 2, workspaces: 1 }, 'the render report keeps only numeric counts')
+assert.equal((await route('/ui').fetch(request({ sidebarForkReport: 'nope' }))).status, 400, 'a malformed report is rejected')
 assert.equal(status.sidebarFork, false, 'the sidebar fork is off unless configured')
 
 // The beacon shares panel.json, so a touch must not wipe the layout beside it.

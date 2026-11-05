@@ -502,6 +502,14 @@ findAll(root, (node) => node.props.role === 'switch')[0].props.onClick()
 await settle()
 assert.equal(offStatus.ui.sidebarForkOff, true, 'turning it off is saved on the host')
 assert.match(allText(root).join(' '), /The shipped sidebar is in use/, 'and the row says the change needs a reload')
+// a recorded fallback shows in the row instead of staying invisible
+offStatus.ui = { sidebarForkOff: false, sidebarForkError: 'the fork threw while rendering' }
+hookStore.clear()
+factory = () => React.createElement(settingRow, { t: (key) => key })
+renderOnce()
+await settle()
+assert.match(allText(root).join(' '), /Fell back to the shipped sidebar/, 'a recorded fallback is surfaced in Settings')
+assert.match(allText(root).join(' '), /the fork threw while rendering/, 'with the reason')
 globalThis.fetch = originalFetch
 
 // ── the sidebar fork: registered only on request ────────────────────────────
@@ -696,6 +704,15 @@ const flatText = allText(root).join(' ')
 assert.ok(flatText.includes('PhD') === false, 'a flat list drops the workspace headers')
 const flatTitles = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
 assert.ok(flatTitles.includes('Sea ice') && flatTitles.includes('Heatwaves'), 'and keeps every session row')
+
+// ── the fork reports what it actually rendered ─────────────────────────────
+const report = calls.filter((call) => call.url.endsWith('/ui') && call.body?.sidebarForkReport).at(-1)
+assert.ok(report, 'a mounted fork reports what it rendered')
+assert.deepEqual(
+  { sessions: report.body.sidebarForkReport.sessions, chats: report.body.sidebarForkReport.chats, workspaces: report.body.sidebarForkReport.workspaces },
+  { sessions: 2, chats: 2, workspaces: 1 },
+  'with the real counts from both snapshots',
+)
 
 // ── the chats search reaches the host, not just the titles ─────────────────
 findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'searchChats')[0].props.onClick()

@@ -68,9 +68,10 @@ What keeps it safe:
   the snapshot shapes, the services, and how to re-verify after an upgrade.
 - A render error is caught by an error boundary that disposes the registration, so
   the **shipped browser takes the sidebar back** instead of leaving it empty.
-- Both the mount and any fallback reason are recorded in `panel.json`
-  (`sidebarForkMounted`, `sidebarForkError`), so a failure is visible without a
-  browser console.
+- The mount, a render report (`sidebarForkReport`: how many sessions, chats and
+  workspaces the shadow actually read) and any fallback reason are recorded in
+  `panel.json`, so both success and failure are visible without a browser console.
+  Settings → General shows the recorded fallback reason when there is one.
 - **Settings → General → "Chats in the sidebar"** turns the fork off at runtime
   (`ui.sidebarForkOff`), no config edit needed, and says a reload applies it.
 - `package.json` pins `engines.dsh`, so a DSH the fork was not verified against
@@ -100,7 +101,7 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 | `POST ask` | `{id, prompt, web, files}` | the chat, its summary, the search, the failure |
 | `GET models` | - | providers with their models, plus the configured default |
 | `POST search` | `{query}` | chats whose title or messages match, with an excerpt |
-| `POST ui` | `{historyCollapsed, sidebarForkOff, sidebarForkMounted, sidebarForkError}` | panel layout, the fork off-switch and fork diagnostics |
+| `POST ui` | `{historyCollapsed, chatsGroup, sidebarForkOff, sidebarForkMounted, sidebarForkReport, sidebarForkError}` | panel layout, the fork off-switch and fork diagnostics |
 
 `/api` is the shared connection channel and it authenticates before routing, so
 the browser's own credential authorizes the call; the host half still applies the
