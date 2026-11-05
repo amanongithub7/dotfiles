@@ -93,6 +93,7 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 | `POST file` | `{id}` | `{dataBase64}` |
 | `POST ask` | `{id, prompt, web, files}` | the chat, its summary, the search, the failure |
 | `GET models` | - | providers with their models, plus the configured default |
+| `POST search` | `{query}` | chats whose title or messages match, with an excerpt |
 | `POST ui` | `{historyCollapsed, sidebarForkOff, sidebarForkMounted, sidebarForkError}` | panel layout, the fork off-switch and fork diagnostics |
 
 `/api` is the shared connection channel and it authenticates before routing, so

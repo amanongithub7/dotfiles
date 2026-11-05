@@ -631,6 +631,20 @@ async function modelDirectory(ctx, settings) {
   return value
 }
 
+/** The first message body mentioning `needle`, as a one-line excerpt. */
+function searchSnippet(chat, needle) {
+  for (const message of Array.isArray(chat.messages) ? chat.messages : []) {
+    const body = text(message.text)
+    if (body === '') continue
+    const at = body.toLowerCase().indexOf(needle)
+    if (at === -1) continue
+    const from = Math.max(0, at - 40)
+    const to = Math.min(body.length, at + needle.length + 80)
+    return `${from > 0 ? '\u2026' : ''}${body.slice(from, to).replace(/\s+/g, ' ').trim()}${to < body.length ? '\u2026' : ''}`
+  }
+  return ''
+}
+
 function registerRoutes(ctx, settings, store) {
   if (typeof ctx.inject !== 'function') {
     ctx.logger?.warn?.('chat: this build has no ctx.inject, so the Chat panel routes are unavailable')
@@ -693,6 +707,27 @@ function registerRoutes(ctx, settings, store) {
       route(['GET'], '/list', async () => json({ chats: await store.list() })),
 
       route(['GET'], '/models', async () => json(await modelDirectory(ctx, settings))),
+
+      route(['POST'], '/search', async (request) => {
+        const payload = await readBody(request)
+        const query = text(payload.query).trim()
+        if (query === '') throw new RequestError('a query is required')
+        if (query.length > 200) throw new RequestError('the query is too long', 413)
+        const needle = query.toLowerCase()
+        const matches = []
+        // Newest first, bounded on both axes: a broad query must not scan the
+        // whole history, and one huge chat must not stall the request.
+        for (const summary of (await store.list()).slice(0, 200)) {
+          const chat = await store.get(summary.id)
+          if (chat === null) continue
+          const snippet = await searchSnippet(chat, needle)
+          const inTitle = text(chat.title).toLowerCase().includes(needle)
+          if (inTitle === false && snippet === '') continue
+          matches.push({ id: chat.id, title: text(chat.title), updatedAt: chat.updatedAt ?? 0, snippet })
+          if (matches.length >= 20) break
+        }
+        return json({ matches })
+      }),
 
       route(['POST'], '/get', async (request) => {
         const payload = await readBody(request)

@@ -60,6 +60,7 @@ window.__ModuleLoader__.load({
       chatMenu: 'Chat actions',
       rename: 'Rename',
       save: 'Save',
+      matches: 'Matches in messages',
       cancel: 'Cancel',
       sessionMenu: 'Session actions',
       untitled: 'Untitled',
@@ -747,6 +748,7 @@ window.__ModuleLoader__.load({
 .aman-sb-item:hover,
 .aman-sb-item[data-on="true"] { background: var(--dsw-alias-interactive-bg-hover); }
 .aman-sb-empty { padding: 8px 10px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.aman-sb-group-plain { padding: 4px 8px 2px; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
 .aman-sb-rename {
   flex: 1;
   min-width: 0;
@@ -1573,6 +1575,8 @@ window.__ModuleLoader__.load({
       const [renaming, setRenaming] = useState(null)
       const [renameText, setRenameText] = useState('')
       const [menuFor, setMenuFor] = useState(null)
+      // Host content search results; null means the query is too short to run one.
+      const [matches, setMatches] = useState(null)
 
       useEffect(() => {
         if (sidebarPropsReady(props) === false) {
@@ -1598,6 +1602,26 @@ window.__ModuleLoader__.load({
           })
           .catch(() => {})
       }, [refresh])
+
+      useEffect(() => {
+        const needle = query.trim()
+        if (needle.length < 2) {
+          setMatches(null)
+          return undefined
+        }
+        let live = true
+        const timer = setTimeout(() => {
+          request('/search', { query: needle })
+            .then((payload) => {
+              if (live) setMatches(Array.isArray(payload.matches) ? payload.matches : [])
+            })
+            .catch(() => {})
+        }, 250)
+        return () => {
+          live = false
+          clearTimeout(timer)
+        }
+      }, [query])
 
       const chooseGrouping = (mode) => {
         setGroupMode(mode)
@@ -1802,9 +1826,24 @@ window.__ModuleLoader__.load({
             },
           })),
         h('div', { className: 'aman-sb-rows' },
-          chatGroups.length === 0
-            ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
-            : chatGroups.map(renderChatGroup)))
+          matches !== null
+            ? matches.length === 0
+              ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
+              : h('div', { key: 'matches', className: 'aman-sb-group' },
+                  h('span', { key: 'label', className: 'aman-sb-group-label aman-sb-group-plain' }, t('matches')),
+                  matches.map((match) => h('div', {
+                    key: match.id,
+                    className: 'aman-sb-row',
+                    title: text(match.snippet),
+                    'data-active': chatSelection.get() === match.id ? 'true' : 'false',
+                    onClick: () => selectChat(match.id),
+                  },
+                  h('span', { key: 'slot', className: 'aman-sb-slot' }),
+                  h('span', { key: 'title', className: 'aman-sb-title' }, text(match.title) || t('newChat')),
+                  h('span', { key: 'time', className: 'aman-sb-time' }, when(match.updatedAt)))))
+            : chatGroups.length === 0
+              ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
+              : chatGroups.map(renderChatGroup)))
 
       const workspaceSection = h(
         'div',

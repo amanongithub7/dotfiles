@@ -134,7 +134,7 @@ apply(ctx, { dataDir, maxUploadBytes: 4096, maxChars: 20, timeoutMs: 5000, webRe
 
 assert.ok(registrations.tool, 'the chat tool is registered')
 assert.ok(registrations.command, 'the /chat command is registered')
-assert.equal(routes.size, 11, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
+assert.equal(routes.size, 12, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
 assert.deepEqual(warnings, [], 'registration warned about nothing')
 
 const text = (value) => ({ type: 'text-delta', text: value })
@@ -383,6 +383,17 @@ assert.equal(sent().provider, 'openrouter', 'the chosen provider reaches the ada
 assert.equal(sent().model, 'vision-pro', 'the chosen model reaches the adapter')
 assert.equal(chosen.chat.model, 'vision-pro', 'the chat remembers the route it ran on')
 assert.equal(chosen.summary.model, 'vision-pro', 'and the list summary reports it')
+
+// ── searching the chat history ──────────────────────────────────────────────
+await route('/rename').fetch(request({ id: created.chat.id, title: 'CMIP6 scenarios' }))
+const byTitle = await (await route('/search').fetch(request({ query: 'cmip6' }))).json()
+assert.ok(byTitle.matches.some((match) => match.id === created.chat.id), 'a title match is found')
+const byBody = await (await route('/search').fetch(request({ query: 'panel reply' }))).json()
+assert.ok(byBody.matches.length >= 1, 'a message body match is found')
+assert.match(byBody.matches[0].snippet, /panel reply/, 'with an excerpt around the hit')
+assert.deepEqual((await (await route('/search').fetch(request({ query: 'nothing-matches-this' }))).json()).matches, [], 'an empty result is empty')
+assert.equal((await route('/search').fetch(request({ query: '   ' }))).status, 400, 'a blank query is rejected')
+assert.equal((await route('/search').fetch(request({ query: 'x'.repeat(201) }))).status, 413, 'an over-long query is rejected')
 
 // ── route errors ────────────────────────────────────────────────────────────
 assert.equal((await route('/ask').fetch(request({ id: created.chat.id, prompt: '   ' }))).status, 400, 'an empty prompt is a client error')

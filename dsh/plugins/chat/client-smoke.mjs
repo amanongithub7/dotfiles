@@ -190,6 +190,9 @@ globalThis.fetch = async (url, options = {}) => {
       default: { provider: 'paratera', model: 'DeepSeek-V4.1-Flash' },
     })
   }
+  if (target.endsWith('/search')) {
+    return json({ matches: [{ id: 'c2', title: 'Sea ice trends', updatedAt: Date.now(), snippet: 'the phrase panel reply appears here' }] })
+  }
   if (target.endsWith('/ui')) {
     statusUi = { ...statusUi, ...body }
     return json({ ui: statusUi })
@@ -644,6 +647,22 @@ assert.ok(
   calls.some((call) => call.url.endsWith('/ui') && call.body.chatsGroup === 'model'),
   'the grouping preference is remembered on the host',
 )
+
+// ── the chats search reaches the host, not just the titles ─────────────────
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'searchChats')[0].props.onClick()
+await settle()
+const searchField = findAll(root, (node) => node.props.className === 'aman-sb-search')[0]
+assert.ok(searchField, 'the chats search field opens')
+searchField.props.onInput({ target: { value: 'panel reply' } })
+await settle()
+await new Promise((resolve) => setTimeout(resolve, 350))
+await settle()
+assert.ok(
+  calls.some((call) => call.url.endsWith('/search') && call.body.query === 'panel reply'),
+  'a query of two characters or more is sent to the host',
+)
+assert.match(allText(root).join(' '), /matches/, 'results are grouped under the matches heading')
+assert.match(allText(root).join(' '), /Sea ice trends/, 'and the matched chat is listed')
 
 // the boundary hands the sidebar back instead of leaving it empty
 let boundaryFellBack = false
