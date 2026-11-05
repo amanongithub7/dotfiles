@@ -78,12 +78,14 @@ const DEFAULTS = {
   maxUploadBytes: 26_214_400,
   dataDir: '',
   titleChars: 60,
-  // The sidebar fork stays off until its chats half is complete: with it off, the
-  // shipped workspace browser owns the sidebar and nothing changes for the user.
-  sidebarFork: false,
+  // The sidebar fork is on by default. Three things make that safe: the error
+  // boundary hands the sidebar back to the shipped browser if the shadow throws,
+  // the runtime off-switch in Settings writes ui.sidebarForkOff for the next
+  // reload, and engines.dsh blocks an unverified DSH from activating at all.
+  sidebarFork: true,
 }
 
-function withDefaults(config) {
+export function withDefaults(config) {
   const given = config ?? {}
   const merged = { ...DEFAULTS }
   for (const [key, value] of Object.entries(given)) {
