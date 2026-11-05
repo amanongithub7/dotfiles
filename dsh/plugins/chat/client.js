@@ -1633,8 +1633,25 @@ window.__ModuleLoader__.load({
           props.onFailure?.('the sidebar fork is missing its standard props')
           return
         }
-        // Proof of life for anyone reading the host state: the fork mounted.
-        request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
+        // The profile gets the last word, read here rather than at registration:
+        // the page is up by now, and the fork retires itself if it is switched off.
+        request('/status', null, 'GET')
+          .then((payload) => {
+            if (payload?.sidebarFork === false) {
+              props.onRetire?.('the sidebar fork is disabled in this profile')
+              return
+            }
+            if (payload?.ui?.sidebarForkOff === true) {
+              props.onRetire?.('the sidebar fork was switched off in Settings')
+              return
+            }
+            // Proof of life for anyone reading the host state: the fork mounted.
+            request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
+          })
+          .catch(() => {
+            // No status means no reason to hide the sidebar: stay on the default.
+            request('/ui', { sidebarForkMounted: Date.now() }).catch(() => {})
+          })
       }, [])
 
       const refresh = useCallback(() => {
@@ -2340,59 +2357,62 @@ window.__ModuleLoader__.load({
           order: 60,
           label: translate('forkLabel'),
         }, () => h(SidebarForkSetting, { t: translate })))
-        // The shadow of the shipped workspace browser. Off unless the host half
-        // says so, and abandoned silently if the services it needs are missing —
-        // the shipped occupant then keeps owning the sidebar.
-        request('/status', null, 'GET')
-          .then((payload) => {
-            if (payload?.sidebarFork !== true) return
-            // The runtime off-switch lives in panel.json, so turning the shadow off
-            // never needs a config edit or a rebuild.
-            if (payload?.ui?.sidebarForkOff === true) return
-            if (typeof ctx.slots?.inject !== 'function') return
-            const layout = clientService(ctx, 'layout')
-            const uiWorkspace = clientService(ctx, 'uiWorkspace')
-            let dispose = null
-            const abandon = (reason) => {
-              console.warn(`chat sidebar fork disabled: ${reason}`)
-              request('/ui', { sidebarForkError: text(reason) }).catch(() => {})
-              if (typeof dispose === 'function') dispose()
-              dispose = null
-            }
-            ctx.slots.inject('sidebar.workspaces', () => {
-              const registered = ctx.slots.register({
-                name: 'sidebar.workspaces',
-                // The shipped browser occupies this single slot at priority 0; the
-                // shadow has to outrank it or it would never take the seat.
-                priority: 1,
-                children: sidebarChildren(ctx),
-                inject: () => ({
-                  openSession: (sessionId) => uiWorkspace?.openSession?.(sessionId),
-                  startSession: (workspaceId) => uiWorkspace?.startSession?.(workspaceId),
-                  selectChat: (id) => {
-                    chatSelection.set(id)
-                    // A plugin-registered panel key is not guaranteed to be a valid
-                    // MainPanelId; a refusal must not break the row click.
-                    try {
-                      layout?.selectPanel?.('chat')
-                    } catch (error) {
-                      console.warn('chat: could not switch to the chat panel:', error)
-                    }
-                  },
-                  onFailure: abandon,
+
+        // The shadow of the shipped workspace browser, registered eagerly. The
+        // component retires it when the profile says off, because an apply-time
+        // fetch to /status runs before the page's connection is necessarily
+        // usable — waiting on it kept the fork off the sidebar entirely.
+        const layout = clientService(ctx, 'layout')
+        const uiWorkspace = clientService(ctx, 'uiWorkspace')
+        let dispose = null
+        const retire = (reason) => {
+          if (reason !== undefined) console.warn(`chat sidebar fork retired: ${reason}`)
+          if (typeof dispose === 'function') dispose()
+          dispose = null
+        }
+        const failed = (reason) => {
+          console.warn(`chat sidebar fork disabled: ${reason}`)
+          request('/ui', { sidebarForkError: reason }).catch(() => {})
+          retire()
+        }
+        if (typeof ctx.slots.inject === 'function') {
+          ctx.slots.inject('sidebar.workspaces', () => {
+            dispose = ctx.slots.register({
+              name: 'sidebar.workspaces',
+              priority: 1,
+              children: sidebarChildren(ctx),
+              inject: () => ({
+                openSession: (sessionId) => uiWorkspace?.openSession?.(sessionId),
+                startSession: (workspaceId) => uiWorkspace?.startSession?.(workspaceId),
+                selectChat: (id) => {
+                  chatSelection.set(id)
+                  try {
+                    layout?.selectPanel?.('chat')
+                  } catch (error) {
+                    console.warn('chat: could not switch to the chat panel:', error)
+                  }
+                },
+                searchSessions: (query) => {
+                  const sessions = clientService(ctx, 'sessions')
+                  if (typeof sessions?.search !== 'function') return Promise.resolve({ items: [] })
+                  return Promise.resolve(sessions.search(query, new AbortController().signal)).then((result) => {
+                    if (result?.ok === false) throw result.error ?? new Error('search failed')
+                    return result?.ok === true ? result.value : result
+                  })
+                },
                 createWorkspace: (workspacePath) => {
                   const workspaces = clientService(ctx, 'workspaces')
                   if (typeof workspaces?.create !== 'function') throw new Error('this profile cannot create workspaces')
                   return workspaces.create({ path: workspacePath })
                 },
-                }),
-                locale: NAMESPACE,
-              }, (props) => h(SbBoundary, { onFailure: () => props.onFailure?.('the fork threw while rendering') }, h(SidebarFork, props)))
-              dispose = registered
-              return registered
-            })
+                onRetire: retire,
+                onFailure: failed,
+              }),
+              locale: NAMESPACE,
+            }, (props) => h(SbBoundary, { onFailure: () => props.onFailure?.('the fork threw while rendering') }, h(SidebarFork, props)))
+            return dispose
           })
-          .catch(() => {})
+        }
       },
     }
   },

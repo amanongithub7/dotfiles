@@ -291,11 +291,13 @@ plugin.apply({
   },
 })
 
-assert.equal(slots.length, 3, 'the half claims the icon, the page and the settings row')
+assert.equal(slots.length, 4, 'the half claims the icon, the page, the settings row and the sidebar')
 assert.deepEqual(slots[0].options, { name: 'sidebar.panellist', id: 'chat', order: 20, label: 'Chat' })
 assert.deepEqual(slots[1].options, { name: 'main', key: 'chat' })
 assert.equal(slots[2].options.name, 'settings.general.item', 'the fork switch lives in an additive settings seat')
 assert.equal(slots[2].options.id, 'chat-sidebar-fork')
+assert.equal(slots[3].options.name, 'sidebar.workspaces', 'and the shadow takes the browsing region eagerly')
+assert.equal(slots[3].options.priority, 1, 'above the shipped occupant')
 
 const icon = renderTree(React.createElement(slots[0].Component, { size: 22, active: true }))
 assert.equal(icon.props.width, 22, 'the icon honours the requested size')
@@ -308,8 +310,8 @@ await settle()
 
 assert.deepEqual(
   calls.filter((call) => call.method === 'GET').map((call) => call.url.replace('/api/aman-chat', '')),
-  ['/status', '/list', '/models', '/status'],
-  'registering probes the fork flag, then the panel loads history, models and status',
+  ['/list', '/models', '/status'],
+  'the panel loads history, models and status on mount',
 )
 assert.match(allText(root).join(' '), /CMIP6 scenarios/, 'a previous chat is listed')
 assert.match(allText(root).join(' '), /Sea ice trends/, 'every previous chat is listed')
@@ -516,8 +518,7 @@ assert.match(allText(root).join(' '), /Fell back to the shipped sidebar/, 'a rec
 assert.match(allText(root).join(' '), /the fork threw while rendering/, 'with the reason')
 globalThis.fetch = originalFetch
 
-// ── the sidebar fork: registered only on request ────────────────────────────
-sidebarFork = true
+// ── the sidebar fork is registered eagerly and retires itself ───────────────
 const forkSlots = []
 const injected = {}
 const services = {
@@ -540,6 +541,7 @@ plugin.apply({
 })
 await new Promise((resolve) => setImmediate(resolve))
 assert.equal(forkSlots.length, 4, 'the shadow joins the icon, the page and the settings row')
+assert.equal(forkSlots.filter((entry) => entry.options.name === 'sidebar.workspaces').length, 1, 'the shadow registers without waiting on the host')
 const shadow = forkSlots.find((entry) => entry.options.name === 'sidebar.workspaces')
 assert.ok(shadow, 'the shadow registers into sidebar.workspaces')
 assert.equal(shadow.options.locale, 'chat-panel', 'it reuses the plugin dictionary')
@@ -557,20 +559,6 @@ assert.deepEqual(
 assert.equal(shadow.options.children['sidebar.workspaces.session.row.action'].kind, 'list')
 assert.ok(shadow.options.children['sidebar.workspaces.session.menu.item'].inject, 'the menu list keeps its hook contract')
 
-// with the switch off, the shadow stays out of the sidebar
-statusUi = { sidebarForkOff: true }
-const stillFork = []
-plugin.apply({
-  get: (name) => services[name],
-  effect: () => {},
-  slots: {
-    inject: (owner, callback) => callback(),
-    register: (options, Component) => { stillFork.push({ options, Component }); return () => {} },
-  },
-})
-await new Promise((resolve) => setImmediate(resolve))
-assert.equal(stillFork.filter((entry) => entry.options.name === 'sidebar.workspaces').length, 0, 'the off switch keeps the shipped browser')
-statusUi = {}
 
 // the declaration must match the recorded contract exactly
 const contract = JSON.parse(await fs.readFile(new URL('./contract/sidebar-workspaces.json', import.meta.url), 'utf8'))
@@ -685,6 +673,31 @@ assert.ok(
   calls.some((call) => call.url.endsWith('/ui') && call.body.chatsGroup === 'model'),
   'the grouping preference is remembered on the host',
 )
+
+// with the switch off, the mounted fork retires its own registration
+statusUi = { sidebarForkOff: true }
+let disposed = 0
+const retiring = []
+plugin.apply({
+  get: (name) => services[name],
+  effect: () => {},
+  slots: {
+    inject: (owner, callback) => callback(),
+    register: (options, Component) => {
+      retiring.push({ options, Component })
+      return () => { disposed += 1 }
+    },
+  },
+})
+await new Promise((resolve) => setImmediate(resolve))
+const retiringShadow = retiring.find((entry) => entry.options.name === 'sidebar.workspaces')
+assert.ok(retiringShadow, 'it registers even when the profile says off')
+hookStore.clear()
+factory = () => React.createElement(retiringShadow.Component, { ...forkProps, onRetire: () => { disposed += 1 } })
+renderOnce()
+await settle()
+assert.ok(disposed >= 1, 'mounting it with the switch off disposes the registration, handing the sidebar back')
+statusUi = {}
 
 // ── the first render arrives before the snapshots do ────────────────────────
 hookStore.clear()
