@@ -72,8 +72,11 @@ What keeps it safe:
   (`ui.sidebarForkOff`), no config edit needed, and says a reload applies it.
 - `package.json` pins `engines.dsh`, so a DSH the fork was not verified against
   blocks activation and the shipped sidebar stays in place.
-- The upgrade procedure — what to re-check, which bundles to diff — is section 7
-  of the fork plan in `../ideas/chats-sidebar-fork-plan.md`.
+- `contract/sidebar-workspaces.json` is the machine-readable contract; the client
+  test asserts the fork's declaration against it, so drift fails a test instead of
+  the sidebar. `contract/sidebar-workspaces.md` records why each dependency exists.
+- `UPGRADE.md` is the runbook: what to re-read after a DSH update, what each kind
+  of drift looks like, and how to roll back in one click.
 
 ### Routes
 

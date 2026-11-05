@@ -9,6 +9,7 @@
  *   node client-smoke.mjs
  */
 import assert from 'node:assert/strict'
+import fs from 'node:fs/promises'
 
 // ── a small React ───────────────────────────────────────────────────────────
 const hookStore = new Map()
@@ -558,6 +559,22 @@ plugin.apply({
 await new Promise((resolve) => setImmediate(resolve))
 assert.equal(stillFork.filter((entry) => entry.options.name === 'sidebar.workspaces').length, 0, 'the off switch keeps the shipped browser')
 statusUi = {}
+
+// the declaration must match the recorded contract exactly
+const contract = JSON.parse(await fs.readFile(new URL('./contract/sidebar-workspaces.json', import.meta.url), 'utf8'))
+assert.deepEqual(
+  Object.keys(shadow.options.children).sort(),
+  Object.keys(contract.children).sort(),
+  'the shadow declares exactly the seats the contract records',
+)
+for (const [name, spec] of Object.entries(contract.children)) {
+  assert.equal(shadow.options.children[name].kind, spec.kind, `${name} keeps its kind`)
+  assert.equal(shadow.options.children[name].scope, spec.scope, `${name} keeps its scope`)
+}
+const injectedHooks = shadow.options.children['sidebar.workspaces.session.menu.item'].inject.hooks
+for (const hook of contract.children['sidebar.workspaces.session.menu.item'].injectHooks) {
+  assert.ok(injectedHooks[hook] !== undefined || hook === 'shortcuts', `the menu list provides ${hook}`)
+}
 
 // ── and it renders both sections from the framework hooks ───────────────────
 const sessionsFixture = {
