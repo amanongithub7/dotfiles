@@ -52,9 +52,12 @@ session or trajectory, which is what keeps the loop out.
 ### The sidebar fork (`sidebarFork`)
 
 Off by default. When on, the browser half also occupies `sidebar.workspaces` and
-renders the whole browsing region itself: the Workspaces section (grouped session
-rows, the shipped row menus and actions through their own seats) plus a **Chats**
-section listing this plugin's chats. The shipped browser gives up the seat, which
+renders the whole browsing region itself, both sections with the same header:
+**Workspaces** (session rows grouped by workspace or flat, search over the host
+message index, and the shipped row menus and actions through their own seats) and
+**Chats** (this plugin's chats, grouped by date or model, searchable by title and
+message content, with rename and delete on every row). Each header carries search,
+a grouping choice, and its new button. The shipped browser gives up the seat, which
 is the point: the sidebar has no additive section seat, so a Chats section means
 owning the region.
 

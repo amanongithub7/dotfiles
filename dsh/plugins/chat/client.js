@@ -53,6 +53,11 @@ window.__ModuleLoader__.load({
       workspaces: 'Workspaces',
       workspace: 'Workspace',
       searchChats: 'Search chats',
+      searchSessions: 'Search sessions',
+      groupSessions: 'Group sessions by',
+      groupByWorkspace: 'Workspace',
+      groupByFlat: 'Flat list',
+      newChat: 'New chat',
       groupBy: 'Group chats by',
       groupByDate: 'Date',
       groupByModel: 'Model',
@@ -61,6 +66,7 @@ window.__ModuleLoader__.load({
       rename: 'Rename',
       save: 'Save',
       matches: 'Matches in messages',
+      noMatches: 'No matches',
       cancel: 'Cancel',
       sessionMenu: 'Session actions',
       untitled: 'Untitled',
@@ -1577,6 +1583,11 @@ window.__ModuleLoader__.load({
       const [menuFor, setMenuFor] = useState(null)
       // Host content search results; null means the query is too short to run one.
       const [matches, setMatches] = useState(null)
+      const [sessionQuery, setSessionQuery] = useState('')
+      const [sessionSearchOpen, setSessionSearchOpen] = useState(false)
+      const [sessionMatches, setSessionMatches] = useState(null)
+      const [sessionGroupOpen, setSessionGroupOpen] = useState(false)
+      const [sessionLayout, setSessionLayout] = useState('workspace')
 
       useEffect(() => {
         if (sidebarPropsReady(props) === false) {
@@ -1622,6 +1633,31 @@ window.__ModuleLoader__.load({
           clearTimeout(timer)
         }
       }, [query])
+
+      useEffect(() => {
+        const needle = sessionQuery.trim()
+        if (needle.length < 2 || typeof props.searchSessions !== 'function') {
+          setSessionMatches(null)
+          return undefined
+        }
+        let live = true
+        const timer = setTimeout(() => {
+          Promise.resolve(props.searchSessions(needle))
+            .then((payload) => {
+              if (live === false) return
+              const items = Array.isArray(payload?.items) ? payload.items : []
+              setSessionMatches(items.map((item) => ({
+                id: item.sessionId,
+                snippet: text(item.snippet),
+              })))
+            })
+            .catch(() => {})
+        }, 250)
+        return () => {
+          live = false
+          clearTimeout(timer)
+        }
+      }, [sessionQuery, props])
 
       const chooseGrouping = (mode) => {
         setGroupMode(mode)
@@ -1845,45 +1881,100 @@ window.__ModuleLoader__.load({
               ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noChats'))
               : chatGroups.map(renderChatGroup)))
 
-      const workspaceSection = h(
-        'div',
-        { key: 'workspaces', className: 'aman-sb-section' },
-        h(
-          SbHeader,
-          { label: t('workspaces') },
-          h(SbButton, { icon: 'newChat', label: t('newSession'), onClick: () => startSession(undefined) }),
-        ),
-        h('div', { className: 'aman-sb-rows' },
-          workspaceGroups.map((group) =>
-            h(
-              'div',
-              { key: group.key || 'stray', className: 'aman-sb-group' },
-              group.label === ''
-                ? null
-                : h('button', {
-                    type: 'button',
-                    className: 'aman-sb-group-head',
-                    onClick: () => toggle(`ws:${group.key}`),
+      const renderSessionRowNode = (node) => h(SbSessionRow, {
+        key: node.id,
+        node,
+        active: node.id === activeId,
+        renderSlot,
+        t,
+        onOpen: openSession,
+      })
+
+      const renderSessionGroup = (groupKey, label, nodes) => {
+        const collapsedGroup = collapsed[groupKey] === true
+        return h('div', { key: groupKey, className: 'aman-sb-group' },
+          label === ''
+            ? null
+            : h('button', {
+                type: 'button',
+                className: 'aman-sb-group-head',
+                onClick: () => toggle(groupKey),
+              },
+              h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsedGroup ? 'false' : 'true' }, h(SbIcon, { name: 'chevron', size: 14 })),
+              h('span', { key: 'folder', className: 'aman-sb-folder' }, h(SbIcon, { name: 'folder', size: 14 })),
+              h('span', { key: 'label', className: 'aman-sb-group-label' }, label)),
+          collapsedGroup ? null : nodes.map(renderSessionRowNode))
+      }
+
+      const flatSessions = (list?.ids ?? [])
+        .map((id) => summaries[id])
+        .filter((summary) => summary !== undefined && summary.blank !== true)
+        .map(nodeOf)
+        .sort((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
+
+      const sessionRows = sessionMatches !== null
+        ? sessionMatches.length === 0
+          ? h('div', { key: 'none', className: 'aman-sb-empty' }, t('noMatches'))
+          : renderSessionGroup(
+              'matches',
+              t('matches'),
+              sessionMatches
+                .map((match) => summaries[match.id])
+                .filter((summary) => summary !== undefined)
+                .map(nodeOf),
+            )
+        : sessionLayout === 'flat'
+          ? renderSessionGroup('flat', '', flatSessions)
+          : workspaceGroups.map((group) => renderSessionGroup(`ws:${group.key}`, group.label, group.sessions))
+
+      const workspaceSection = h('div', { key: 'workspaces', className: 'aman-sb-section' },
+        h(SbHeader, {
+          label: t('workspaces'),
+          search: sessionSearchOpen
+            ? h('input', {
+                key: 'search',
+                className: 'aman-sb-search',
+                value: sessionQuery,
+                placeholder: t('searchSessions'),
+                'aria-label': t('searchSessions'),
+                autoFocus: true,
+                onInput: (event) => setSessionQuery(event.target.value),
+                onKeyDown: (event) => {
+                  if (event.key !== 'Escape') return
+                  setSessionQuery('')
+                  setSessionSearchOpen(false)
+                },
+              })
+            : undefined,
+        },
+        h(SbButton, { icon: 'search', label: t('searchSessions'), onClick: () => setSessionSearchOpen((value) => value !== true) }),
+        h('span', { key: 'group', className: 'aman-sb-anchor' },
+          h(SbButton, { icon: 'sliders', label: t('groupSessions'), onClick: () => setSessionGroupOpen((value) => value !== true) }),
+          sessionGroupOpen
+            ? h(SbPopover, { key: 'pop', onClose: () => setSessionGroupOpen(false) },
+                h('button', {
+                  key: 'workspace',
+                  type: 'button',
+                  className: 'aman-sb-item',
+                  'data-on': sessionLayout === 'workspace' ? 'true' : 'false',
+                  onClick: () => {
+                    setSessionLayout('workspace')
+                    setSessionGroupOpen(false)
                   },
-                  h('span', { key: 'chevron', className: 'aman-sb-chevron', 'data-open': collapsed[`ws:${group.key}`] !== true ? 'true' : 'false' }, h(SbIcon, { name: 'chevron', size: 14 })),
-                  h('span', { key: 'folder', className: 'aman-sb-folder' }, h(SbIcon, { name: 'folder', size: 14 })),
-                  h('span', { key: 'label', className: 'aman-sb-group-label' }, group.label)),
-              collapsed[`ws:${group.key}`] === true
-                ? null
-                : group.sessions.map((node) =>
-                    h(SbSessionRow, {
-                      key: node.id,
-                      node,
-                      active: node.id === activeId,
-                      renderSlot,
-                      t,
-                      onOpen: openSession,
-                    }),
-                  ),
-            ),
-          ),
-        ),
-      )
+                }, t('groupByWorkspace')),
+                h('button', {
+                  key: 'flat',
+                  type: 'button',
+                  className: 'aman-sb-item',
+                  'data-on': sessionLayout === 'flat' ? 'true' : 'false',
+                  onClick: () => {
+                    setSessionLayout('flat')
+                    setSessionGroupOpen(false)
+                  },
+                }, t('groupByFlat')))
+            : null),
+        h(SbButton, { icon: 'newChat', label: t('newSession'), onClick: () => startSession(undefined) })),
+        h('div', { className: 'aman-sb-rows' }, sessionRows))
 
       return h('div', { className: 'aman-sb-root' }, workspaceSection, chatSection)
     }

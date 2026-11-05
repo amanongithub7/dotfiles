@@ -604,7 +604,12 @@ const forkProps = {
   openSession: (id) => { injected.session = id },
   startSession: () => { injected.started = true },
   selectChat: (id) => { injected.chat = id },
+  searchSessions: (query) => {
+    searched.push(query)
+    return Promise.resolve({ items: [{ sessionId: 's2', snippet: 'a body match' }] })
+  },
 }
+const searched = []
 hookStore.clear()
 factory = () => React.createElement(shadow.Component, forkProps)
 renderOnce()
@@ -614,7 +619,7 @@ const rowTitles = findAll(root, (node) => node.props.className === 'aman-sb-titl
 assert.ok(rowTitles.includes('Sea ice') && rowTitles.includes('Heatwaves'), 'the session rows render from the snapshot')
 assert.ok(rowTitles.includes('CMIP6 scenarios'), 'the chats rows render from the host routes')
 assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-head-label').length, 2, 'two section headers')
-assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-icon').length, 4, 'search, group, new chat, new session')
+assert.equal(findAll(root, (node) => node.props.className === 'aman-sb-icon').length, 6, 'search, group and new on both sections')
 assert.ok(slotCalls.some((call) => call.name === 'sidebar.session.row.leading'), 'the leading seat is rendered')
 assert.ok(slotCalls.some((call) => call.name === 'sidebar.workspaces.session.row.action'), 'the row actions seat is rendered')
 
@@ -664,6 +669,33 @@ assert.ok(
   calls.some((call) => call.url.endsWith('/ui') && call.body.chatsGroup === 'model'),
   'the grouping preference is remembered on the host',
 )
+
+// ── the workspaces half searches and regroups too ──────────────────────────
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'searchSessions')[0].props.onClick()
+await settle()
+const sessionField = findAll(root, (node) => node.props.className === 'aman-sb-search')[0]
+assert.ok(sessionField, 'the sessions search field opens')
+sessionField.props.onInput({ target: { value: 'body match' } })
+await settle()
+await new Promise((resolve) => setTimeout(resolve, 350))
+await settle()
+assert.deepEqual(searched, ['body match'], 'the sessions search goes to the host search service')
+assert.match(allText(root).join(' '), /matches/, 'session matches are grouped under the heading')
+const titlesAfterSearch = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
+assert.ok(titlesAfterSearch.includes('Heatwaves'), 'the matching session is listed')
+assert.ok(titlesAfterSearch.includes('Sea ice') === false, 'a session that does not match is not listed')
+
+findAll(root, (node) => node.props.className === 'aman-sb-search')[0].props.onKeyDown({ key: 'Escape' })
+await settle()
+findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'groupSessions')[0].props.onClick()
+await settle()
+const flatItem = findAll(root, (node) => node.props.className === 'aman-sb-item').find((node) => allText(node).join('') === 'groupByFlat')
+flatItem.props.onClick()
+await settle()
+const flatText = allText(root).join(' ')
+assert.ok(flatText.includes('PhD') === false, 'a flat list drops the workspace headers')
+const flatTitles = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
+assert.ok(flatTitles.includes('Sea ice') && flatTitles.includes('Heatwaves'), 'and keeps every session row')
 
 // ── the chats search reaches the host, not just the titles ─────────────────
 findAll(root, (node) => node.props.className === 'aman-sb-icon' && node.props.title === 'searchChats')[0].props.onClick()
