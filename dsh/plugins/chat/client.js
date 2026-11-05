@@ -42,6 +42,13 @@ window.__ModuleLoader__.load({
       sources: 'Sources',
       failed: 'Request failed',
       thinking: 'Waiting for the provider',
+      model: 'Model',
+      noModels: 'No models listed',
+      forkLabel: 'Chats in the sidebar',
+      forkOn: 'The sidebar shows the Chats section; a reload applies a change.',
+      forkOff: 'The shipped sidebar is in use; a reload applies a change.',
+      forkEnabled: 'Enabled',
+      forkDisabled: 'Disabled',
       chats: 'Chats',
       workspaces: 'Workspaces',
       workspace: 'Workspace',
@@ -500,6 +507,70 @@ window.__ModuleLoader__.load({
   color: var(--dsw-alias-label-tertiary);
 }
 .aman-chat-note[data-error="true"] { color: var(--dsw-alias-state-error-primary); }
+.aman-chat-anchor { position: relative; display: inline-flex; flex: none; }
+.aman-chat-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  padding: 3px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.aman-chat-model:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-chat-model-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.aman-chat-caret { flex: none; font-size: 10px; line-height: 1; }
+.aman-chat-pop {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-elevation-soft);
+}
+.aman-chat-pop-group { display: flex; flex-direction: column; gap: 1px; }
+.aman-chat-pop-label {
+  padding: 4px 8px 2px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.aman-chat-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: none;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.aman-chat-pop-item:hover,
+.aman-chat-pop-item[aria-checked="true"] { background: var(--dsw-alias-interactive-bg-hover); }
+.aman-chat-pop-item[aria-checked="true"]::before { content: '\\2713'; flex: none; color: var(--dsw-alias-brand-primary); }
+
 .aman-sb-root {
   display: flex;
   flex-direction: column;
@@ -672,6 +743,10 @@ window.__ModuleLoader__.load({
 .aman-sb-item:hover,
 .aman-sb-item[data-on="true"] { background: var(--dsw-alias-interactive-bg-hover); }
 .aman-sb-empty { padding: 8px 10px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.aman-chat-setting { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
+.aman-chat-setting-text { min-width: 0; flex: 1; }
+.aman-chat-setting-label { font-size: 14px; line-height: 20px; color: var(--dsw-alias-label-primary); }
+.aman-chat-setting-hint { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
 
 .aman-chat-hidden { display: none; }
 `
@@ -1044,6 +1119,91 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /**
+     * Settings → General row: the runtime off-switch for the sidebar fork. It
+     * writes the preference and says a reload applies it, because swapping a slot
+     * occupant underneath a mounted tree is not something to do quietly.
+     */
+    function SidebarForkSetting(props) {
+      const t = props.t
+      const [state, setState] = useState(null)
+      useEffect(() => {
+        request('/status', null, 'GET')
+          .then((payload) => setState({
+            available: payload?.sidebarFork === true,
+            off: payload?.ui?.sidebarForkOff === true,
+          }))
+          .catch(() => setState({ available: false, off: false }))
+      }, [])
+      if (state === null || state.available === false) return null
+      const flip = () => {
+        const next = state.off !== true
+        request('/ui', { sidebarForkOff: next })
+          .then(() => setState({ available: true, off: next }))
+          .catch(() => {})
+      }
+      return h(
+        'div',
+        { className: 'aman-chat-setting' },
+        h('div', { key: 'text', className: 'aman-chat-setting-text' },
+          h('div', { key: 'label', className: 'aman-chat-setting-label' }, t('forkLabel')),
+          h('div', { key: 'hint', className: 'aman-chat-setting-hint' }, state.off === true ? t('forkOff') : t('forkOn'))),
+        h('button', {
+          key: 'toggle',
+          type: 'button',
+          className: 'aman-chat-toggle',
+          role: 'switch',
+          'aria-checked': state.off === true ? 'false' : 'true',
+          onClick: flip,
+        }, state.off === true ? t('forkDisabled') : t('forkEnabled')),
+      )
+    }
+
+    /** The composer's model picker: the configured route list, grouped by provider. */
+    function ModelPicker(props) {
+      const t = props.t
+      const [open, setOpen] = useState(false)
+      const providers = Array.isArray(props.models?.providers) ? props.models.providers : []
+      const choice = props.choice ?? {}
+      const label = text(choice.model) || text(props.models?.default?.model) || t('model')
+      return h(
+        'span',
+        { className: 'aman-chat-anchor' },
+        h('button', {
+          type: 'button',
+          className: 'aman-chat-model',
+          title: `${t('model')}: ${label}`,
+          'aria-label': `${t('model')}: ${label}`,
+          'aria-haspopup': 'menu',
+          'aria-expanded': open ? 'true' : 'false',
+          onClick: () => setOpen((value) => value !== true),
+        }, h('span', { key: 'name', className: 'aman-chat-model-name' }, label), h('span', { key: 'caret', className: 'aman-chat-caret' }, '\u25be')),
+        open
+          ? h('div', { key: 'pop', className: 'aman-chat-pop', role: 'menu' },
+              providers.length === 0
+                ? h('div', { key: 'none', className: 'aman-chat-note', style: { padding: '6px 8px' } }, t('noModels'))
+                : providers.map((provider) =>
+                    h('div', { key: provider.id, className: 'aman-chat-pop-group' },
+                      h('div', { key: 'label', className: 'aman-chat-pop-label' }, provider.name || provider.id),
+                      provider.models.length === 0
+                        ? h('div', { key: 'empty', className: 'aman-chat-note', style: { padding: '2px 8px 6px' } }, t('noModels'))
+                        : provider.models.map((model) =>
+                            h('button', {
+                              key: model.id,
+                              type: 'button',
+                              role: 'menuitemradio',
+                              className: 'aman-chat-pop-item',
+                              'aria-checked': choice.provider === provider.id && choice.model === model.id ? 'true' : 'false',
+                              onClick: () => {
+                                props.onChoose({ provider: provider.id, model: model.id })
+                                setOpen(false)
+                              },
+                            }, model.name || model.id))),
+                    ))
+          : null,
+      )
+    }
+
     function Composer(props) {
       const t = props.t
       const busy = props.busy
@@ -1122,6 +1282,13 @@ window.__ModuleLoader__.load({
               h(AtomIcon, { key: 'atom' }),
               t('web'),
             ),
+            h(ModelPicker, {
+              key: 'model',
+              t,
+              models: props.models,
+              choice: props.choice,
+              onChoose: props.onChoose,
+            }),
             h('input', {
               key: 'picker',
               ref: fileRef,
@@ -1573,6 +1740,8 @@ window.__ModuleLoader__.load({
       const [note, setNote] = useState('')
       const [status, setStatus] = useState(null)
       const [collapsed, setCollapsed] = useState(false)
+      const [models, setModels] = useState({ providers: [], default: { provider: '', model: '' } })
+      const [choice, setChoice] = useState({ provider: '', model: '' })
       const scrollRef = useRef(null)
       // The chat in hand, so a create or a send does not re-fetch what the
       // response already delivered.
@@ -1585,6 +1754,13 @@ window.__ModuleLoader__.load({
         request('/list', null, 'GET')
           .then((payload) => {
             if (live) setChats(Array.isArray(payload.chats) ? payload.chats : [])
+          })
+          .catch(() => {})
+        request('/models', null, 'GET')
+          .then((payload) => {
+            if (!live) return
+            setModels(payload)
+            setChoice((current) => (current.model === '' ? payload.default ?? current : current))
           })
           .catch(() => {})
         request('/status', null, 'GET')
@@ -1621,6 +1797,7 @@ window.__ModuleLoader__.load({
           .then((payload) => {
             if (!live) return
             setChat(payload.chat ?? null)
+            if (payload.chat?.model) setChoice({ provider: text(payload.chat.provider), model: text(payload.chat.model) })
             loadedRef.current = payload.chat?.id ?? null
           })
           .catch(fail)
@@ -1649,6 +1826,7 @@ window.__ModuleLoader__.load({
       const startNew = useCallback(() => {        request('/new', {})
           .then((payload) => {
             setChat(payload.chat ?? null)
+            if (payload.chat?.model) setChoice({ provider: text(payload.chat.provider), model: text(payload.chat.model) })
             loadedRef.current = payload.chat?.id ?? null
             setActiveId(payload.chat?.id ?? null)
             setChats(Array.isArray(payload.chats) ? payload.chats : [])
@@ -1689,7 +1867,14 @@ window.__ModuleLoader__.load({
         setBusy(true)
         setNote('')
         setPending([])
-        request('/ask', { id: activeId, prompt, web, files: attached.map((file) => file.id) })
+        request('/ask', {
+          id: activeId,
+          prompt,
+          web,
+          files: attached.map((file) => file.id),
+          provider: choice.provider === '' ? undefined : choice.provider,
+          model: choice.model === '' ? undefined : choice.model,
+        })
           .then((payload) => {
             setChat(payload.chat ?? null)
             loadedRef.current = payload.chat?.id ?? null
@@ -1704,7 +1889,7 @@ window.__ModuleLoader__.load({
             fail(error)
           })
           .finally(() => setBusy(false))
-      }, [activeId, fail, pending, web])
+      }, [activeId, choice, fail, pending, web])
 
       const webMissing = status !== null && !status?.tavily?.path
       const items = chats.map((entry) =>
@@ -1800,6 +1985,9 @@ window.__ModuleLoader__.load({
             pending,
             note,
             webMissing,
+            models,
+            choice,
+            onChoose: setChoice,
             onSend: send,
             onToggleWeb: () => setWeb((current) => !current),
             onAttach: attach,
@@ -1822,12 +2010,21 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register({ name: 'sidebar.panellist', id: 'chat', order: 20, label: translate('title') }, ChatIcon))
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'chat' }, () => h(ChatPanel, { t: translate })))
+        ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+          name: 'settings.general.item',
+          id: 'chat-sidebar-fork',
+          order: 60,
+          label: translate('forkLabel'),
+        }, () => h(SidebarForkSetting, { t: translate })))
         // The shadow of the shipped workspace browser. Off unless the host half
         // says so, and abandoned silently if the services it needs are missing —
         // the shipped occupant then keeps owning the sidebar.
         request('/status', null, 'GET')
           .then((payload) => {
             if (payload?.sidebarFork !== true) return
+            // The runtime off-switch lives in panel.json, so turning the shadow off
+            // never needs a config edit or a rebuild.
+            if (payload?.ui?.sidebarForkOff === true) return
             if (typeof ctx.slots?.inject !== 'function') return
             const layout = clientService(ctx, 'layout')
             const uiWorkspace = clientService(ctx, 'uiWorkspace')

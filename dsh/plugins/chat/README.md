@@ -28,7 +28,9 @@ client:
   full-width block, like the workspace UI. Replies render a small markdown subset
   (headings, lists, quotes, fenced and inline code, links, bold, italic) as React
   elements; no HTML string is ever injected.
-- **Composer** - a contenteditable with the shipped geometry, Enter sends,
+- **Composer** - a contenteditable with the shipped geometry, a model picker fed
+  by `GET models` (every route with an adapter, grouped by provider, cached on the
+  host for five minutes), Enter sends,
   Shift+Enter adds a line, Enter during IME composition does not send. Attached
   files appear as 240x64 cards. A paperclip button sits directly left of send. A
   `role="switch"` Search toggle, marked with an atom (a nucleus in two
@@ -66,6 +68,12 @@ What keeps it safe:
 - Both the mount and any fallback reason are recorded in `panel.json`
   (`sidebarForkMounted`, `sidebarForkError`), so a failure is visible without a
   browser console.
+- **Settings → General → "Chats in the sidebar"** turns the fork off at runtime
+  (`ui.sidebarForkOff`), no config edit needed, and says a reload applies it.
+- `package.json` pins `engines.dsh`, so a DSH the fork was not verified against
+  blocks activation and the shipped sidebar stays in place.
+- The upgrade procedure — what to re-check, which bundles to diff — is section 7
+  of the fork plan in `../ideas/chats-sidebar-fork-plan.md`.
 
 ### Routes
 
@@ -84,7 +92,8 @@ Fetch routes instead, all under `/api/aman-chat` (each returns JSON):
 | `POST upload` | `{name, mime, dataBase64}` | `{file: {id, name, bytes, mime}}` |
 | `POST file` | `{id}` | `{dataBase64}` |
 | `POST ask` | `{id, prompt, web, files}` | the chat, its summary, the search, the failure |
-| `POST ui` | `{historyCollapsed, sidebarForkMounted, sidebarForkError}` | the saved panel layout and fork diagnostics |
+| `GET models` | - | providers with their models, plus the configured default |
+| `POST ui` | `{historyCollapsed, sidebarForkOff, sidebarForkMounted, sidebarForkError}` | panel layout, the fork off-switch and fork diagnostics |
 
 `/api` is the shared connection channel and it authenticates before routing, so
 the browser's own credential authorizes the call; the host half still applies the

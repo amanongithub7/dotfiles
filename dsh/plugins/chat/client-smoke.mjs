@@ -181,6 +181,15 @@ globalThis.fetch = async (url, options = {}) => {
   calls.push({ url: String(url), method: options.method ?? 'GET', body })
   const target = String(url)
   if (target.endsWith('/status')) return json({ ok: true, dataDir: '/tmp/x', chats: 1, llm: { available: true }, tavily: { command: 'tvly', path: '/Users/x/.local/bin/tvly' }, web: true, sidebarFork, ui: statusUi })
+  if (target.endsWith('/models')) {
+    return json({
+      providers: [
+        { id: 'paratera', name: 'Paratera', models: [{ id: 'DeepSeek-V4.1-Flash', name: 'DeepSeek V4.1 Flash', image: false }, { id: 'GLM-5.3', name: 'GLM 5.3', image: false }] },
+        { id: 'openrouter', name: 'OpenRouter', models: [{ id: 'vision-pro', name: 'Vision Pro', image: true }] },
+      ],
+      default: { provider: 'paratera', model: 'DeepSeek-V4.1-Flash' },
+    })
+  }
   if (target.endsWith('/ui')) {
     statusUi = { ...statusUi, ...body }
     return json({ ui: statusUi })
@@ -278,9 +287,11 @@ plugin.apply({
   },
 })
 
-assert.equal(slots.length, 2, 'the half claims the icon and the page')
+assert.equal(slots.length, 3, 'the half claims the icon, the page and the settings row')
 assert.deepEqual(slots[0].options, { name: 'sidebar.panellist', id: 'chat', order: 20, label: 'Chat' })
 assert.deepEqual(slots[1].options, { name: 'main', key: 'chat' })
+assert.equal(slots[2].options.name, 'settings.general.item', 'the fork switch lives in an additive settings seat')
+assert.equal(slots[2].options.id, 'chat-sidebar-fork')
 
 const icon = renderTree(React.createElement(slots[0].Component, { size: 22, active: true }))
 assert.equal(icon.props.width, 22, 'the icon honours the requested size')
@@ -293,8 +304,8 @@ await settle()
 
 assert.deepEqual(
   calls.filter((call) => call.method === 'GET').map((call) => call.url.replace('/api/aman-chat', '')),
-  ['/status', '/list', '/status'],
-  'registering probes the fork flag, then the panel loads the history and the host status',
+  ['/status', '/list', '/models', '/status'],
+  'registering probes the fork flag, then the panel loads history, models and status',
 )
 assert.match(allText(root).join(' '), /CMIP6 scenarios/, 'a previous chat is listed')
 assert.match(allText(root).join(' '), /Sea ice trends/, 'every previous chat is listed')
@@ -315,7 +326,14 @@ await settle()
 
 const ask = calls.filter((call) => call.url.endsWith('/ask'))
 assert.equal(ask.length, 1, 'submitting posts exactly once')
-assert.deepEqual(ask[0].body, { id: null, prompt: 'What are the SSP scenarios?', web: true, files: [] })
+assert.deepEqual(ask[0].body, {
+  id: null,
+  prompt: 'What are the SSP scenarios?',
+  web: true,
+  files: [],
+  provider: 'paratera',
+  model: 'DeepSeek-V4.1-Flash',
+}, 'a turn states the route it runs on')
 const rendered = allText(root).join(' ')
 assert.match(rendered, /Forty scenarios across five SSPs\./, 'the reply is added to the thread')
 assert.match(rendered, /A source/, 'the sources are listed under the reply')
@@ -327,8 +345,8 @@ const actions = findAll(root, (node) => node.props.className === 'aman-chat-row-
 assert.equal(actions.length, 1, 'the composer has one action row')
 assert.deepEqual(
   actions[0].children.map((child) => child.props.className),
-  ['aman-chat-toggle', 'aman-chat-hidden', 'aman-chat-grow', 'aman-chat-add', 'aman-chat-primary'],
-  'the paperclip sits directly left of the send button',
+  ['aman-chat-toggle', 'aman-chat-anchor', 'aman-chat-hidden', 'aman-chat-grow', 'aman-chat-add', 'aman-chat-primary'],
+  'the model picker follows Search, and the paperclip sits directly left of send',
 )
 assert.equal(
   findAll(root, (node) => node.type === 'path' && String(node.props.d).startsWith('M21.44')).length,
@@ -345,6 +363,24 @@ const orbits = findAll(switches[0], (node) => node.type === 'ellipse')
 assert.equal(orbits.length, 2, 'the icon is two orbits')
 assert.ok(orbits.some((node) => String(node.props.transform).includes('rotate(90')), 'the orbits are perpendicular')
 assert.equal(findAll(switches[0], (node) => node.type === 'circle' && node.props.fill === 'currentColor').length, 1, 'and one filled nucleus')
+
+// ── the model picker ───────────────────────────────────────────────────────
+const modelButton = () => findAll(root, (node) => node.props.className === 'aman-chat-model')[0]
+assert.ok(modelButton(), 'the composer carries a model picker')
+assert.match(allText(modelButton()).join(''), /DeepSeek-V4\.1-Flash/, 'it shows the model in use')
+modelButton().props.onClick()
+await settle()
+assert.equal(findAll(root, (node) => node.props.className === 'aman-chat-pop-item').length, 3, 'every catalogued model is offered')
+assert.deepEqual(
+  findAll(root, (node) => node.props.className === 'aman-chat-pop-label').map((node) => allText(node).join('')),
+  ['Paratera', 'OpenRouter'],
+  'models are grouped by provider',
+)
+findAll(root, (node) => node.props.className === 'aman-chat-pop-item')
+  .find((node) => allText(node).join('') === 'GLM 5.3')
+  .props.onClick()
+await settle()
+assert.match(allText(modelButton()).join(''), /GLM-5\.3/, 'choosing a model updates the composer')
 
 // ── waiting shows animated dots, not a sentence ─────────────────────────────
 deferAsk = true
@@ -438,6 +474,32 @@ await settle()
 assert.equal(aside().length, 0, 'a page opened after folding shows no history column')
 assert.equal(folds()[0].props['aria-expanded'], 'false', 'and the control starts on show')
 
+// ── the settings row turns the fork off without a config edit ───────────────
+const settingRow = slots[2].Component
+const offStatus = { ok: true, sidebarFork: true, ui: { sidebarForkOff: false } }
+const originalFetch = globalThis.fetch
+globalThis.fetch = async (url, options = {}) => {
+  const target = String(url)
+  if (target.endsWith('/status')) return json(offStatus)
+  if (target.endsWith('/ui')) {
+    const body = JSON.parse(options.body ?? '{}')
+    offStatus.ui = { ...offStatus.ui, ...body }
+    return json({ ui: offStatus.ui })
+  }
+  return json({})
+}
+hookStore.clear()
+factory = () => React.createElement(settingRow, { t: (key) => key })
+renderOnce()
+await settle()
+assert.match(allText(root).join(' '), /Chats in the sidebar/, 'the row is titled')
+assert.match(allText(root).join(' '), /The sidebar shows the Chats section/, 'and says the fork is on')
+findAll(root, (node) => node.props.role === 'switch')[0].props.onClick()
+await settle()
+assert.equal(offStatus.ui.sidebarForkOff, true, 'turning it off is saved on the host')
+assert.match(allText(root).join(' '), /The shipped sidebar is in use/, 'and the row says the change needs a reload')
+globalThis.fetch = originalFetch
+
 // ── the sidebar fork: registered only on request ────────────────────────────
 sidebarFork = true
 const forkSlots = []
@@ -461,7 +523,7 @@ plugin.apply({
   },
 })
 await new Promise((resolve) => setImmediate(resolve))
-assert.equal(forkSlots.length, 3, 'the shadow joins the icon and the page')
+assert.equal(forkSlots.length, 4, 'the shadow joins the icon, the page and the settings row')
 const shadow = forkSlots.find((entry) => entry.options.name === 'sidebar.workspaces')
 assert.ok(shadow, 'the shadow registers into sidebar.workspaces')
 assert.equal(shadow.options.locale, 'chat-panel', 'it reuses the plugin dictionary')
@@ -478,6 +540,21 @@ assert.deepEqual(
 )
 assert.equal(shadow.options.children['sidebar.workspaces.session.row.action'].kind, 'list')
 assert.ok(shadow.options.children['sidebar.workspaces.session.menu.item'].inject, 'the menu list keeps its hook contract')
+
+// with the switch off, the shadow stays out of the sidebar
+statusUi = { sidebarForkOff: true }
+const stillFork = []
+plugin.apply({
+  get: (name) => services[name],
+  effect: () => {},
+  slots: {
+    inject: (owner, callback) => callback(),
+    register: (options, Component) => { stillFork.push({ options, Component }); return () => {} },
+  },
+})
+await new Promise((resolve) => setImmediate(resolve))
+assert.equal(stillFork.filter((entry) => entry.options.name === 'sidebar.workspaces').length, 0, 'the off switch keeps the shipped browser')
+statusUi = {}
 
 // ── and it renders both sections from the framework hooks ───────────────────
 const sessionsFixture = {

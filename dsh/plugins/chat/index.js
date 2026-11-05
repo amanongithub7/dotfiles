@@ -358,6 +358,10 @@ async function runTurn(ctx, settings, store, input, signal) {
 
   let chat = input.id ? await store.get(input.id) : null
   if (chat === null) chat = await store.create({ title: titleFrom(prompt, settings.titleChars), provider, model })
+  // The chat remembers the route it last ran on, so the list can group by model
+  // and the panel can reopen on the same choice.
+  chat.provider = provider
+  chat.model = model
 
   const wantsImages = await imageSupport(ctx, settings, provider, model)
   const attachments = []
@@ -577,6 +581,56 @@ function registerCommand(ctx, settings) {
  * segment has to match the endpoint pattern, so every action is a POST with a
  * JSON body and only the parameterless reads are GETs.
  */
+/** How long a provider/model directory stays warm before it is re-read. */
+const MODEL_DIRECTORY_TTL_MS = 300_000
+let modelDirectoryCache = { at: 0, value: null }
+
+function within(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]).catch(() => fallback)
+}
+
+async function providerModels(llm, provider) {
+  const models = await within(llm.listModels(provider), 4_000, [])
+  return (Array.isArray(models) ? models : []).map((model) => ({
+    id: text(model.id),
+    name: text(model.name) || text(model.id),
+    image: Array.isArray(model.inputModalities) && model.inputModalities.includes('image'),
+  }))
+}
+
+/**
+ * Every route with an adapter, and the models it advertises, for the panel's
+ * model picker. Cached because `listModels` may go to the network, and each
+ * provider is bounded so one slow endpoint cannot hang the route.
+ */
+async function modelDirectory(ctx, settings) {
+  const now = Date.now()
+  if (modelDirectoryCache.value !== null && now - modelDirectoryCache.at < MODEL_DIRECTORY_TTL_MS) {
+    return modelDirectoryCache.value
+  }
+  const llm = service(ctx, 'llm')
+  const fallback = { providers: [], default: { provider: settings.provider, model: settings.model } }
+  if (llm?.listProviders === undefined) return fallback
+  let providers = []
+  try {
+    providers = llm.listProviders() ?? []
+  } catch {
+    providers = []
+  }
+  const entries = []
+  for (const provider of Array.isArray(providers) ? providers : []) {
+    const id = text(provider?.id)
+    if (id === '') continue
+    entries.push({ id, name: text(provider?.name) || id, models: await providerModels(llm, id) })
+  }
+  const value = { providers: entries, default: { provider: settings.provider, model: settings.model } }
+  modelDirectoryCache = { at: now, value }
+  return value
+}
+
 function registerRoutes(ctx, settings, store) {
   if (typeof ctx.inject !== 'function') {
     ctx.logger?.warn?.('chat: this build has no ctx.inject, so the Chat panel routes are unavailable')
@@ -629,12 +683,15 @@ function registerRoutes(ctx, settings, store) {
         // in panel.json instead of only in a console nobody is watching.
         if (typeof payload.sidebarForkError === 'string') patch.sidebarForkError = payload.sidebarForkError.slice(0, 200)
         if (typeof payload.sidebarForkMounted === 'number') patch.sidebarForkMounted = payload.sidebarForkMounted
+        if (typeof payload.sidebarForkOff === 'boolean') patch.sidebarForkOff = payload.sidebarForkOff
         if (Object.keys(patch).length === 0) throw new RequestError('nothing to save')
         const record = await store.savePanel({ ui: { ...((await store.panel()).ui ?? {}), ...patch } })
         return json({ ui: record.ui ?? {} })
       }),
 
       route(['GET'], '/list', async () => json({ chats: await store.list() })),
+
+      route(['GET'], '/models', async () => json(await modelDirectory(ctx, settings))),
 
       route(['POST'], '/get', async (request) => {
         const payload = await readBody(request)

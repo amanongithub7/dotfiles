@@ -40,6 +40,21 @@ const llm = {
 
 let imageInputs = ['text', 'image']
 llm.resolveModelInfo = async () => ({ inputModalities: imageInputs })
+const listModelCalls = []
+llm.listProviders = () => [
+  { id: 'paratera', name: 'Paratera' },
+  { id: 'openrouter', name: 'OpenRouter' },
+  { id: 'broken', name: 'Broken' },
+]
+llm.listModels = async (provider) => {
+  listModelCalls.push(provider)
+  if (provider === 'broken') throw new Error('provider unreachable')
+  if (provider === 'openrouter') return [{ id: 'vision-pro', name: 'Vision Pro', inputModalities: ['text', 'image'] }]
+  return [
+    { id: 'DeepSeek-V4.1-Flash', name: 'DeepSeek V4.1 Flash', inputModalities: ['text'] },
+    { id: 'GLM-5.3', name: 'GLM 5.3', inputModalities: ['text'] },
+  ]
+}
 
 const savedImages = []
 let failSaveImage = false
@@ -119,7 +134,7 @@ apply(ctx, { dataDir, maxUploadBytes: 4096, maxChars: 20, timeoutMs: 5000, webRe
 
 assert.ok(registrations.tool, 'the chat tool is registered')
 assert.ok(registrations.command, 'the /chat command is registered')
-assert.equal(routes.size, 10, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
+assert.equal(routes.size, 11, `every panel route is registered (got ${[...routes.keys()].join(', ')})`)
 assert.deepEqual(warnings, [], 'registration warned about nothing')
 
 const text = (value) => ({ type: 'text-delta', text: value })
@@ -320,6 +335,10 @@ assert.equal((await route('/ui').fetch(request({ historyCollapsed: true }))).sta
 const recorded = await (await route('/ui').fetch(request({ sidebarForkError: 'the fork threw while rendering' }))).json()
 assert.equal(recorded.ui.sidebarForkError, 'the fork threw while rendering', 'a fallback reason is recorded for diagnosis')
 assert.equal((await route('/ui').fetch(request({ sidebarForkError: 7 }))).status, 400, 'a non-string reason is rejected')
+const offSaved = await (await route('/ui').fetch(request({ sidebarForkOff: true }))).json()
+assert.equal(offSaved.ui.sidebarForkOff, true, 'the runtime off-switch is saved')
+assert.equal((await route('/ui').fetch(request({ sidebarForkOff: 'no' }))).status, 400, 'a non-boolean switch is rejected')
+await route('/ui').fetch(request({ sidebarForkOff: false }))
 assert.equal(status.sidebarFork, false, 'the sidebar fork is off unless configured')
 
 // The beacon shares panel.json, so a touch must not wipe the layout beside it.
@@ -332,6 +351,36 @@ assert.deepEqual(panelFile.ui, { historyCollapsed: true }, 'the beacon keeps the
 assert.ok(panelFile.at > 0, 'and still records when the panel was last seen')
 assert.equal(await uiStore.lastSeen(), panelFile.at, 'lastSeen reads the same beacon')
 await fs.rm(uiDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
+
+// ── the model directory behind the picker ───────────────────────────────────
+const directory = await (await route('/models').fetch(request({}))).json()
+assert.equal(directory.default.provider, 'paratera', 'the directory names the configured default')
+assert.deepEqual(directory.providers.map((entry) => entry.id), ['paratera', 'openrouter', 'broken'])
+const paratera = directory.providers.find((entry) => entry.id === 'paratera')
+assert.equal(paratera.name, 'Paratera')
+assert.ok(paratera.models.some((model) => model.id === 'DeepSeek-V4.1-Flash'), 'catalogued models are listed')
+assert.equal(paratera.models.find((model) => model.id === 'GLM-5.3').image, false, 'text-only is reported')
+const openrouter = directory.providers.find((entry) => entry.id === 'openrouter')
+assert.equal(openrouter.models.find((model) => model.id === 'vision-pro').image, true, 'image input is reported')
+assert.deepEqual(directory.providers.find((entry) => entry.id === 'broken').models, [], 'a failing provider is empty, not fatal')
+
+const callsBefore = listModelCalls.length
+await route('/models').fetch(request({}))
+assert.equal(listModelCalls.length, callsBefore, 'the directory is cached between requests')
+
+// ── a turn on a chosen route ────────────────────────────────────────────────
+chunks = [text('answered elsewhere'), stop]
+const chosen = await (await route('/ask').fetch(request({
+  id: created.chat.id,
+  prompt: 'which model am I on?',
+  provider: 'openrouter',
+  model: 'vision-pro',
+  web: false,
+}))).json()
+assert.equal(sent().provider, 'openrouter', 'the chosen provider reaches the adapter')
+assert.equal(sent().model, 'vision-pro', 'the chosen model reaches the adapter')
+assert.equal(chosen.chat.model, 'vision-pro', 'the chat remembers the route it ran on')
+assert.equal(chosen.summary.model, 'vision-pro', 'and the list summary reports it')
 
 // ── route errors ────────────────────────────────────────────────────────────
 assert.equal((await route('/ask').fetch(request({ id: created.chat.id, prompt: '   ' }))).status, 400, 'an empty prompt is a client error')
