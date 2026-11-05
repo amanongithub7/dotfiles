@@ -496,6 +496,10 @@ hookStore.clear()
 factory = () => React.createElement(settingRow, { t: (key) => key })
 renderOnce()
 await settle()
+assert.ok(
+  findAll(root, (node) => node.type === 'style').some((node) => allText(node).join('').includes('.aman-sb-toggle')),
+  'the settings row carries its own styles too',
+)
 assert.match(allText(root).join(' '), /Chats in the sidebar/, 'the row is titled')
 assert.match(allText(root).join(' '), /The sidebar shows the Chats section/, 'and says the fork is on')
 findAll(root, (node) => node.props.role === 'switch')[0].props.onClick()
@@ -623,6 +627,10 @@ factory = () => React.createElement(shadow.Component, forkProps)
 renderOnce()
 await settle()
 
+assert.ok(
+  findAll(root, (node) => node.type === 'style').some((node) => allText(node).join('').includes('.aman-sb-root')),
+  'the fork carries its own styles, because the Chat page is not mounted',
+)
 const rowTitles = findAll(root, (node) => node.props.className === 'aman-sb-title').map((node) => allText(node).join(''))
 assert.ok(rowTitles.includes('Sea ice') && rowTitles.includes('Heatwaves'), 'the session rows render from the snapshot')
 assert.ok(rowTitles.includes('CMIP6 scenarios'), 'the chats rows render from the host routes')

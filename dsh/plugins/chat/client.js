@@ -583,10 +583,21 @@ window.__ModuleLoader__.load({
 .aman-chat-pop-item[aria-checked="true"] { background: var(--dsw-alias-interactive-bg-hover); }
 .aman-chat-pop-item[aria-checked="true"]::before { content: '\\2713'; flex: none; color: var(--dsw-alias-brand-primary); }
 
+
+.aman-chat-hidden { display: none; }
+`
+    // Chrome the sidebar fork and its Settings row draw with. It is a separate
+    // template because neither surface mounts the Chat page, whose <style> used
+    // to be the only place these rules existed.
+    const SIDEBAR_CSS = `
 .aman-sb-root {
+  box-sizing: border-box;
+  /* Fill the sidebar column the way the shipped browser does, or the region
+     collapses to its content height. */
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow-y: auto;
   padding: 0 var(--dsh-sidebar-inline-padding, 8px) 8px 0;
   font-family: var(--dsw-font-family);
@@ -770,13 +781,29 @@ window.__ModuleLoader__.load({
   font-size: 14px;
   outline: none;
 }
+.aman-sb-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.aman-sb-toggle[aria-checked="true"] {
+  border-color: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-brand-primary);
+}
 .aman-chat-setting { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
 .aman-chat-setting-text { min-width: 0; flex: 1; }
 .aman-chat-setting-label { font-size: 14px; line-height: 20px; color: var(--dsw-alias-label-primary); }
 .aman-chat-setting-hint { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
-
-.aman-chat-hidden { display: none; }
 `
+
 
     function text(value) {
       return typeof value === 'string' ? value : String(value ?? '')
@@ -1174,6 +1201,7 @@ window.__ModuleLoader__.load({
       return h(
         'div',
         { className: 'aman-chat-setting' },
+        h('style', { key: 'css' }, SIDEBAR_CSS),
         h('div', { key: 'text', className: 'aman-chat-setting-text' },
           h('div', { key: 'label', className: 'aman-chat-setting-label' }, t('forkLabel')),
           h('div', { key: 'hint', className: 'aman-chat-setting-hint' }, state.off === true ? t('forkOff') : t('forkOn')),
@@ -1183,7 +1211,7 @@ window.__ModuleLoader__.load({
         h('button', {
           key: 'toggle',
           type: 'button',
-          className: 'aman-chat-toggle',
+          className: 'aman-sb-toggle',
           role: 'switch',
           'aria-checked': state.off === true ? 'false' : 'true',
           onClick: flip,
@@ -1992,7 +2020,7 @@ window.__ModuleLoader__.load({
         h(SbButton, { icon: 'newChat', label: t('newSession'), onClick: () => startSession(undefined) })),
         h('div', { className: 'aman-sb-rows' }, sessionRows))
 
-      return h('div', { className: 'aman-sb-root' }, workspaceSection, chatSection)
+      return h('div', { className: 'aman-sb-root' }, h('style', { key: 'css' }, SIDEBAR_CSS), workspaceSection, chatSection)
     }
 
     function ChatPanel(props) {
