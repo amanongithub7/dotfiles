@@ -17,3 +17,12 @@ vim.api.nvim_create_autocmd("VimResized", {
   buffer = 0,
   callback = set_textwidth,
 })
+
+-- A jupytext markdown twin (nb.md with nb.ipynb next to it) is a notebook too:
+-- give it the same \h guide key as the notebook buffer. Plain markdown keeps its
+-- markdown-plus \h* heading maps untouched.
+if vim.fn.filereadable(vim.fn.expand("%:p:r") .. ".ipynb") == 1 then
+  vim.keymap.set("n", "<localleader>h", function()
+    require("config.notebook-guide").open()
+  end, { buffer = true, desc = "notebook guide" })
+end

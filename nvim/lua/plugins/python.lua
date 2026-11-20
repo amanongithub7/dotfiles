@@ -25,6 +25,11 @@ return {
   { -- ipynb to markdown conversion and back
     "GCBallesteros/jupytext.nvim",
     config = function()
+      -- Must come before jupytext.setup(): both register a BufReadCmd for
+      -- *.ipynb and Vim runs them in registration order. Ours seeds a missing
+      -- or empty notebook with the nbformat template, so jupytext's conversion
+      -- (which needs valid JSON) and molten never see an invalid file.
+      require("config.notebook").autoseed()
       require("jupytext").setup({
         style = "markdown",
         output_extension = "md",

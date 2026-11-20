@@ -5,6 +5,18 @@ vim.opt_local.tabstop = 4
 vim.opt_local.softtabstop = 4
 vim.opt_local.shiftwidth = 4
 
+-- Hard-wrap markdown prose at a fixed column, but never code cells or the
+-- jupytext frontmatter. The width is deliberately constant rather than derived
+-- from the window: markdown cells are written into the .ipynb, so a width that
+-- followed the terminal would make the saved file depend on the screen it was
+-- edited on. Change this one number to change the max line length.
+local PROSE_WIDTH = 80
+vim.bo.textwidth = PROSE_WIDTH
+-- The guard is lua/config/notebook-format.lua, installed from
+-- after/ftplugin/quarto.lua (the runtime quarto ftplugin sources rmd.vim and
+-- would win otherwise). Display soft-wrap is separate: see the "prose-wrap"
+-- autocmd in lua/config/autocmds.lua.
+
 -- Molten keymaps for notebook buffers (ft=quarto: .qmd files and jupytext-
 -- converted .ipynb buffers). localleader is "\".
 --
@@ -93,6 +105,45 @@ end, "expand output window")
 
 -- cell management
 map("<localleader>md", ":MoltenDelete<CR>", "delete molten cell")
+
+-- cell navigation. LazyVim owns the global ]b / [b (next/previous *buffer*), so
+-- the @code_cell textobject maps configured in lua/plugins/treesitter.lua never
+-- fire in a notebook buffer; a buffer-local map wins. The same keys move
+-- between fenced blocks in plain markdown via markdown-plus, so ]b means "next
+-- code cell" on both sides of a jupytext pair. The @code_cell captures come
+-- from after/queries/markdown/textobjects.scm (notebook buffers parse with the
+-- markdown grammar).
+local function move_cell(direction)
+  local ok, move = pcall(require, "nvim-treesitter-textobjects.move")
+  if not ok then
+    return
+  end
+  local fn = direction > 0 and move.goto_next_start or move.goto_previous_start
+  local moved = false
+  for _ = 1, vim.v.count1 do
+    local before = vim.api.nvim_win_get_cursor(0)[1]
+    pcall(fn, "@code_cell.inner", "textobjects")
+    if vim.api.nvim_win_get_cursor(0)[1] == before then
+      break
+    end
+    moved = true
+  end
+  if not moved then
+    vim.notify("notebook: no " .. (direction > 0 and "next" or "previous") .. " code cell", vim.log.levels.INFO)
+  end
+end
+
+map("]b", function()
+  move_cell(1)
+end, "next code cell")
+map("[b", function()
+  move_cell(-1)
+end, "previous code cell")
+
+-- the guide to this setup (guides/notebook-guide.md), same key as the LaTeX guide
+map("<localleader>h", function()
+  require("config.notebook-guide").open()
+end, "notebook guide")
 
 -- which-key: groups + nerd-font icons (buffer-local, notebook buffers only)
 local wk = require("which-key")
