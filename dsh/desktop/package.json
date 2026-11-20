@@ -4,7 +4,8 @@
   "dependencies": {
     "@aman/dsh-chat": "link:/Users/aman/dotfiles/dsh/plugins/chat",
     "@aman/dsh-personal-presets": "link:/Users/aman/dotfiles/agent-config/dsh/bundle",
-    "@aman/dsh-research-tools": "link:/Users/aman/dotfiles/dsh/plugins/research-tools"
+    "@aman/dsh-research-tools": "link:/Users/aman/dotfiles/dsh/plugins/research-tools",
+    "deepseek-harness-pets": "0.2.3"
   },
   "dsh": {
     "profile": {

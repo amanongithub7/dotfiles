@@ -3,3 +3,6 @@ packages:
 
 nodeLinker: hoisted
 autoInstallPeers: false
+minimumReleaseAgeExclude:
+  - dsh-ntr@0.3.7
+  - dsh-deepseek-web-free@1.0.31
