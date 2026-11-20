@@ -24,6 +24,36 @@ Version tracked: sioyek 2.0.0 (Homebrew cask).
 | `<C-n>` / `<C-p>` | next / previous page |
 | `<D-right>` / `<D-left>` | next / previous page |
 
+### Search
+
+`/term` then Enter commits the search; every match is highlighted from then on.
+
+| Key | Action |
+| --- | --- |
+| `n` | next match (`next_item`) |
+| `p` / `N` | previous match (`previous_item`; `N` is the stock binding, kept) |
+| `<D-p>` twice | portal: press at the source, then at the destination (moved off `p`) |
+
+Stock sioyek binds `n` to `next_item` and `Shift+n` to `previous_item`, but `p`
+is `portal` — so "previous" was never on `p`. `p` now means previous match and
+portals moved to `<D-p>`. Search is case-sensitive by default
+(`case_sensitive_search`), so `/figure` will not find `Figure`.
+
+**The `showing result 0 / N` gotcha.** After Enter, `search_text()` fills the hit
+list but sets `current_search_result_index = -1`, so the status bar reads
+`0 / N` and *no* hit is selected yet. Both keys run the same function with ±1
+(`goto_search_result`), which does `mod(index + offset, N)`:
+
+- `n` from `-1` → hit **1**, which with `super_fast_search` is the first
+  occurrence on/after the page you are reading — usually the match already on
+  screen, so the view barely moves and `n` looks dead.
+- `p` from `-1` → `mod(-2, N)` → hit **N-1** (3 of 4), not the last one.
+
+Once one hit is selected, `n`/`p` step normally. Upstream has the same wart
+([#1438](https://github.com/ahrm/sioyek/issues/1438),
+[#1562](https://github.com/ahrm/sioyek/issues/1562)) and the development branch
+still leaves the index at `-1`, so no upgrade fixes it.
+
 ### Highlights
 
 | Key | Action |
