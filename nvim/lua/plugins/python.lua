@@ -13,7 +13,7 @@ return {
       { "folke/snacks.nvim" },
     },
     ft = { "python", "jupyter" }, -- Load when opening python and python notebook files
-    keys = { { ",v", "<cmd>VenvSelect<cr>" } }, -- Open picker on keymap
+    keys = { { "<leader>v", "<cmd>VenvSelect<cr>" } }, -- Open picker on keymap
     opts = {
       options = {
         picker = "snacks",

@@ -11,33 +11,92 @@
 local purge_maps
 purge_maps = vim.schedule_wrap(function()
   local purge = {
-    "<leader>`",                                          -- switch buffer (native <C-^> is faster)
-    "<leader>K",                                          -- Keywordprg (native K; LSP hover)
-    "<leader>L",                                          -- LazyVim changelog
-    "<leader>,",                                          -- duplicate of <leader>b buffers picker
-    "<leader>-", "<leader>|",                             -- splits moved into <leader>w group
-    "<leader>t",                                          -- global empty +test marker (python-scoped below)
-    "<leader>bb", "<leader>bd", "<leader>bD", "<leader>bi", -- buffer menu -> <leader>b picker
-    "<leader>bj", "<leader>bl", "<leader>bo", "<leader>bP", "<leader>bp", "<leader>br",
-    "<leader>qq", "<leader>qd", "<leader>ql", "<leader>qs", "<leader>qS", -- sessions unused
-    "<leader>gG", "<leader>gY", "<leader>gD",             -- git duplicates
-    "<leader>gi", "<leader>gI", "<leader>gp", "<leader>gP", "<leader>gB", -- GitHub -> <leader>G group
-    "<leader>wd", "<leader>wm",                           -- window menu gone (nav/resize on <C-*> keys)
-    "<leader>xl", "<leader>xL", "<leader>xQ", "<leader>xt", "<leader>xT", -- trouble/picker duplicates
-    "<leader>sG", "<leader>sW", "<leader>sc",             -- search menu duplicates (<leader>/, sw, <leader>:)
-    "<leader>uS",                                         -- toggle for disabled snacks.scroll
-    "<leader>E", "<leader>fe", "<leader>fE",              -- explorer: keep only <leader>e
-    "<leader>ff", "<leader>fF", "<leader>fb", "<leader>fB", "<leader>fn", -- find menu gone
-    "<leader>fc", "<leader>fp", "<leader>fr", "<leader>fR", "<leader>fP", "<leader>fg",
-    "<leader>ft", "<leader>fT",
-    "<leader><tab>[", "<leader><tab>]", "<leader><tab><tab>", "<leader><tab>d",
-    "<leader><tab>f", "<leader><tab>l", "<leader><tab>o", -- tabs unused
+    "<leader>`", -- switch buffer (native <C-^> is faster)
+    "<leader>K", -- Keywordprg (native K; LSP hover)
+    "<leader>L", -- LazyVim changelog
+    "<leader>,", -- duplicate of <leader>b buffers picker
+    "<leader>-",
+    "<leader>|", -- splits moved into <leader>w group
+    "<leader>t", -- global empty +test marker (python-scoped below)
+    "<leader>bb",
+    "<leader>bd",
+    "<leader>bD",
+    "<leader>bi", -- buffer menu -> <leader>b picker
+    "<leader>bj",
+    "<leader>bl",
+    "<leader>bo",
+    "<leader>bP",
+    "<leader>bp",
+    "<leader>br",
+    "<leader>qq",
+    "<leader>qd",
+    "<leader>ql",
+    "<leader>qs",
+    "<leader>qS", -- sessions unused
+    "<leader>gG",
+    "<leader>gY",
+    "<leader>gD", -- git duplicates
+    "<leader>gi",
+    "<leader>gI",
+    "<leader>gp",
+    "<leader>gP",
+    "<leader>gB", -- GitHub -> <leader>G group
+    "<leader>wd",
+    "<leader>wm", -- window menu gone (nav/resize on <C-*> keys)
+    "<leader>xl",
+    "<leader>xL",
+    "<leader>xQ",
+    "<leader>xt",
+    "<leader>xT", -- trouble/picker duplicates
+    "<leader>sG",
+    "<leader>sW",
+    "<leader>sc", -- search menu duplicates (<leader>/, sw, <leader>:)
+    "<leader>uS", -- toggle for disabled snacks.scroll
+    "<leader>E",
+    "<leader>fe",
+    "<leader>fE", -- explorer: keep only <leader>e
+    "<leader>ff",
+    "<leader>fF",
+    "<leader>fb",
+    "<leader>fB",
+    "<leader>fn", -- find menu gone
+    "<leader>fc",
+    "<leader>fp",
+    "<leader>fr",
+    "<leader>fR",
+    "<leader>fP",
+    "<leader>fg",
+    "<leader>ft",
+    "<leader>fT",
+    "<leader><tab>[",
+    "<leader><tab>]",
+    "<leader><tab><tab>",
+    "<leader><tab>d",
+    "<leader><tab>f",
+    "<leader><tab>l",
+    "<leader><tab>o", -- tabs unused
     -- neotest: scenario-scoped maps are created per-buffer below
-    "<leader>ta", "<leader>td", "<leader>to", "<leader>tO", "<leader>tr",
-    "<leader>tS", "<leader>tw", "<leader>tt", "<leader>tT", "<leader>tl", "<leader>ts",
+    "<leader>ta",
+    "<leader>td",
+    "<leader>to",
+    "<leader>tO",
+    "<leader>tr",
+    "<leader>tS",
+    "<leader>tw",
+    "<leader>tt",
+    "<leader>tT",
+    "<leader>tl",
+    "<leader>ts",
     -- opencode session numbers (rarely needed)
-    "<leader>o1", "<leader>o2", "<leader>o3", "<leader>o4", "<leader>o5",
-    "<leader>o6", "<leader>o7", "<leader>o8", "<leader>o9",
+    "<leader>o1",
+    "<leader>o2",
+    "<leader>o3",
+    "<leader>o4",
+    "<leader>o5",
+    "<leader>o6",
+    "<leader>o7",
+    "<leader>o8",
+    "<leader>o9",
   }
   for _, lhs in ipairs(purge) do
     pcall(vim.keymap.del, "n", lhs)
@@ -154,6 +213,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     map("<leader>zq", function()
       require("zotero").ask_opencode()
     end, "Ask opencode (paper agent)")
+    map("<leader>zh", function()
+      require("zotero").guide()
+    end, "Guide (colors & keys)")
   end,
 })
 
@@ -171,16 +233,36 @@ vim.api.nvim_create_autocmd("FileType", {
     local map = function(lhs, rhs, desc)
       vim.keymap.set("n", lhs, rhs, { buffer = args.buf, desc = desc })
     end
-    map("<leader>tr", function() require("neotest").run.run() end, "Run Nearest Test")
-    map("<leader>tT", function() require("neotest").run.run(vim.fn.expand("%")) end, "Run All Tests in File")
-    map("<leader>tl", function() require("neotest").run.run_last() end, "Re-run Last Test")
-    map("<leader>ts", function() require("neotest").summary.toggle() end, "Toggle Test Summary")
-    map("<leader>ta", function() require("neotest").run.attach() end, "Attach to Test")
-    map("<leader>td", function() require("neotest").run.run({ strategy = "dap" }) end, "Debug Nearest Test")
-    map("<leader>to", function() require("neotest").output.open() end, "Show Test Output")
-    map("<leader>tO", function() require("neotest").output_panel.toggle() end, "Toggle Output Panel")
-    map("<leader>tS", function() require("neotest").run.stop() end, "Stop Test")
-    map("<leader>tw", function() require("neotest").watch.toggle() end, "Toggle Watch")
+    map("<leader>tr", function()
+      require("neotest").run.run()
+    end, "Run Nearest Test")
+    map("<leader>tT", function()
+      require("neotest").run.run(vim.fn.expand("%"))
+    end, "Run All Tests in File")
+    map("<leader>tl", function()
+      require("neotest").run.run_last()
+    end, "Re-run Last Test")
+    map("<leader>ts", function()
+      require("neotest").summary.toggle()
+    end, "Toggle Test Summary")
+    map("<leader>ta", function()
+      require("neotest").run.attach()
+    end, "Attach to Test")
+    map("<leader>td", function()
+      require("neotest").run.run({ strategy = "dap" })
+    end, "Debug Nearest Test")
+    map("<leader>to", function()
+      require("neotest").output.open()
+    end, "Show Test Output")
+    map("<leader>tO", function()
+      require("neotest").output_panel.toggle()
+    end, "Toggle Output Panel")
+    map("<leader>tS", function()
+      require("neotest").run.stop()
+    end, "Stop Test")
+    map("<leader>tw", function()
+      require("neotest").watch.toggle()
+    end, "Toggle Watch")
     vim.schedule(function()
       require("which-key").add({
         { "<leader>t", group = "test", icon = "󰙨", buffer = args.buf },
@@ -204,6 +286,7 @@ vim.schedule(function()
     { "<leader>od", group = "diff", icon = "󰊢" },
     { "<leader>?", desc = "Buffer Local Keymaps", icon = "󰋗" },
     { "<leader>w", group = "windows", icon = "󰖲" },
+    { "<leader>v", desc = "V-env Selector", icon = "" },
     -- groups whose maps were removed: hide the empty menu entries
     { "<leader>f", hidden = true },
     { "<leader>q", hidden = true },
