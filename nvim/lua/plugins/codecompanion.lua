@@ -61,10 +61,34 @@ local function pickers()
   return require("codecompanion.interactions.chat.keymaps.change_adapter")
 end
 
+-- Each provider gets its own key variable (CC_*) so CodeCompanion's credentials
+-- stay independent of the PARATERA_API_KEY / DEEPSEEK_API_KEY that the rest of
+-- the tooling (dsh, opencode) reads.
+--
+-- A function, not the plain string form: when an adapter's env var is unset,
+-- CodeCompanion's own resolver (`is_env_var` only matches *set* variables) passes
+-- the variable's name through literally, so the request goes out with
+-- `Authorization: Bearer CC_PARATERA_API_KEY` and fails with a confusing 401.
+-- Returning "" instead, plus a one-off warning, turns that into a clear message.
+local warned_keys = {}
+local function key_from_env(env_var)
+  return function()
+    local key = os.getenv(env_var)
+    if not key or key == "" then
+      if not warned_keys[env_var] then
+        warned_keys[env_var] = true
+        vim.notify(("CodeCompanion: %s is not set; requests will fail auth"):format(env_var), vim.log.levels.WARN)
+      end
+      return ""
+    end
+    return key
+  end
+end
+
 return {
   {
     "olimorris/codecompanion.nvim",
-    version = "^19.0.0",
+    version = false,
     -- Every entry point is a command, so nothing loads until it's first used.
     cmd = {
       "CodeCompanion",
@@ -76,7 +100,13 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter", -- yaml parser, for the prompt library
+
+      -- extensions
       "MeanderingProgrammer/render-markdown.nvim", -- renders the chat buffer
+      "ravitemer/mcphub.nvim", -- mcp capabilities for CodeCompanion
+      "ravitemer/codecompanion-history.nvim", -- persistent session history
+      "Davidyz/VectorCode", -- scan directory capabilities
+      "lalitmee/codecompanion-spinners.nvim", -- ui spinners for different states
     },
     -- The AI menu. `keys` double as the lazy-load trigger, so these maps work
     -- on a cold start without pulling the plugin in at startup.
@@ -107,6 +137,13 @@ return {
       },
       { "<leader>ar", "<cmd>CodeCompanionCodeReview<cr>", desc = "Code Review" },
     },
+    -- Show the adapter/provider and model each chat buffer is on, as a winbar
+    -- on the window that displays it. `init` (not `config`) so the autocmd is
+    -- registered at startup, before the plugin is first used; the winbar is an
+    -- expression, so it stays current when the model changes.
+    init = function()
+      require("config.cc-winbar").setup(MODELS)
+    end,
     ---@module 'codecompanion'
     ---@type CodeCompanion.Config
     opts = {
@@ -147,6 +184,68 @@ return {
 
             return adapter
           end,
+
+          -- Direct DeepSeek (https://api-docs.deepseek.com) instead of routing
+          -- through OpenRouter. The built-in adapter already speaks DeepSeek's
+          -- dialect (`thinking`, `reasoning_content`, tool calls), so only the
+          -- model list is refreshed: upstream retired `deepseek-v4-flash` (it
+          -- still resolves, billed as V4.1-Flash) and now serves
+          -- `deepseek-flash` and `deepseek-v4-pro`. Key: CC_DEEPSEEK_API_KEY.
+          deepseek = function()
+            local adapter = require("codecompanion.adapters").extend("deepseek", {
+              env = { api_key = key_from_env("CC_DEEPSEEK_API_KEY") },
+              schema = { model = { default = "deepseek-flash" } },
+            })
+
+            -- replace the choices rather than merging, so the retired ids don't
+            -- show up in the picker
+            adapter.schema.model.choices = {
+              ["deepseek-flash"] = {
+                formatted_name = "DeepSeek Flash",
+                meta = { context_window = 1048576 },
+                opts = { can_reason = true, can_use_tools = true },
+              },
+              ["deepseek-v4-pro"] = {
+                formatted_name = "DeepSeek V4 Pro",
+                meta = { context_window = 1048576 },
+                opts = { can_reason = true, can_use_tools = true },
+              },
+            }
+
+            return adapter
+          end,
+
+          -- Paratera MaaS: a plain OpenAI-compatible chat-completions endpoint
+          -- (https://llmapi.paratera.com/v1) serving DeepSeek, GLM and Kimi.
+          -- Built on `openai_legacy` -- the base the bundled xai adapter uses --
+          -- with a static model list, so no /models call is needed and the
+          -- picker works offline. Key: CC_PARATERA_API_KEY.
+          paratera = function()
+            local adapter = require("codecompanion.adapters").extend("openai_legacy", {
+              name = "paratera",
+              formatted_name = "Paratera",
+              url = "https://llmapi.paratera.com/v1/chat/completions",
+              env = { api_key = key_from_env("CC_PARATERA_API_KEY") },
+              headers = {
+                ["Content-Type"] = "application/json",
+                Authorization = "Bearer ${api_key}",
+              },
+              opts = { stream = true, tools = true, vision = false },
+              schema = { model = { default = "DeepSeek-V4.1-Flash" } },
+            })
+
+            -- openai_legacy ships OpenAI's model table; assign (don't merge) so
+            -- the picker lists only what Paratera actually serves
+            adapter.schema.model.choices = {
+              ["DeepSeek-V4.1-Flash"] = { formatted_name = "DeepSeek V4.1 Flash" },
+              ["DeepSeek-V4-Flash-0731"] = { formatted_name = "DeepSeek V4 Flash (0731)" },
+              ["GLM-5.3"] = { formatted_name = "GLM-5.3" },
+              ["GLM-5.3-Flash"] = { formatted_name = "GLM-5.3 Flash" },
+              ["Kimi-K3"] = { formatted_name = "Kimi K3" },
+            }
+
+            return adapter
+          end,
         },
         acp = {
           -- the agent presets (claude_code, codex, opencode, ...)
@@ -178,6 +277,11 @@ return {
           provider = "snacks",
         },
         chat = {
+          show_reasoning = false,
+          fold_context = true,
+          icons = {
+            chat_context = "📎️",
+          },
           window = {
             layout = "vertical",
             position = "right",
