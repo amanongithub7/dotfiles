@@ -46,6 +46,13 @@ require("lazy").setup({
     enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
+  -- lazy.nvim's manager is a floating window and passes its border to
+  -- nvim_open_win explicitly, so 'winborder' does not apply to it: without this
+  -- it draws border = "none". The border colour comes from FloatBorder
+  -- (see lua/plugins/theme.lua).
+  ui = {
+    border = "rounded",
+  },
   plugins = {
     "nvim-lua/plenary.nvim",
 

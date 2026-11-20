@@ -25,6 +25,15 @@ vim.g.python3_host_prog = vim.fn.expand("~/.virtualenvs/neovim/bin/python3")
 -- so a full line wraps exactly at the zen viewport edge.
 vim.g.zen_width = 0.55
 
+-- Rounded borders for every floating window that does not set its own: LSP
+-- hover/signature/rename, diagnostics, mason, dap, snacks' border = true wins
+-- (input, notifier, pickers). Pickers and which-key pin "rounded" explicitly
+-- in their own specs; the colour is fixed in lua/plugins/theme.lua.
+-- 0.11+ only; guarded so an older binary still starts.
+if vim.fn.has("nvim-0.11") == 1 then
+  vim.o.winborder = "rounded"
+end
+
 -- Neovim's markdown ftplugin sets list-friendly indent (expandtab, ts/sts/sw=4)
 -- when this is 1. LazyVim sets it to 0, leaving shiftwidth=2; markdown-plus' <Tab>
 -- then nests list items by 2 spaces, which is too shallow for a child of "1. "
