@@ -526,7 +526,7 @@ function M.copy_key(key)
 end
 
 -- Picker ---------------------------------------------------------------------
----@param opts? { action?: "insert"|"pdf"|"note" }
+---@param opts? { action?: "insert"|"pdf"|"note"|"yank" }
 function M.pick(opts)
   opts = opts or {}
   local entries = M.entries()
@@ -534,8 +534,33 @@ function M.pick(opts)
     vim.notify("Zotero: no entries in " .. M.bib_file .. " (configure the BBT export)", vim.log.levels.WARN)
     return
   end
+  -- What <CR> does depends on why the picker was opened, so say so, both in the
+  -- footer and in each binding's desc (which is also what `?` shows).
+  local enter = ({
+    pdf = "open in Zotero",
+    note = "open/create note",
+    yank = "yank citekey",
+  })[opts.action or "insert"] or "insert citation"
+  local key_desc = {
+    o = "Open PDF",
+    n = "Open/create note",
+    y = "Yank citekey",
+  }
+  local footer = {}
+  for _, chunk in ipairs({
+    { " o ", "SnacksFooterKey" },
+    { " open PDF ", "SnacksFooterDesc" },
+    { " n ", "SnacksFooterKey" },
+    { " note ", "SnacksFooterDesc" },
+    { " y ", "SnacksFooterKey" },
+    { " yank key ", "SnacksFooterDesc" },
+    { " <CR> ", "SnacksFooterKey" },
+    { " " .. enter .. " ", "SnacksFooterDesc" },
+  }) do
+    footer[#footer + 1] = chunk
+  end
   Snacks.picker({
-    title = "Zotero Citations",
+    title = "Zotero Citations · o PDF · n note · y yank",
     items = entries,
     preview = "none",
     confirm = function(picker, item)
@@ -582,18 +607,19 @@ function M.pick(opts)
     },
     win = {
       input = {
+        footer = footer,
         keys = {
           -- plain letters in normal mode (insert mode still types for search)
-          ["o"] = { "zotero_pdf", mode = "n" },
-          ["n"] = { "zotero_note", mode = "n" },
-          ["y"] = { "zotero_yank", mode = "n" },
+          ["o"] = { "zotero_pdf", mode = "n", desc = key_desc.o },
+          ["n"] = { "zotero_note", mode = "n", desc = key_desc.n },
+          ["y"] = { "zotero_yank", mode = "n", desc = key_desc.y },
         },
       },
       list = {
         keys = {
-          ["o"] = "zotero_pdf",
-          ["n"] = "zotero_note",
-          ["y"] = "zotero_yank",
+          ["o"] = { "zotero_pdf", desc = key_desc.o },
+          ["n"] = { "zotero_note", desc = key_desc.n },
+          ["y"] = { "zotero_yank", desc = key_desc.y },
         },
       },
     },
@@ -703,11 +729,119 @@ end
 ---Markdown table describing the colour -> type convention.
 ---@return string
 function M.annotation_legend()
-  local out = { "| Color | Type |", "|:-----:|------|" }
+  local out = { "| Color | Hex | Type |", "|:-----:|:---:|------|" }
   for _, c in ipairs(M.annotation_colors) do
-    out[#out + 1] = ("| %s | %s |"):format(c.emoji, c.heading)
+    out[#out + 1] = ("| %s | `%s` | %s |"):format(c.emoji, c.hex, c.heading)
   end
   return table.concat(out, "\n")
+end
+
+-- Guide popup -----------------------------------------------------------------
+
+local SWATCH = "███"
+local guide_ns = vim.api.nvim_create_namespace("zotero.guide")
+
+---Keys shown in the guide. Mirrors nvim/lua/config/keymaps.lua.
+local NOTE_KEYMAPS = {
+  { "<leader>zl", "Literature Menu — search the library, insert a citation (global)" },
+  { "<leader>zr", "Reload the bibliography from Better BibTeX (global)" },
+  { "<leader>zo", "Open this paper's PDF in Zotero, at the cursor" },
+  { "<leader>zn", "Open the existing note, or create one" },
+  { "<leader>zy", "Yank the citekey at the cursor" },
+  { "<leader>za", "Insert this paper's annotations at the cursor" },
+  { "<leader>zN", "Create or refresh this paper's note" },
+  { "<leader>zq", "Ask opencode's paper agent (needs tmux)" },
+  { "<leader>zh", "This guide" },
+}
+
+---Floating, read-only reference: annotation colour palette, then keymaps.
+---@return integer win, integer buf
+function M.guide()
+  local name_w, lhs_w = 0, 0
+  for _, c in ipairs(M.annotation_colors) do
+    name_w = math.max(name_w, #c.name)
+  end
+  for _, k in ipairs(NOTE_KEYMAPS) do
+    lhs_w = math.max(lhs_w, #k[1])
+  end
+
+  local lines, swatches = {}, {}
+  local function pad(s, w)
+    return s .. string.rep(" ", math.max(0, w - vim.fn.strdisplaywidth(s)))
+  end
+  local add = function(s)
+    lines[#lines + 1] = s
+    return #lines - 1 -- 0-based row, for extmarks
+  end
+
+  add(" Zotero · Literature Note Guide")
+  add("")
+  add(" ANNOTATION COLORS")
+  add("")
+  for _, c in ipairs(M.annotation_colors) do
+    local row = add(
+      "   " .. SWATCH .. "  " .. c.hex .. "  " .. pad(c.name, name_w) .. "  " .. c.heading .. "  " .. c.emoji
+    )
+    swatches[#swatches + 1] = { row = row, col = 3, name = c.name, hex = c.hex }
+  end
+  add("")
+  add("   Other shades fold into these types; anything unrecognised renders")
+  add("   as Other Highlights (📝).")
+  add("")
+  add(" KEYMAPS")
+  add("")
+  for _, k in ipairs(NOTE_KEYMAPS) do
+    add("   " .. pad(k[1], lhs_w) .. "   " .. k[2])
+  end
+  add("")
+  add("   q / <Esc>   Close this guide")
+  add("")
+  add("   Colors and keys are read live from zotero/init.lua.")
+
+  local width = 0
+  for _, l in ipairs(lines) do
+    width = math.max(width, vim.fn.strdisplaywidth(l))
+  end
+  width = math.min(width + 2, vim.o.columns - 4)
+  local height = math.min(#lines, vim.o.lines - 4)
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  for _, sw in ipairs(swatches) do
+    local group = "ZoteroSwatch_" .. sw.name
+    vim.api.nvim_set_hl(0, group, { fg = sw.hex })
+    vim.api.nvim_buf_set_extmark(buf, guide_ns, sw.row, sw.col, {
+      end_col = sw.col + #SWATCH,
+      hl_group = group,
+    })
+  end
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    style = "minimal",
+    border = "rounded",
+    title = " Zotero Guide ",
+    title_pos = "center",
+    width = width,
+    height = height,
+    row = math.max(0, math.floor((vim.o.lines - height) / 2) - 1),
+    col = math.max(0, math.floor((vim.o.columns - width) / 2)),
+  })
+  vim.wo[win].wrap = false
+  vim.wo[win].cursorline = false
+
+  local close = function()
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
+  vim.keymap.set("n", "q", close, { buffer = buf, nowait = true, desc = "Close guide" })
+  vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true, desc = "Close guide" })
+
+  return win, buf
 end
 
 local ANNOT_START = "<!-- zotero:annotations:start -->"
